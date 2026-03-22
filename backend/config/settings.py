@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.github',
 
     'accounts',
+    'contests',
 ]
 
 SITE_ID = 1

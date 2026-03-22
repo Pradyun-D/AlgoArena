@@ -19,7 +19,8 @@ config = {
     'password': db_pass,
     'database': 'test',
     'ssl_ca': ca_path,  
-    'ssl_verify_cert': True
+    'ssl_verify_cert': True,
+   
 }
 
 def get_connection():
