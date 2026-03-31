@@ -24,6 +24,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('dj_rest_auth.urls')),  # login, logout, password reset/change, user/
+    path ('contests/',include('contests.urls')),
 
     # Registration URLs (explicit to fix bare TemplateView stubs in dj_rest_auth)
     path('api/auth/registration/', RegisterView.as_view(), name='rest_register'),

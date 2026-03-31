@@ -1,0 +1,29 @@
+ {% extends "contest_base.html" %}
+
+ {% block title %} {{contest_info.title}} {% endblock %}
+
+  {% block content %}
+
+<h1>{{ contest.title }} - Leaderboard</h1>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Rank</th>
+        <th>User</th>
+        <th>Solved</th>
+        <th>Score</th>
+        <th>Penalty</th>
+    </tr>
+
+    {% for user in leaderboard %}
+    <tr>
+        <td>{{ user.rank }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.problems_solved }}</td>
+        <td>{{ user.current_score }}</td>
+        <td>{{ user.time_penalty_ms }} ms</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

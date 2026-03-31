@@ -1,0 +1,34 @@
+ {% extends "contest_base.html" %}
+
+ {% block title %} {{contest_info.title}} {% endblock %}
+
+
+  {% block content %}
+
+  <h1>{{ problem.title }}</h1>
+
+<p>Time Limit: {{ problem.time_limit_ms }} ms</p>
+<p>Memory Limit: {{ problem.memory_limit_kb }} KB</p>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Language:</label>
+    <select name="language_id">
+        {% for lang in languages %}
+            <option value="{{ lang.id }}">{{ lang.name }}</option>
+        {% endfor %}
+    </select>
+
+    <br><br>
+
+    <label>Source Code:</label><br>
+    <textarea name="source_code" rows="15" cols="80"></textarea>
+
+    <br><br>
+
+    <button type="submit">Submit</button>
+</form>
+
+  
+{% endblock %}

@@ -1,0 +1,19 @@
+ {% extends "contest_base.html" %}
+
+ {% block title %}All Contests{% endblock %}
+
+
+  {% block content %}
+
+    {% for contest in contests %}
+        <div>
+            <h2>
+                <a href="{% url 'contest_page' contest.contest_id %}">
+                    {{ contest.title }}
+                </a>
+            </h2>
+            <p>Date: {{ contest.date }}</p>
+        </div>
+        <hr>
+    {% endfor %}
+{% endblock %}
