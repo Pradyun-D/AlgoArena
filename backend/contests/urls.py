@@ -7,6 +7,7 @@ urlpatterns = [
     path("api/contests/", views.all_contests_api, name="all_contests_api"),
 
     path("", views.all_contests, name="all_contests_page"),
+    path("create/", views.all_contests, name="create_contest_page"),
     path("<int:contest_id>/", views.contest, name="contest_page"),
     path("<int:contest_id>/delete/", views.delete_contest, name="delete_contest"),
 
