@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     # admin routes
-
+    path("api/contests/", views.all_contests_api, name="all_contests_api"),
 
     path("", views.all_contests, name="all_contests_page"),
     path("<int:contest_id>/", views.contest, name="contest_page"),

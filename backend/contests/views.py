@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import redirect
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response    
+
 # Create your views here.
 
 # hardcoding data for now when sql setup we change it
@@ -82,41 +86,47 @@ def _build_sidebar_context(request):
 
     return sidebar
 
-# /contests
+def _get_contests_data():
+    return [
+        {
+            "contest_id": "1",
+            "title": "Div 2 (Round 1039)",
+            "description": "You will be given 6 simple problems and 2 hour 15 minutes to solve them. Note that one of the problems will be further divided into 2 subtasks. Furthermore, some of the problems may be interactive, so please read the guide for interactive problems if you are not familiar with them. This round will be rated for the participants with rating lower than 2100.",
+            "start_time": "2026-04-01 12:25:39",
+            "end_time": "2026-05-01 18:25:39",
+            "visibility": "Public",
+            "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
+            "created_at": "2026-04-01 16:25:39",
+        },
+        {
+            "contest_id": "2",
+            "title": "Div 1 (Round 1040)",
+            "description": "The authors of the three best Div. 1 of all time, nifeshe, chromate00, and I, have joined forces to create the Division 1+2 round that will break the internet: Nebius Round 2 (Codeforces Round 1088, Div. 1 + Div. 2), which will be held on Saturday, March 28, 2026 at 20:15UTC+5.5. This round will be combined for Division 1 and Division 2 and will be rated for everyone.",
+            "start_time": "2026-06-01 12:25:39",
+            "end_time": "2026-06-01 18:25:39",
+            "visibility": "Public",
+            "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
+            "created_at": "2026-04-01 16:25:39",
+        },
+    ]
+
 
 def all_contests(request):
     if request.method == "GET":
-        contests = [
-            {
-                "contest_id": "1",
-                "title": "Div 2 (Round 1039)",
-                "description": "You will be given 6 simple problems and 2 hour 15 minutes to solve them. Note that one of the problems will be further divided into 2 subtasks. Furthermore, some of the problems may be interactive, so please read the guide for interactive problems if you are not familiar with them. This round will be rated for the participants with rating lower than 2100.",
-                "start_time": "2026-04-01 12:25:39",
-                "end_time": "2026-05-01 18:25:39",
-                "visibility": "Public",
-                "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
-                "created_at": "2026-04-01 16:2  5:39"
-            },
-            {
-                "contest_id": "2",
-                "title": "Div 1 (Round 1040)",
-                "description": "The authors of the three best Div. 1 of all time, nifeshe, chromate00, and I, have joined forces to create the Division 1+2 round that will break the internet: Nebius Round 2 (Codeforces Round 1088, Div. 1 + Div. 2), which will be held on Saturday, March 28, 2026 at 20:15UTC+5.5. This round will be combined for Division 1 and Division 2 and will be rated for everyone.",
-                "start_time": "2026-06-01 12:25:39",
-                "end_time": "2026-06-01 18:25:39",
-                "visibility": "Public",
-                "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
-                "created_at": "2026-04-01 16:25:39"
-            }
-        ]
         return render(
             request,
             "contests/all_contests.html",
             {
-                "contests": contests,
+                "contests": _get_contests_data(),
                 "sidebar_user": _build_sidebar_context(request),
             }
         )
 
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def all_contests_api(request):
+    return Response(_get_contests_data())
 
 def contest(request, contest_id):
     if request.method == "GET":
