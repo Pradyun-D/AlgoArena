@@ -24,7 +24,7 @@ config = {
 }
 
 def get_connection():
-    return mysql.connector.connect(**config)
+    return mysql.connector.connect(**config,use_pure=True)
 
 #Sample test
 connection = get_connection()
