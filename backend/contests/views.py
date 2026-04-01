@@ -6,14 +6,116 @@ from django.shortcuts import redirect
 
 # hardcoding data for now when sql setup we change it
 
+# Return list of registered rounds to javascript for rendering
+
+def _build_registered_rounds(contest_history):
+    registered_rounds = []
+
+    for entry in contest_history:
+        if not isinstance(entry, dict):
+            continue
+
+        is_registered = entry.get("registered")
+        status = str(entry.get("status", "")).strip()
+
+        if not is_registered and status not in {"Upcoming", "Active"}:
+            continue
+
+        if status == "Active":
+            subtitle = "Active Now"
+        elif entry.get("start_time"):
+            subtitle = f"Starts at {entry['start_time']}"
+        else:
+            subtitle = "Registered"
+
+        registered_rounds.append(
+            {
+                "title": entry.get("title", "Untitled Contest"),
+                "subtitle": subtitle,
+                "is_live": status == "Active",
+            }
+        )
+
+    return registered_rounds[:4]
+
+
+# Dummy sidebar data; will implement later.
+
+def _build_sidebar_context(request):
+    sidebar = {
+        "username": "guest_user",
+        "rating": 0,
+        "total_solved": 0,
+        "avg_rank": None,
+        "top_percentile": None,
+        "registered_rounds": [],
+    }
+
+    if not request.user.is_authenticated:
+        return sidebar
+
+    sidebar["username"] = request.user.username or request.user.email.split("@")[0]
+
+    profile = getattr(request.user, "profile", None)
+    if profile is None:
+        return sidebar
+
+    preferences = profile.preferences if isinstance(profile.preferences, dict) else {}
+    contest_history = profile.contest_history if isinstance(profile.contest_history, list) else []
+
+    sidebar["rating"] = preferences.get("rating", preferences.get("contest_rating", 0))
+    sidebar["total_solved"] = preferences.get(
+        "total_problems_solved",
+        preferences.get("problems_solved", 0)
+    )
+    sidebar["top_percentile"] = preferences.get("top_percentile")
+    sidebar["registered_rounds"] = _build_registered_rounds(contest_history)
+
+    ranks = [
+        entry.get("rank")
+        for entry in contest_history
+        if isinstance(entry, dict) and isinstance(entry.get("rank"), (int, float))
+    ]
+
+    if ranks:
+        sidebar["avg_rank"] = round(sum(ranks) / len(ranks))
+
+    return sidebar
+
+# /contests
 
 def all_contests(request):
     if request.method == "GET":
         contests = [
-            {"contest_id": 1, "title": "Weekly Contest"},
-            {"contest_id": 2, "title": "Monthly Contest"},
+            {
+                "contest_id": "1",
+                "title": "Div 2 (Round 1039)",
+                "description": "You will be given 6 simple problems and 2 hour 15 minutes to solve them. Note that one of the problems will be further divided into 2 subtasks. Furthermore, some of the problems may be interactive, so please read the guide for interactive problems if you are not familiar with them. This round will be rated for the participants with rating lower than 2100.",
+                "start_time": "2026-04-01 12:25:39",
+                "end_time": "2026-05-01 18:25:39",
+                "visibility": "Public",
+                "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
+                "created_at": "2026-04-01 16:2  5:39"
+            },
+            {
+                "contest_id": "2",
+                "title": "Div 1 (Round 1040)",
+                "description": "The authors of the three best Div. 1 of all time, nifeshe, chromate00, and I, have joined forces to create the Division 1+2 round that will break the internet: Nebius Round 2 (Codeforces Round 1088, Div. 1 + Div. 2), which will be held on Saturday, March 28, 2026 at 20:15UTC+5.5. This round will be combined for Division 1 and Division 2 and will be rated for everyone.",
+                "start_time": "2026-06-01 12:25:39",
+                "end_time": "2026-06-01 18:25:39",
+                "visibility": "Public",
+                "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
+                "created_at": "2026-04-01 16:25:39"
+            }
         ]
-        return (render(request, "contests/all_contests.html", {"contests": contests}))
+        return render(
+            request,
+            "contests/all_contests.html",
+            {
+                "contests": contests,
+                "sidebar_user": _build_sidebar_context(request),
+            }
+        )
 
 
 def contest(request, contest_id):

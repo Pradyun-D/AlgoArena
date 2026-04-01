@@ -1,19 +1,207 @@
- {% extends "contest_base.html" %}
+{% load static %}
+<!DOCTYPE html>
 
- {% block title %}All Contests{% endblock %}
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AlgoArena | Contests</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed-dim": "#5091ff",
+                        "primary-container": "#6c9fff",
+                        "surface-container-high": "#20201f",
+                        "error-dim": "#d7383b",
+                        "tertiary-container": "#fe5c4a",
+                        "tertiary-dim": "#ff7260",
+                        "on-primary-container": "#00214e",
+                        "outline": "#767575",
+                        "on-tertiary-fixed": "#3a0000",
+                        "on-surface-variant": "#adaaaa",
+                        "on-primary-fixed-variant": "#002a60",
+                        "tertiary-fixed-dim": "#ff7c6a",
+                        "secondary-container": "#006d37",
+                        "on-background": "#ffffff",
+                        "primary-dim": "#0070ea",
+                        "on-secondary": "#005f2f",
+                        "on-secondary-fixed": "#004a23",
+                        "primary": "#84adff",
+                        "secondary-fixed-dim": "#5bef90",
+                        "on-surface": "#ffffff",
+                        "inverse-primary": "#005bc1",
+                        "on-error-container": "#ffa8a3",
+                        "surface-container-low": "#131313",
+                        "secondary-dim": "#5bef90",
+                        "background": "#0e0e0e",
+                        "primary-fixed": "#6c9fff",
+                        "secondary": "#6bfe9c",
+                        "on-secondary-container": "#e3ffe4",
+                        "surface-dim": "#0e0e0e",
+                        "surface-bright": "#2c2c2c",
+                        "on-tertiary-fixed-variant": "#7a0002",
+                        "on-primary-fixed": "#000000",
+                        "surface-tint": "#84adff",
+                        "outline-variant": "#484847",
+                        "inverse-surface": "#fcf9f8",
+                        "surface": "#0e0e0e",
+                        "on-primary": "#002d64",
+                        "surface-container": "#1a1a1a",
+                        "surface-container-lowest": "#000000",
+                        "inverse-on-surface": "#565555",
+                        "tertiary-fixed": "#ff9383",
+                        "on-tertiary-container": "#310000",
+                        "error": "#ff716c",
+                        "on-tertiary": "#4f0001",
+                        "on-error": "#490006",
+                        "surface-container-highest": "#262626",
+                        "error-container": "#9f0519",
+                        "secondary-fixed": "#6bfe9c",
+                        "tertiary": "#ff7765",
+                        "surface-variant": "#262626",
+                        "on-secondary-fixed-variant": "#006a35"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(44, 44, 44, 0.7); backdrop-filter: blur(12px); }
+        .syntax-gradient { background: linear-gradient(135deg, #84adff 0%, #0070ea 100%); }
+        .active-glow { box-shadow: 0 0 15px rgba(132, 173, 255, 0.15); }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopNavBar -->
+<nav class="bg-[#131313] dark:bg-[#131313] fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none">
+<div class="flex items-center gap-8">
+<a class="text-2xl font-black tracking-tighter text-[#84adff] font-['Space_Grotesk'] uppercase" href="{% url 'all_contests_page' %}">AlgoArena</a>
+<div class="hidden md:flex gap-6 h-full items-center">
+<a class="text-gray-500 hover:text-gray-300 transition-colors font-['Space_Grotesk'] tracking-tight font-bold uppercase text-sm" href="{% url 'profile_page' %}">Dashboard</a>
+<a class="text-[#84adff] border-b-2 border-[#84adff] pb-1 font-['Space_Grotesk'] tracking-tight font-bold uppercase text-sm" href="{% url 'all_contests_page' %}">Contests</a>
+<a class="text-gray-500 hover:text-gray-300 transition-colors font-['Space_Grotesk'] tracking-tight font-bold uppercase text-sm" href="{% url 'all_contests_page' %}" id="navbar-leaderboard-link">Leaderboard</a>
+<a class="text-gray-500 hover:text-gray-300 transition-colors font-['Space_Grotesk'] tracking-tight font-bold uppercase text-sm" href="{% url 'profile_page' %}">My Submissions</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-gray-400 hover:bg-[#1a1a1a] transition-all duration-150 rounded-sm scale-95 active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-gray-400 hover:bg-[#1a1a1a] transition-all duration-150 rounded-sm scale-95 active:opacity-80">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of a professional developer in a dark office with blue ambient lighting reflecting on their face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn0TdTfqR870CXvGgzkQRK50fbGHgW4z1UOQe6CKKnkqOjE8pXi4yJi9X3RbAXs6oSw9loiGNy72cw9wZgk9xydSemrpY18fshrYeiq5pT2_zNGUnvHk7PJ23GEL72fd2pM2UXlUtvcqNAaS18PHHnm94rcwy8C6gpueAU8W0oNh3jjl3Xf294Y27Kf7EXMpmxjV9BJ1gSaA5XFKuNmjvY2pM5tMGvou9YBXG595ruH3pUHJjqgFUaKqTzikTYiO13Aejd5km66LI"/>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-12 px-6 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Content Canvas -->
+<div class="lg:col-span-9 space-y-12">
+<!-- Hero Header -->
+<section class="space-y-2">
+<h1 class="text-4xl font-black font-headline tracking-tighter text-on-background uppercase">Contest <span class="text-primary">Registry</span></h1>
+<p class="text-on-surface-variant font-body text-sm max-w-2xl">Browse active and upcoming competitive programming rounds. Optimize your performance through consistent participation in global contests.</p>
+</section>
+<!-- Contest Registry -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="text-lg font-bold font-headline tracking-tight text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">sensors</span>
+                        AVAILABLE CONTESTS
+                    </h2>
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant" id="contest-count">0 loaded</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="contest-list"></div>
+<div class="hidden bg-surface-container-low p-8 rounded-sm border border-dashed border-outline-variant/40 text-center" id="empty-state">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant">trophy</span>
+<h3 class="mt-4 text-lg font-bold font-headline uppercase">No Contests Found</h3>
+<p class="mt-2 text-sm text-on-surface-variant">New rounds will appear here as soon as they are available.</p>
+</div>
+</section>
+</div>
+<!-- Right Column: Sidebar Stats -->
+<aside class="lg:col-span-3 space-y-6">
+<!-- User Stats Card -->
+<div class="bg-surface-container-low p-6 rounded-sm space-y-8 border-t-2 border-primary">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-sm bg-surface-container flex items-center justify-center text-primary border border-primary/20">
+<span class="material-symbols-outlined text-3xl">terminal</span>
+</div>
+<div>
+<h3 class="text-sm font-bold font-headline uppercase tracking-tighter" id="sidebar-username">guest_user</h3>
+<span class="text-[10px] text-secondary font-mono" id="sidebar-rating">Unrated</span>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="bg-surface-container p-3 rounded-sm">
+<span class="block text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Total Solved</span>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-black font-headline leading-none" id="sidebar-total-solved">0</span>
+<span class="text-[10px] text-secondary font-bold">Problems Solved</span>
+</div>
+</div>
+<div class="bg-surface-container p-3 rounded-sm">
+<span class="block text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">Average Rank</span>
+<div class="flex items-end gap-2">
+<span class="text-2xl font-black font-headline leading-none" id="sidebar-avg-rank">N/A</span>
+<span class="text-[10px] text-primary font-bold" id="sidebar-top-percentile">No contest history yet</span>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<h4 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] border-b border-outline-variant/20 pb-2">Registered Rounds</h4>
+<div class="space-y-3" id="registered-rounds-list"></div>
+<p class="hidden text-[10px] text-on-surface-variant uppercase tracking-[0.15em]" id="registered-rounds-empty">No registered contests yet</p>
+</div>
+</div>
+<!-- Platform Stats -->
+<div class="bg-surface-container-low p-6 rounded-sm space-y-4">
+<h4 class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Platform Metrics</h4>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-[11px]">
+<span class="text-on-surface-variant">Online Users</span>
+<span class="font-mono text-secondary">42,891</span>
+</div>
+<div class="flex justify-between items-center text-[11px]">
+<span class="text-on-surface-variant">Submissions / Day</span>
+<span class="font-mono text-on-surface">1.2M</span>
+</div>
+<div class="flex justify-between items-center text-[11px]">
+<span class="text-on-surface-variant">Server Latency</span>
+<span class="font-mono text-primary">12ms</span>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 syntax-gradient rounded-sm shadow-2xl flex items-center justify-center text-on-primary-fixed z-50">
+<span class="material-symbols-outlined">search</span>
+</button>
 
+{{ contests|json_script:"contests-data" }}
+{{ sidebar_user|json_script:"sidebar-user-data" }}
 
-  {% block content %}
-
-    {% for contest in contests %}
-        <div>
-            <h2>
-                <a href="{% url 'contest_page' contest.contest_id %}">
-                    {{ contest.title }}
-                </a>
-            </h2>
-            <p>Date: {{ contest.date }}</p>
-        </div>
-        <hr>
-    {% endfor %}
-{% endblock %}
+<script>
+    window.APP_CONFIG = {
+        contestBaseUrl: "{% url 'contest_page' 0 %}".replace("0/", ""),
+        leaderboardBaseUrl: "{% url 'leaderboard_page' 0 %}".replace("0/leaderboard/", "")
+    };
+</script>
+<script src="{% static 'contests/js/all_contests.js' %}"></script>
+</body></html>
