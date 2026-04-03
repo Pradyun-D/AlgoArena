@@ -3,26 +3,23 @@ from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
+
+    # note pls maintain separate routes for put post get if url is same bcs adding permissions is harder using if else ..(becomes clumsy)
+
     # admin routes
-    path("api/contests/", views.all_contests_api, name="all_contests_api"),
+   
 
-    path("", views.all_contests, name="all_contests_page"),
-    path("<int:contest_id>/", views.contest, name="contest_page"),
-    path("<int:contest_id>/delete/", views.delete_contest, name="delete_contest"),
+    path("create/", views.create_contest, name="create_contest_api"),
+    path("<uuid:contest_id>/delete/", views.delete_contest, name="delete_contest_api"),
+    path("editorial/create/",views.create_editorial,name="create_editorial_api"),
 
- # pls maintain separate routes for each req (GET AND POST only recognisable)
+ 
     # user routes
-    # path("<int:contest_id>/register/", views.register_contest, name="register_page"),
-
-
-    path("<int:contest_id>/problems/", views.contest_problems, name="contest_problems_page"),
-
-    # path("<int:contest_id>/problems/<int:problem_id>/", views.problem_contest, name="problem_contest"),
-
-    path("<int:contest_id>/problems/<int:problem_id>/submit/", views.problem_submit, name="problem_submit"),
-
-    # path("<int:contest_id>/submissions/", views.user_submissions, name="submissions_page"),
-
-    path("<int:contest_id>/leaderboard/", views.contest_leaderboard, name="leaderboard_page"),
+   
+    path("/", views.all_contests, name="all_contests_api"),
+    path("<uuid:contest_id>/problems",views.get_problems_contest,name="get_problems_contest_api").
+    path("<uuid:problem_id>/editorial",views.get_editorial,name="get_editorial_api"),
+    path("editorial/create/", views.create_editorial, name="create_editorial_api"),
+    path("editorial/<uuid:problem_id>/", views.get_editorial, name="get_editorial_api"),
 ]
     

@@ -1,16 +1,23 @@
+from backend.contests.contest_serializer import EditorialSerializer
+from django.contrib.auth.models import PermissionManager
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import redirect
-
+from accounts.permissions import IsProblemSetter, IsAdmin,IsProblemSetterOwner,IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
+from .contest_serializer import ContestSerializer
+from ..local_db import get_db_connection
 
 # Create your views here.
 
 # hardcoding data for now when sql setup we change it
 
 # Return list of registered rounds to javascript for rendering
+
+
+#-------------------- helpers------------------------------------------------------------
 
 def _build_registered_rounds(contest_history):
     registered_rounds = []
@@ -43,7 +50,7 @@ def _build_registered_rounds(contest_history):
     return registered_rounds[:4]
 
 
-# Dummy sidebar data; will implement later.
+# ----------------------Dummy sidebar data; will implement later.--------------------------
 
 def _build_sidebar_context(request):
     sidebar = {
@@ -86,6 +93,8 @@ def _build_sidebar_context(request):
 
     return sidebar
 
+
+
 def _get_contests_data():
     return [
         {
@@ -111,182 +120,116 @@ def _get_contests_data():
     ]
 
 
-def all_contests(request):
-    if request.method == "GET":
-        return render(
-            request,
-            "contests/all_contests.html",
-            {
-                "contests": _get_contests_data(),
-                "sidebar_user": _build_sidebar_context(request),
-            }
-        )
 
+# to get all contests
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
-def all_contests_api(request):
+def all_contests(request):
     return Response(_get_contests_data())
 
-def contest(request, contest_id):
-    if request.method == "GET":
-
-        # fetch all contests from MYSQL
-        # for now dummy data
-        contest = [
-            {
-                "id": contest_id,
-                "title": "Weekly Contest 1",
-                "description": "Basic DSA problems",
-                "start_time": "2026-04-01 10:00",
-                "end_time": "2026-04-01 12:00",
-                "status": "Upcoming",
-                "visibility": "Public",
-            }
-        ]
-
-        return (render(request, "contests/contest.html", {"contest": contest}))
 
 
-def delete_contest(request, contest_id):
-    if request.method == "POST":
-        # delete from MYSQL HERE using contest_id
+# to create a contest (problemsetter/user)
 
-        return redirect("all_contest_page")
-
-
-def contest_problems(request, contest_id):
-    if request.method == "GET":
-        ## fetch from MYSQL using contest_id
-        # for now dummy data
-        contest_info = {
-            "contest_id": contest_id,
-            "title": "Weekly Contest",
-            "status": "Active",
-        }
-
-        problems = [
-            {
-                "problem_id": "p1",
-                "title": "Two Sum",
-                "slug": "two-sum",
-                "difficulty": "Easy",
-                "time_limit_ms": 1000,
-                "memory_limit_kb": 262144,
-                "visibility": "Contest_Only",
-            },
-            {
-                "problem_id": "p2",
-                "title": "Binary Search",
-                "slug": "binary-search",
-                "difficulty": "Easy",
-                "time_limit_ms": 1000,
-                "memory_limit_kb": 262144,
-                "visibility": "Contest_Only",
-            },
-            {
-                "problem_id": "p3",
-                "title": "Longest Increasing Subsequence",
-                "slug": "longest-increasing-subsequence",
-                "difficulty": "Medium",
-                "time_limit_ms": 1500,
-                "memory_limit_kb": 262144,
-                "visibility": "Contest_Only",
-            },
-            {
-                "problem_id": "p4",
-                "title": "Median of Medians",
-                "slug": "median-of-medians",
-                "difficulty": "Hard",
-                "time_limit_ms": 2000,
-                "memory_limit_kb": 262144,
-                "visibility": "Contest_Only",
-            },
-        ]
-
-        return render(
-            request,
-            "contests/contest_problems.html",
-            {
-                "contest": contest_info,
-                "problems": problems,
-            }
-        )
+@api_view(["POST"])
+@permission_classes([IsProblemSetter])
+def create_contest(request):
+    serializer = ContestSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            serializer.save(created_by=request.user.id)
+            return Response(serializer.data, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+    return Response(serializer.errors, status=400)
 
 
-def problem_submit(request, contest_id, problem_id):
-
-    if request.method == "GET":
-        problem = {
-            "problem_id": problem_id,
-            "title": "Two Sum",
-            "time_limit_ms": 1000,
-            "memory_limit_kb": 262144,
-        }
-
-        languages = [
-            {"id": 1, "name": "C++"},
-            {"id": 2, "name": "Python"},
-            {"id": 3, "name": "Java"},
-        ]
-
-        return render(
-            request,
-            "contests/problem_submit.html",
-            {"problem": problem, "contest_id": contest_id, "languages": languages}
-        )
-
-    elif request.method == "POST":
-        source_code = request.POST.get("source_code")
-        language_id = request.POST.get("language_id")
-
-        submission_id = "sub123"
-
-        return redirect("submissions_page", contest_id=contest_id)
+# to delete a contest (problemsetter/user)
 
 
-def contest_leaderboard(request, contest_id):
-    if request.method == "GET":
+@api_view(["DELETE"])
+@permission_classes([IsProblemSetterOwner]) 
+def delete_contest(request,contest_id):
 
-        contest = {"contest_id": contest_id, "title": "Weekly Contest 101"}
+    # checking if present in db 
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM contests WHERE contest_id=%s",(contest_id,))
+        result=cursor.fetchone()
+        if not result:
+            return Response({"error":"Contest not found","status":404})
+    
+    # deleting from db
+        cursor.execute("DELETE FROM contests WHERE contest_id=%s",(contest_id,))
+        conn.commit()
+        return Response({"message":"Contest deleted successfully","status":200})
+    except Exception as e:
+        return Response({"error": str(e),"status":500})
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
 
-        leaderboard = [
-            {
-                "rank": 1,
-                "user_id": 101,
-                "username": "Alice",
-                "problems_solved": 5,
-                "current_score": 500,
-                "time_penalty_ms": 120000,
-            },
-            {
-                "rank": 2,
-                "user_id": 102,
-                "username": "Bob",
-                "problems_solved": 5,
-                "current_score": 500,
-                "time_penalty_ms": 150000,
-            },
-            {
-                "rank": 3,
-                "user_id": 103,
-                "username": "Charlie",
-                "problems_solved": 4,
-                "current_score": 400,
-                "time_penalty_ms": 110000,
-            },
-            {
-                "rank": 4,
-                "user_id": 104,
-                "username": "David",
-                "problems_solved": 3,
-                "current_score": 300,
-                "time_penalty_ms": 90000,
-            },
-        ]
 
-        return render(
-            request,
-            "contests/contest_leaderboard.html",
-            {"contest": contest, "leaderboard": leaderboard}
-        )
+
+# getting all problems of a contest
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_problems_contest(request,contest_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM problems WHERE problem_id IN (SELECT problem_id FROM contest_problems WHERE contest_id=%s)",(contest_id,))
+        result=cursor.fetchall()
+        if not result :
+            return Response({"message":"Contest has no problems","status":200})
+
+        return Response({"problems":result,"status":200})        
+    except Exception as e:
+        return Response({"error": str(e),"status":500})
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+#  creating editorial for a contest 
+@api_view(["POST"])
+@permission_classes([IsProblemSetterOwner])
+def create_editorial(request):
+    serializer=EditorialSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            serializer.save(created_by=request.user.id)
+            return Response({"message":"Editorial created successfully","status":200})
+        except Exception as e:
+            return Response({"error": str(e),"status":500})
+    return Response(serializer.errors,status=400)
+
+
+
+# view/get  the editorial of a contest 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_editorial(request,problem_id):
+    try :
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM editorials WHERE problem_id=%s",(problem_id,))
+        result=cursor.fetchone()
+        if not result:
+            return Response({"message":"Editorial not found","status":404})
+        return Response({"editorial":result,"status":200})
+    except Exception as e:
+        return Response({"error":str(e),"status":500})
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
