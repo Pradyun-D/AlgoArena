@@ -8,7 +8,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
 from .contest_serializer import ContestSerializer
-from ..local_db import get_db_connection
+from localDb import get_connection
+from .judge import judge_submission
+
+
+#Create the SQL connection
+connection = get_connection()
+cursor = connection.cursor()
 
 # Create your views here.
 
