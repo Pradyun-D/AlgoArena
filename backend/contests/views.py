@@ -8,8 +8,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
 from .contest_serializer import ContestSerializer
-from localDb import get_connection
-from .judge import judge_submission
+from db import get_connection
+# from .judge import judge_submission
 
 
 #Create the SQL connection
@@ -160,7 +160,7 @@ def delete_contest(request,contest_id):
 
     # checking if present in db 
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM contests WHERE contest_id=%s",(contest_id,))
         result=cursor.fetchone()
@@ -187,7 +187,7 @@ def delete_contest(request,contest_id):
 @permission_classes([IsAuthenticated])
 def get_problems_contest(request,contest_id):
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM problems WHERE problem_id IN (SELECT problem_id FROM contest_problems WHERE contest_id=%s)",(contest_id,))
         result=cursor.fetchall()
@@ -224,7 +224,7 @@ def create_editorial(request):
 @permission_classes([IsAuthenticated])
 def get_editorial(request,problem_id):
     try :
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM editorials WHERE problem_id=%s",(problem_id,))
         result=cursor.fetchone()

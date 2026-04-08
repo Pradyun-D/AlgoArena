@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import ContestCard from "../Components/contest_card";
-import Sidebar from "../Components/sidebar";
+import ContestCard from "../Components/ContestCard";
+import Sidebar from "../Components/Sidebar";
 
 function ContestsPage() {
     const [contests, setContests] = useState([]);
