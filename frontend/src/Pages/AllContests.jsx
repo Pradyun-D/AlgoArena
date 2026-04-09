@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import ContestCard from "../Components/ContestCard";
 import Sidebar from "../Components/Sidebar";
 
@@ -12,23 +13,13 @@ function ContestsPage() {
         : "/contests";
 
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/contests/api/contests/?format=json")
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error(`Contests request failed with ${res.status}`);
-                }
-                return res.json();
-            })
+        axios.get("http://127.0.0.1:8000/contests/")
+            .then((res) => res.data)
             .then((data) => setContests(Array.isArray(data) ? data : []))
             .catch(() => setContests([]));
 
-        fetch("/api/user/")
-            .then((res) => {
-                if (!res.ok) {
-                    return null;
-                }
-                return res.json();
-            })
+        axios.get("http://127.0.0.1:8000/api/auth/user/", { withCredentials: true })
+            .then((res) => res.data)
             .then((data) => setUser(data || {}))
             .catch(() => setUser({}));
     }, []);

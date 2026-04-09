@@ -184,16 +184,27 @@ def delete_contest(request,contest_id):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def get_problems_contest(request,contest_id):
+def get_contest_info(request,contest_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM problems WHERE problem_id IN (SELECT problem_id FROM contest_problems WHERE contest_id=%s)",(contest_id,))
-        result=cursor.fetchall()
-        if not result :
-            return Response({"message":"Contest has no problems","status":200})
+        cursor.execute("SELECT * FROM Contests WHERE contest_id = %s", (contest_id,))
+        result_contest=cursor.fetchone()
 
-        return Response({"problems":result,"status":200})        
+        if not result_contest:
+            return Response({"message":"Contest with this id doesn't exist","status":200}) 
+        
+        cursor.execute("SELECT * FROM problems WHERE problem_id IN (SELECT problem_id FROM contest_problems WHERE contest_id=%s)",(contest_id,))
+        result_problem=cursor.fetchall()
+        if not result_problem :
+            return Response({"message":"Contest has no problems","status":200})
+        
+        data={
+            "contest_info":result_contest,
+            "problems":result_problem
+        }
+        
+        return Response({"data":data,"status":200})        
     except Exception as e:
         return Response({"error": str(e),"status":500})
     finally:
@@ -237,4 +248,3 @@ def get_editorial(request,problem_id):
             cursor.close()
         if 'conn' in locals() and conn.is_connected():
             conn.close()
-

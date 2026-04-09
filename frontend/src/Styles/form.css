@@ -1,4 +1,27 @@
 :root {
+  --bg-body: #0a0a0a;
+  --bg-modal: #111111;
+  --bg-input: #000000;
+  --bg-card: #151515;
+  --border-color: #222222;
+  --border-focus: #2f81f7;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-accent: #58a6ff;
+  --btn-primary-bg: #2f81f7;
+  --btn-primary-hover: #1f6feb;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #21262d;
+  --btn-secondary-text: #c9d1d9;
+  --toggle-bg: #30363d;
+  --toggle-active: #2ea043;
+  --tag-bg: #2e1065;
+  --tag-text: #e9d5ff;
+  --tag-border: #7e22ce;
+  --tag-hover: #3b0764;
+}
+
+.light-mode {
   --bg-body: #f6f8fa;
   --bg-modal: #ffffff;
   --bg-input: #f3f4f6;
@@ -15,39 +38,10 @@
   --btn-secondary-text: #24292f;
   --toggle-bg: #d0d7de;
   --toggle-active: #1a7f37;
-  
- 
   --tag-bg: #f3e8ff;
   --tag-text: #6b21a8;
   --tag-border: #d8b4fe;
   --tag-hover: #e9d5ff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-body: #0a0a0a;
-    --bg-modal: #111111;
-    --bg-input: #000000;
-    --bg-card: #151515;
-    --border-color: #222222;
-    --border-focus: #2f81f7;
-    --text-primary: #e6edf3;
-    --text-secondary: #8b949e;
-    --text-accent: #58a6ff;
-    --btn-primary-bg: #2f81f7;
-    --btn-primary-hover: #1f6feb;
-    --btn-primary-text: #ffffff;
-    --btn-secondary-bg: #21262d;
-    --btn-secondary-text: #c9d1d9;
-    --toggle-bg: #30363d;
-    --toggle-active: #2ea043;
-
-    /* Vibrant Tag Colors (Dark Mode) */
-    --tag-bg: #2e1065;
-    --tag-text: #e9d5ff;
-    --tag-border: #7e22ce;
-    --tag-hover: #3b0764;
-  }
 }
 
 body {
