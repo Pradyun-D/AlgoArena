@@ -3,6 +3,9 @@ import ReactMarkdown from "react-markdown";
 
 function ContestCard({ contest, contestBaseUrl }) {
     const isLive = isLiveContest(contest);
+    const isCompleted = contest?.end_time
+        ? new Date(contest.end_time).getTime() < Date.now()
+        : false;
 
     const accentClass = isLive
         ? "border-secondary text-secondary"
@@ -15,10 +18,12 @@ function ContestCard({ contest, contestBaseUrl }) {
 
     const badgeLabel = isLive
         ? "Live Now"
-        : (contest.status || "Scheduled");
+        : isCompleted
+            ? "Completed"
+            : (contest.status || "Scheduled");
 
     return (
-        <article className={`bg-surface-container p-6 rounded-sm border-l-4 ${accentClass} transition-all hover:bg-surface-container-highest`}>
+        <article className={`min-w-0 overflow-hidden bg-surface-container p-6 rounded-sm border-l-4 ${accentClass} transition-all hover:bg-surface-container-highest`}>
             <div className="flex justify-between items-start gap-4 mb-6">
                 <div>
                     <span className={`text-xs font-bold uppercase tracking-widest font-headline ${accentTextClass}`}>
@@ -34,7 +39,7 @@ function ContestCard({ contest, contestBaseUrl }) {
                 </span>
             </div>
 
-            <div className="text-on-surface-variant text-sm leading-6 mb-6 min-h-12 prose prose-invert max-w-none">
+            <div className="text-on-surface-variant text-sm leading-6 mb-6 min-h-12 prose prose-invert max-w-none break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-sm [&_img]:block [&_img]:my-3 [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">
             <ReactMarkdown>
                 {contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round."}
             </ReactMarkdown>

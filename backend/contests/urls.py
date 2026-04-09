@@ -17,6 +17,7 @@ urlpatterns = [
     # user routes
    
     path("", views.all_contests, name="all_contests_api"),
+    path("past/", views.past_contests, name="past_contests_api"),
     path("<uuid:contest_id>/details", views.get_contest_info, name="get_contest_info_api"),
     path("<uuid:problem_id>/editorial/",views.get_editorial,name="get_editorial_api"),
     path("editorial/create/", views.create_editorial, name="create_editorial_api"),

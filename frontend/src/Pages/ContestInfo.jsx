@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 import "../Styles/contest_info.css";
 
 const formatDateTime = (value) => {
@@ -245,10 +246,12 @@ function ContestPage() {
 
           <section>
             <h2 className="section-title">Contest Brief</h2>
-            <p>
-              {contestInfo.description ||
-                "This contest currently has no published brief. Check back closer to the start time."}
-            </p>
+            <div>
+              <ReactMarkdown>
+                {contestInfo.description ||
+                  "This contest currently has no published brief. Check back closer to the start time."}
+              </ReactMarkdown>
+            </div>
           </section>
 
           <section id="schedule">

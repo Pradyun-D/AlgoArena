@@ -102,13 +102,32 @@ def _get_contests_data():
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
-            FROM contests
+            FROM contests WHERE end_time > (SELECT CURTIME())
             ORDER BY start_time ASC, created_at DESC
             """
         )
         return cursor.fetchall()  
     except Exception as e:
             return Response({"error": str(e)}, status=500)  
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def _get_past_contests_data():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+            FROM contests WHERE end_time <= (SELECT CURTIME())
+            ORDER BY end_time DESC, created_at DESC
+            """
+        )
+        return cursor.fetchall()
+    except Exception as e:
+            return Response({"error": str(e)}, status=500)
     finally:
         cursor.close()
         conn.close()
@@ -121,6 +140,12 @@ def _get_contests_data():
 @permission_classes([AllowAny])
 def all_contests(request):
     return Response(_get_contests_data())
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def past_contests(request):
+    return Response(_get_past_contests_data())
 
 
 

@@ -4,19 +4,25 @@ import ContestCard from "../Components/ContestCard";
 import Sidebar from "../Components/Sidebar";
 
 function ContestsPage() {
-    const [contests, setContests] = useState([]);
+    const [availableContests, setAvailableContests] = useState([]);
+    const [pastContests, setPastContests] = useState([]);
     const [user, setUser] = useState({});
 
     const contestBaseUrl = "/contest/";
-    const leaderboardUrl = contests.length > 0
-        ? `/leaderboard/${contests[0].contest_id}/`
+    const leaderboardUrl = availableContests.length > 0
+        ? `/leaderboard/${availableContests[0].contest_id}/`
         : "/contests";
 
     useEffect(() => {
         axios.get("http://127.0.0.1:8000/contests/")
             .then((res) => res.data)
-            .then((data) => setContests(Array.isArray(data) ? data : []))
-            .catch(() => setContests([]));
+            .then((data) => setAvailableContests(Array.isArray(data) ? data : []))
+            .catch(() => setAvailableContests([]));
+
+        axios.get("http://127.0.0.1:8000/contests/past/")
+            .then((res) => res.data)
+            .then((data) => setPastContests(Array.isArray(data) ? data : []))
+            .catch(() => setPastContests([]));
 
         axios.get("http://127.0.0.1:8000/api/auth/user/", { withCredentials: true })
             .then((res) => res.data)
@@ -82,11 +88,11 @@ function ContestsPage() {
                                 AVAILABLE CONTESTS
                             </h2>
                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
-                                {contests.length} loaded
+                                {availableContests.length} loaded
                             </span>
                         </div>
 
-                        {contests.length === 0 ? (
+                        {availableContests.length === 0 ? (
                             <div className="bg-surface-container-low p-8 rounded-sm border border-dashed border-outline-variant/40 text-center">
                                 <span className="material-symbols-outlined text-4xl text-on-surface-variant">trophy</span>
                                 <h3 className="mt-4 text-lg font-bold font-headline uppercase">No Contests Found</h3>
@@ -96,7 +102,39 @@ function ContestsPage() {
                             </div>
                         ) : (
                             <div className="contest-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {contests.map((contest) => (
+                                {availableContests.map((contest) => (
+                                    <ContestCard
+                                        key={contest.contest_id}
+                                        contest={contest}
+                                        contestBaseUrl={contestBaseUrl}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-bold font-headline tracking-tight text-on-surface flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm">history</span>
+                                PAST CONTESTS
+                            </h2>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+                                {pastContests.length} archived
+                            </span>
+                        </div>
+
+                        {pastContests.length === 0 ? (
+                            <div className="bg-surface-container-low p-8 rounded-sm border border-dashed border-outline-variant/40 text-center">
+                                <span className="material-symbols-outlined text-4xl text-on-surface-variant">history</span>
+                                <h3 className="mt-4 text-lg font-bold font-headline uppercase">No Past Contests Yet</h3>
+                                <p className="mt-2 text-sm text-on-surface-variant">
+                                    Completed contests will show up here once they have finished.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="contest-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {pastContests.map((contest) => (
                                     <ContestCard
                                         key={contest.contest_id}
                                         contest={contest}
