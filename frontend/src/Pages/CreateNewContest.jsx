@@ -1,18 +1,21 @@
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from 'axios';
 import "../Styles/form.css"
+
+// ----------------IMP----------------
+// form is incomplete (more fields depending on Pradyun's advice to be added later)
+
+// ----------------TO DO-------------------------
+// validate required fields before submit
+// enforce a max number of problems if that’s a rule
+
+
 
 const ContestFormPage = () => {
   const navigate = useNavigate();
-  const [contest, setContest] = useState({
-    title: "",
-    description: "",
-    start_time: "",
-    duration: "",
-    visibility: "public"
-  })
-
-  const [problem, setProblem] = useState({
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const emptyProblem = {
     title: "",
     description: "",
     difficulty: "easy",
@@ -21,14 +24,25 @@ const ContestFormPage = () => {
     visibility: "public",
     tags: [],
     max_score: ""
+  };
+
+  const [contest, setContest] = useState({
+    title: "",
+    description: "",
+    start_time: "",
+    duration: "",
+    visibility: "public"
   })
+
+  const [problem, setProblem] = useState(emptyProblem)
 
   const [tagInput, setTagInput] = useState("")
   const [problems, setProblems] = useState([])
+  const [editingProblemIndex, setEditingProblemIndex] = useState(null)
 
   useEffect(()=> {
     const savedContest=localStorage.getItem("contestDraft")
-    const savedProblems=localStorage.getItem("problemDraft")
+    const savedProblems=localStorage.getItem("problemsDraft")
     if (savedContest) setContest(JSON.parse(savedContest))
     if (savedProblems) setProblems(JSON.parse(savedProblems))
   },[])
@@ -45,14 +59,12 @@ const ContestFormPage = () => {
 
   const addTag = () => {
     if (!tagInput.trim()) return
-
     if (problem.tags.includes(tagInput.trim())) return
 
     setProblem(prev => ({
       ...prev,
       tags: [...prev.tags, tagInput.trim()]
     }))
-
     setTagInput("")
   }
 
@@ -63,51 +75,126 @@ const ContestFormPage = () => {
     }))
   }
 
-  const addProblem = () => {
-    setProblems(prev => [...prev, problem])
+  const resetProblemForm = () => {
+    setProblem(emptyProblem)
+    setTagInput("")
+    setEditingProblemIndex(null)
+  }
 
-    setProblem({
-      title: "",
-      description: "",
-      difficulty: "easy",
-      time_limit_ms: "",
-      memory_limit_kb: "",
-      visibility: "public",
-      tags: [],
-      max_score: ""
-    })
+  const validateProblem = () => {
+    const requiredFields = [
+      problem.title.trim(),
+      problem.difficulty.trim(),
+      problem.max_score.toString().trim(),
+      problem.time_limit_ms.toString().trim(),
+      problem.memory_limit_kb.toString().trim()
+    ]
+
+    return requiredFields.every(Boolean)
+  }
+
+  const addProblem = () => {
+    if (!validateProblem()) {
+      alert("Please fill in all required problem fields before adding it.")
+      return
+    }
+
+    if (editingProblemIndex !== null) {
+      setProblems(prev => prev.map((item, index) => (
+        index === editingProblemIndex ? { ...problem } : item
+      )))
+      resetProblemForm()
+      return
+    }
+
+    setProblems(prev => [...prev, { ...problem }])
+    resetProblemForm()
   }
 
   const removeProblem = (i) => {
     setProblems(prev => prev.filter((_, idx) => idx !== i))
+    if (editingProblemIndex === i) {
+      resetProblemForm()
+    }
   }
 
+  const editProblem = (index) => {
+    setProblem({ ...problems[index] })
+    setTagInput("")
+    setEditingProblemIndex(index)
+  }
+
+  const calculatedEndTime = (() => {
+    if (!contest.start_time || !contest.duration) {
+      return ""
+    }
+
+    const start = new Date(contest.start_time)
+    const durationInMinutes = Number(contest.duration)
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(durationInMinutes)) {
+      return ""
+    }
+
+    const end = new Date(start.getTime() + durationInMinutes * 60000)
+    const timezoneOffset = end.getTimezoneOffset()
+    const localDate = new Date(end.getTime() - timezoneOffset * 60000)
+    return localDate.toISOString().slice(0, 16)
+  })()
+
   const handleSubmit = async () => {
-    await fetch("http://localhost:8000/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contest, problems })
-    })
-    localStorage.removeItem("contestDraft")
-    localStorage.removeItem("problemsDraft")
+    if (problems.length === 0) {
+      alert("Add at least one problem before creating the contest.")
+      return
+    }
+
+    try {
+     const response = await axios.post("http://127.0.0.1:8000/contests/create/", {
+       contest,
+       problems
+     }, {
+       withCredentials: false
+     });
+     console.log(response.data)
+     localStorage.removeItem("contestDraft")
+     localStorage.removeItem("problemsDraft")
+     navigate('/contests')
+    }
+
+    catch (error) {
+        console.log("error from create new contest ", error.message, error.response?.data)
+        alert(
+          error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Contest creation failed."
+        )
+    }
   }
 
   const handleSaveDraft = () => {
     localStorage.setItem("contestDraft", JSON.stringify(contest))
     localStorage.setItem("problemsDraft", JSON.stringify(problems))
-   
     alert("Draft saved locally!") 
   }
 
   return (
-    <div className="overlay">
+    // Applied the dynamic class here based on state
+    <div className={`overlay ${isDarkMode ? 'dark-mode' : ''}`} style={{ background: 'var(--bg-body)' }}>
       <div className="modal">
         <div className="modal-header">
           <div>
             <h2 className="title">CREATE NEW CONTEST</h2>
-            
           </div>
-          <button className="close-btn">×</button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {/* Added Theme Toggle Button */}
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', cursor: 'pointer' }}
+            >
+              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+            </button>
+            <button className="close-btn" onClick={() => navigate('/contests')}>×</button>
+          </div>
         </div>
 
         <div className="modal-body">
@@ -118,7 +205,6 @@ const ContestFormPage = () => {
                 <label>CONTEST TITLE</label>
                 <input name="title" className="input" placeholder="e.g., Global Binary Sprint #4" value={contest.title} onChange={handleContestChange} />
               </div>
-            
             </div>
             <div className="input-group">
               <label>DESCRIPTION (MARKDOWN SUPPORTED)</label>
@@ -140,7 +226,7 @@ const ContestFormPage = () => {
                 </div>
                 <div className="input-group">
                   <label>END TIME (AUTO)</label>
-                  <input className="input" placeholder="--:--:--" disabled />
+                  <input className="input" value={calculatedEndTime} placeholder="Auto-calculated from start time" disabled />
                 </div>
               </div>
             </div>
@@ -175,8 +261,8 @@ const ContestFormPage = () => {
           </div>
 
           <div className="section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-               <p className="section-title">PROBLEM SELECTION</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0' }}>
+               <p className="section-title" style={{ margin: 0 }}>PROBLEM SELECTION</p>
                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Selected: {problems.length}/10</span>
             </div>
 
@@ -195,10 +281,26 @@ const ContestFormPage = () => {
               <input name="memory_limit_kb" className="input" placeholder="Memory Limit(kb)" value={problem.memory_limit_kb} onChange={handleProblemChange} />
             </div>
 
+            <div className="input-group" style={{ marginBottom: '16px' }}>
+              <label>PROBLEM DESCRIPTION</label>
+              <textarea
+                name="description"
+                className="textarea"
+                placeholder="Describe the problem statement or internal notes..."
+                value={problem.description}
+                onChange={handleProblemChange}
+              />
+            </div>
+
             <div className="row" style={{marginBottom: '16px', alignItems: 'center'}}>
               <input className="input" placeholder="Enter tag" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if(e.key === "Enter") { e.preventDefault(); addTag(); } }} />
               <button className="button button-draft" onClick={addTag}>Add Tag</button>
-              <button className="button button-primary" onClick={addProblem}>Add Problem</button>
+              <button className="button button-primary" onClick={addProblem}>
+                {editingProblemIndex !== null ? "Update Problem" : "Add Problem"}
+              </button>
+              {editingProblemIndex !== null && (
+                <button className="button button-secondary" onClick={resetProblemForm}>Cancel Edit</button>
+              )}
             </div>
 
             <div className="tag-list">
@@ -216,7 +318,10 @@ const ContestFormPage = () => {
                     <p>{p.title} ({p.difficulty})</p>
                     <span>{p.max_score} pts • {p.time_limit_ms}ms • {p.memory_limit_kb}kb</span>
                   </div>
-                  <button className="button button-secondary" onClick={() => removeProblem(i)}>Remove</button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="button button-draft" onClick={() => editProblem(i)}>Edit</button>
+                    <button className="button button-secondary" onClick={() => removeProblem(i)}>Remove</button>
+                  </div>
                 </div>
               ))}
             </div>

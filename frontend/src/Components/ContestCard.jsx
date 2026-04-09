@@ -1,4 +1,5 @@
 import { isLiveContest } from "../Utils/is_live_contest";
+import ReactMarkdown from "react-markdown";
 
 function ContestCard({ contest, contestBaseUrl }) {
     const isLive = isLiveContest(contest);
@@ -33,9 +34,11 @@ function ContestCard({ contest, contestBaseUrl }) {
                 </span>
             </div>
 
-            <p className="text-on-surface-variant text-sm mb-6">
+            <div className="text-on-surface-variant text-sm leading-6 mb-6 min-h-12 prose prose-invert max-w-none">
+            <ReactMarkdown>
                 {contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round."}
-            </p>
+            </ReactMarkdown>
+            </div>
 
             <a
                 href={`${contestBaseUrl}${contest.contest_id}/`}
