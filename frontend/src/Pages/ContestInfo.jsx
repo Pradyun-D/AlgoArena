@@ -117,13 +117,12 @@ function ContestPage() {
         setError("");
 
         const response = await axios.get(
-          `http://127.0.0.1:8000/contests/${contestId}/details`,
-          { withCredentials: true }
+          `http://127.0.0.1:8000/contests/${contestId}/details`
         );
 
         const payload = response.data?.data;
 
-        if (!payload?.contest_info) {
+        if (!payload?.contest) {
           throw new Error(response.data?.message || "Contest data not found.");
         }
 
@@ -146,11 +145,11 @@ function ContestPage() {
   }, [contestId]);
 
   useEffect(() => {
-    if (!data?.contest_info) {
+    if (!data?.contest) {
       return undefined;
     }
 
-    const { start_time: startTime, end_time: endTime } = data.contest_info;
+    const { start_time: startTime, end_time: endTime } = data.contest;
     const status = getContestStatus(startTime, endTime);
     const targetTime = status === "Upcoming" ? startTime : endTime;
 
@@ -192,7 +191,7 @@ function ContestPage() {
     );
   }
 
-  const contestInfo = data?.contest_info || {};
+  const contestInfo = data?.contest || {};
   const problems = Array.isArray(data?.problems) ? data.problems : [];
   const contestStatus = getContestStatus(contestInfo.start_time, contestInfo.end_time);
   const isLive = contestStatus === "Live";

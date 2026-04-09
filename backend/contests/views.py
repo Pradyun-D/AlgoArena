@@ -150,6 +150,7 @@ def create_contest(request):
 @api_view(["DELETE"])
 @permission_classes([IsProblemSetterOwner]) 
 def delete_contest(request,contest_id):
+    contest_id = str(contest_id)
 
     # checking if present in db 
     try:
@@ -179,6 +180,7 @@ def delete_contest(request,contest_id):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_contest_info(request,contest_id):
+    contest_id = str(contest_id)
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -209,7 +211,7 @@ def get_contest_info(request,contest_id):
         )
         result_problem = cursor.fetchall()
 
-        problem_ids = [problem["problem_id"] for problem in result_problem]
+        problem_ids = [str(problem["problem_id"]) for problem in result_problem]
         tags_by_problem = {problem_id: [] for problem_id in problem_ids}
 
         if problem_ids:
@@ -230,7 +232,7 @@ def get_contest_info(request,contest_id):
         serialized_payload = {
             "contest": result_contest,
             "problems": [
-                {**problem, "tags": tags_by_problem.get(problem["problem_id"], [])}
+                {**problem, "problem_id": str(problem["problem_id"]), "tags": tags_by_problem.get(str(problem["problem_id"]), [])}
                 for problem in result_problem
             ],
         }
