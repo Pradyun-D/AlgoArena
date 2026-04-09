@@ -1,4 +1,3 @@
-from backend.contests.contest_serializer import EditorialSerializer
 from django.contrib.auth.models import PermissionManager
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -7,7 +6,7 @@ from accounts.permissions import IsProblemSetter, IsAdmin,IsProblemSetterOwner,I
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
-from .contest_serializer import ContestSerializer
+from .contest_serializer import ContestSerializer, EditorialSerializer
 from db import get_connection
 # from .judge import judge_submission
 

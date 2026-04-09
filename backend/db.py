@@ -201,9 +201,12 @@ exec_engine_queries = [
     """
 
 ]
+
+"""
 for query in exec_engine_queries:
     cursor.execute(query)
 
 connection.commit()
 cursor.close()
 connection.close()
+"""

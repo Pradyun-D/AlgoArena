@@ -1,10 +1,24 @@
 from rest_framework import serializers
 import mysql.connector
-from ..local_db import get_db_connection
 import uuid
+import importlib.util
+import sys
+import os
 
+module_name = "local_db"
 
-conn = get_db_connection()
+base_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(base_dir, "..", "local_db.py")
+
+# Normalize path
+file_path = os.path.normpath(file_path)
+
+spec = importlib.util.spec_from_file_location(module_name, file_path)
+local_db = importlib.util.module_from_spec(spec)
+sys.modules[module_name] = local_db
+spec.loader.exec_module(local_db)
+
+conn = local_db.get_db_connection()
 cursor = conn.cursor(dictionary=True)
 
 class ContestSerializer(serializers.Serializer):
