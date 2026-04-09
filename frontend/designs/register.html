@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AlgoArena | INITIALIZE_ACCOUNT</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-dim": "#ff7260",
+                    "surface-container-highest": "#262626",
+                    "secondary-fixed-dim": "#5bef90",
+                    "on-tertiary-fixed-variant": "#7a0002",
+                    "on-secondary-fixed": "#004a23",
+                    "primary-fixed": "#6c9fff",
+                    "on-tertiary-container": "#310000",
+                    "primary-fixed-dim": "#5091ff",
+                    "on-primary": "#002d64",
+                    "on-secondary-container": "#e3ffe4",
+                    "surface-container-low": "#131313",
+                    "on-tertiary-fixed": "#3a0000",
+                    "surface-container-high": "#20201f",
+                    "on-background": "#ffffff",
+                    "on-error": "#490006",
+                    "inverse-primary": "#005bc1",
+                    "inverse-surface": "#fcf9f8",
+                    "on-primary-fixed-variant": "#002a60",
+                    "tertiary": "#ff7765",
+                    "tertiary-fixed-dim": "#ff7c6a",
+                    "on-surface": "#ffffff",
+                    "surface-variant": "#262626",
+                    "surface-tint": "#84adff",
+                    "secondary-container": "#006d37",
+                    "on-tertiary": "#4f0001",
+                    "surface-container": "#1a1a1a",
+                    "on-error-container": "#ffa8a3",
+                    "secondary-fixed": "#6bfe9c",
+                    "tertiary-container": "#fe5c4a",
+                    "primary-dim": "#0070ea",
+                    "outline": "#767575",
+                    "on-secondary": "#005f2f",
+                    "background": "#0e0e0e",
+                    "surface-bright": "#2c2c2c",
+                    "surface": "#0e0e0e",
+                    "outline-variant": "#484847",
+                    "error-container": "#9f0519",
+                    "surface-container-lowest": "#000000",
+                    "on-secondary-fixed-variant": "#006a35",
+                    "on-primary-container": "#00214e",
+                    "error-dim": "#d7383b",
+                    "secondary-dim": "#5bef90",
+                    "on-primary-fixed": "#000000",
+                    "tertiary-fixed": "#ff9383",
+                    "inverse-on-surface": "#565555",
+                    "surface-dim": "#0e0e0e",
+                    "primary": "#84adff",
+                    "on-surface-variant": "#adaaaa",
+                    "secondary": "#6bfe9c",
+                    "error": "#ff716c",
+                    "primary-container": "#6c9fff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": [
+                            "Space Grotesk"
+                    ],
+                    "body": [
+                            "Inter"
+                    ],
+                    "label": [
+                            "Inter"
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(44, 44, 44, 0.7);
+            backdrop-filter: blur(12px);
+        }
+        .syntax-accent {
+            border-left: 2px solid #84adff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<header class="w-full top-0 left-0 bg-[#131313] flex justify-between items-center px-6 h-12 w-full z-50">
+<div class="text-lg font-bold tracking-tighter text-[#84adff] font-['Space_Grotesk']">
+            ALGO_ARENA
+        </div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-6 items-center">
+<span class="text-slate-500 font-['Space_Grotesk'] tracking-tight text-sm cursor-not-allowed">ARENA</span>
+<span class="text-slate-500 font-['Space_Grotesk'] tracking-tight text-sm cursor-not-allowed">LEADERBOARD</span>
+</div>
+<div class="flex gap-4">
+<button class="text-slate-500 hover:bg-[#262626] transition-colors p-1 rounded-sm scale-95 duration-75">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+</button>
+<button class="text-slate-500 hover:bg-[#262626] transition-colors p-1 rounded-sm scale-95 duration-75">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-12">
+<div class="w-full max-w-2xl">
+<div class="bg-surface-container rounded-sm overflow-hidden relative">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary-dim to-secondary"></div>
+<div class="p-8 md:p-12">
+<div class="mb-10">
+<h1 class="font-headline text-4xl font-bold tracking-tight text-on-surface mb-2">AUTH_GATEWAY</h1>
+<p class="text-on-surface-variant font-mono text-sm tracking-widest uppercase">system.initialize_user_profile()</p>
+</div>
+<form class="space-y-8">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">FULL_NAME</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 focus:syntax-accent text-on-surface placeholder:text-outline-variant font-body py-3 px-4 rounded-sm transition-all" placeholder="e.g. Alan Turing" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">HANDLE/USERNAME</label>
+<div class="relative">
+<span class="absolute left-4 top-3.5 text-primary text-sm font-mono">@</span>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 focus:syntax-accent text-on-surface placeholder:text-outline-variant font-body py-3 pl-8 pr-4 rounded-sm transition-all" placeholder="syntax_hero" type="text"/>
+</div>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">EMAIL</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 focus:syntax-accent text-on-surface placeholder:text-outline-variant font-body py-3 px-4 rounded-sm transition-all" placeholder="dev@null.sh" type="email"/>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">PASSWORD</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 focus:syntax-accent text-on-surface placeholder:text-outline-variant font-body py-3 px-4 rounded-sm transition-all" placeholder="********" type="password"/>
+</div>
+<div class="space-y-2">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">CONFIRM_PASSWORD</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-0 focus:syntax-accent text-on-surface placeholder:text-outline-variant font-body py-3 px-4 rounded-sm transition-all" placeholder="********" type="password"/>
+</div>
+</div>
+<div class="space-y-4 pt-4">
+<label class="block text-[10px] font-mono tracking-widest text-on-surface-variant uppercase">PRIMARY_LANGUAGE</label>
+<div class="grid grid-cols-3 gap-4">
+<label class="cursor-pointer group">
+<input checked="" class="hidden peer" name="lang" type="radio"/>
+<div class="bg-surface-container-low peer-checked:bg-primary-container/10 peer-checked:ring-1 peer-checked:ring-primary text-center py-4 rounded-sm transition-all group-hover:bg-surface-container-high">
+<p class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">C++</p>
+<p class="text-[9px] text-on-surface-variant font-mono mt-1 opacity-60">LLVM_FAST</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="hidden peer" name="lang" type="radio"/>
+<div class="bg-surface-container-low peer-checked:bg-primary-container/10 peer-checked:ring-1 peer-checked:ring-primary text-center py-4 rounded-sm transition-all group-hover:bg-surface-container-high">
+<p class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Python</p>
+<p class="text-[9px] text-on-surface-variant font-mono mt-1 opacity-60">CYTHON_3.12</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="hidden peer" name="lang" type="radio"/>
+<div class="bg-surface-container-low peer-checked:bg-primary-container/10 peer-checked:ring-1 peer-checked:ring-primary text-center py-4 rounded-sm transition-all group-hover:bg-surface-container-high">
+<p class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Java</p>
+<p class="text-[9px] text-on-surface-variant font-mono mt-1 opacity-60">OPENJDK_21</p>
+</div>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-3 pt-4">
+<input class="w-4 h-4 rounded-sm bg-surface-container-low border-none focus:ring-0 text-primary" id="tos" type="checkbox"/>
+<label class="text-xs text-on-surface-variant font-label cursor-pointer select-none" for="tos">
+                                I confirm the <span class="text-secondary font-mono">TERMS_OF_SERVICE_AGREEMENT</span> and acknowledge data processing protocols.
+                            </label>
+</div>
+<div class="pt-6">
+<button class="w-full bg-gradient-to-br from-primary to-primary-dim text-on-primary font-headline font-bold py-4 rounded-sm hover:opacity-90 active:scale-[0.98] transition-all tracking-widest text-sm" type="submit">
+                                INITIALIZE_ACCOUNT
+                            </button>
+</div>
+</form>
+<div class="mt-8 pt-8 border-t border-outline-variant/10 text-center">
+<p class="text-xs text-on-surface-variant font-label">
+                            ALREADY REGISTERED? <a class="text-primary hover:underline underline-offset-4 ml-1" href="#">START_SESSION</a>
+</p>
+</div>
+</div>
+</div>
+<div class="mt-8 flex justify-center gap-8 opacity-40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-[10px] font-mono uppercase tracking-tighter">SECURED_BY_AES256</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">database</span>
+<span class="text-[10px] font-mono uppercase tracking-tighter">REGION: US-EAST-1</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">code</span>
+<span class="text-[10px] font-mono uppercase tracking-tighter">VER: 2.4.0-STABLE</span>
+</div>
+</div>
+</div>
+</main>
+<footer class="fixed bottom-0 w-full bg-[#0e0e0e] flex justify-between items-center px-6 h-8 border-t border-[#484847]/20 z-50">
+<div class="flex gap-6">
+<span class="text-[#6bfe9c] font-mono text-[10px] uppercase tracking-widest">SYSTEM_STATUS: OK</span>
+<span class="text-[#6bfe9c] font-mono text-[10px] uppercase tracking-widest">API_LATENCY: 12ms</span>
+</div>
+<div class="flex gap-6">
+<span class="text-slate-600 hover:text-[#84adff] cursor-pointer font-mono text-[10px] uppercase tracking-widest">TERMS</span>
+<span class="text-slate-600 hover:text-[#84adff] cursor-pointer font-mono text-[10px] uppercase tracking-widest">DOCS</span>
+<span class="text-slate-600 font-mono text-[10px] uppercase tracking-widest opacity-50">v2.4.0-stable</span>
+</div>
+</footer>
+</body></html>

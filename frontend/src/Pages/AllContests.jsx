@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ContestCard from "../Components/ContestCard";
 import Sidebar from "../Components/Sidebar";
+import { clearStoredAuthUser, getStoredAuthUser } from "../Utils/auth_storage";
 
 function ContestsPage() {
     const [availableContests, setAvailableContests] = useState([]);
     const [pastContests, setPastContests] = useState([]);
     const [user, setUser] = useState({});
+    const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
 
     const contestBaseUrl = "/contest/";
     const leaderboardUrl = availableContests.length > 0
@@ -28,7 +30,17 @@ function ContestsPage() {
             .then((res) => res.data)
             .then((data) => setUser(data || {}))
             .catch(() => setUser({}));
+
+        const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+        window.addEventListener("storage", syncAuthUser);
+
+        return () => window.removeEventListener("storage", syncAuthUser);
     }, []);
+
+    const handleLogout = () => {
+        clearStoredAuthUser();
+        setAuthUser(null);
+    };
 
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
@@ -53,19 +65,38 @@ function ContestsPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80">
-                        <span className="material-symbols-outlined">notifications</span>
-                    </button>
-                    <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80">
-                        <span className="material-symbols-outlined">settings</span>
-                    </button>
-                    <div className="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20">
-                        <img
-                            className="w-full h-full object-cover"
-                            alt="Developer avatar"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn0TdTfqR870CXvGgzkQRK50fbGHgW4z1UOQe6CKKnkqOjE8pXi4yJi9X3RbAXs6oSw9loiGNy72cw9wZgk9xydSemrpY18fshrYeiq5pT2_zNGUnvHk7PJ23GEL72fd2pM2UXlUtvcqNAaS18PHHnm94rcwy8C6gpueAU8W0oNh3jjl3Xf294Y27Kf7EXMpmxjV9BJ1gSaA5XFKuNmjvY2pM5tMGvou9YBXG595ruH3pUHJjqgFUaKqTzikTYiO13Aejd5km66LI"
-                        />
-                    </div>
+                    {authUser ? (
+                        <>
+                            <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/profile/edit">
+                                Profile
+                            </a>
+                            <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80" onClick={handleLogout}>
+                                <span className="material-symbols-outlined">logout</span>
+                            </button>
+                            <div className="flex items-center gap-3 pl-3 border-l border-outline-variant/20">
+                                <div className="w-9 h-9 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20 flex items-center justify-center text-primary font-headline font-bold uppercase">
+                                    {String(authUser.username || "U").slice(0, 1)}
+                                </div>
+                                <div className="hidden md:block">
+                                    <div className="text-[11px] text-on-surface-variant uppercase tracking-[0.18em]">
+                                        Signed In
+                                    </div>
+                                    <div className="text-sm font-bold font-headline uppercase">
+                                        {authUser.username}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/login">
+                                Login
+                            </a>
+                            <a className="text-primary border border-outline-variant/20 px-3 py-2 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/register">
+                                Register
+                            </a>
+                        </>
+                    )}
                 </div>
             </nav>
 
