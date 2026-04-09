@@ -10,11 +10,6 @@ from .contest_serializer import ContestSerializer, EditorialSerializer
 from db import get_connection
 # from .judge import judge_submission
 
-
-#Create the SQL connection
-connection = get_connection()
-cursor = connection.cursor()
-
 # Create your views here.
 
 # hardcoding data for now when sql setup we change it
@@ -101,28 +96,22 @@ def _build_sidebar_context(request):
 
 
 def _get_contests_data():
-    return [
-        {
-            "contest_id": "1",
-            "title": "Div 2 (Round 1039)",
-            "description": "You will be given 6 simple problems and 2 hour 15 minutes to solve them. Note that one of the problems will be further divided into 2 subtasks. Furthermore, some of the problems may be interactive, so please read the guide for interactive problems if you are not familiar with them. This round will be rated for the participants with rating lower than 2100.",
-            "start_time": "2026-04-01 12:25:39",
-            "end_time": "2026-05-01 18:25:39",
-            "visibility": "Public",
-            "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
-            "created_at": "2026-04-01 16:25:39",
-        },
-        {
-            "contest_id": "2",
-            "title": "Div 1 (Round 1040)",
-            "description": "The authors of the three best Div. 1 of all time, nifeshe, chromate00, and I, have joined forces to create the Division 1+2 round that will break the internet: Nebius Round 2 (Codeforces Round 1088, Div. 1 + Div. 2), which will be held on Saturday, March 28, 2026 at 20:15UTC+5.5. This round will be combined for Division 1 and Division 2 and will be rated for everyone.",
-            "start_time": "2026-06-01 12:25:39",
-            "end_time": "2026-06-01 18:25:39",
-            "visibility": "Public",
-            "created_by": "522273ac-2db9-11f1-888d-de2d1da0f60f",
-            "created_at": "2026-04-01 16:25:39",
-        },
-    ]
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+            FROM contests
+            ORDER BY start_time ASC, created_at DESC
+            """
+        )
+        return cursor.fetchall()  
+    except Exception as e:
+            return Response({"error": str(e)}, status=500)  
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
@@ -138,12 +127,17 @@ def all_contests(request):
 # to create a contest (problemsetter/user)
 
 @api_view(["POST"])
-@permission_classes([IsProblemSetter])
+@permission_classes([AllowAny])
 def create_contest(request):
-    serializer = ContestSerializer(data=request.data)
+    payload = dict(request.data)
+    contest_data = dict(payload.get("contest", {}))
+    contest_data["created_by"] = getattr(request.user, "id", None)
+    payload["contest"] = contest_data
+
+    serializer = ContestSerializer(data=payload)
     if serializer.is_valid():
         try:
-            serializer.save(created_by=request.user.id)
+            serializer.save()
             return Response(serializer.data, status=201)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
@@ -183,28 +177,66 @@ def delete_contest(request,contest_id):
 # getting all problems of a contest
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def get_contest_info(request,contest_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM Contests WHERE contest_id = %s", (contest_id,))
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at
+            FROM contests
+            WHERE contest_id = %s
+            """,
+            (contest_id,),
+        )
         result_contest=cursor.fetchone()
 
         if not result_contest:
             return Response({"message":"Contest with this id doesn't exist","status":200}) 
         
-        cursor.execute("SELECT * FROM problems WHERE problem_id IN (SELECT problem_id FROM contest_problems WHERE contest_id=%s)",(contest_id,))
-        result_problem=cursor.fetchall()
-        if not result_problem :
-            return Response({"message":"Contest has no problems","status":200})
-        
-        data={
-            "contest_info":result_contest,
-            "problems":result_problem
+        cursor.execute(
+            """
+            SELECT p.problem_id, p.title, p.description, p.difficulty, p.time_limit_ms,
+                   p.memory_limit_kb, p.visibility, cp.max_score
+            FROM contest_problems cp
+            JOIN problems p ON p.problem_id = cp.problem_id
+            WHERE cp.contest_id = %s
+            ORDER BY p.created_at ASC
+            """,
+            (contest_id,),
+        )
+        result_problem = cursor.fetchall()
+
+        problem_ids = [problem["problem_id"] for problem in result_problem]
+        tags_by_problem = {problem_id: [] for problem_id in problem_ids}
+
+        if problem_ids:
+            placeholders = ", ".join(["%s"] * len(problem_ids))
+            cursor.execute(
+                f"""
+                SELECT pt.problem_id, t.name
+                FROM problem_tags pt
+                JOIN tags t ON t.tag_id = pt.tag_id
+                WHERE pt.problem_id IN ({placeholders})
+                ORDER BY t.name ASC
+                """,
+                tuple(problem_ids),
+            )
+            for row in cursor.fetchall():
+                tags_by_problem.setdefault(row["problem_id"], []).append(row["name"])
+
+        serialized_payload = {
+            "contest": result_contest,
+            "problems": [
+                {**problem, "tags": tags_by_problem.get(problem["problem_id"], [])}
+                for problem in result_problem
+            ],
         }
-        
-        return Response({"data":data,"status":200})        
+
+        serializer = ContestSerializer(instance=serialized_payload)
+        return Response({"data": serializer.data, "status": 200})
     except Exception as e:
         return Response({"error": str(e),"status":500})
     finally:

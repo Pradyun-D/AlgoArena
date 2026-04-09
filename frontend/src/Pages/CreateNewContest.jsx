@@ -143,16 +143,31 @@ const ContestFormPage = () => {
   })()
 
   const handleSubmit = async () => {
+    if (!contest.title.trim()) {
+      alert("Contest title is required.")
+      return
+    }
+
+    if (!contest.start_time || !contest.duration || !calculatedEndTime) {
+      alert("Please provide a valid contest start time and duration.")
+      return
+    }
+
     if (problems.length === 0) {
       alert("Add at least one problem before creating the contest.")
       return
     }
 
+    const payload = {
+      contest: {
+        ...contest,
+        end_time: calculatedEndTime,
+      },
+      problems,
+    }
+
     try {
-     const response = await axios.post("http://127.0.0.1:8000/contests/create/", {
-       contest,
-       problems
-     }, {
+     const response = await axios.post("http://127.0.0.1:8000/contests/create/", payload, {
        withCredentials: false
      });
      console.log(response.data)

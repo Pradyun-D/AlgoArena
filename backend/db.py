@@ -1,34 +1,38 @@
 from rest_framework.permissions import NOT
 import mysql.connector
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
-ca_path = os.getenv('CA', r'certs/isrgrootx1.pem')
-db_username = os.getenv('DB_USER', r'certs/isrgrootx1.pem')
-db_pass = os.getenv('DB_PASS', r'certs/isrgrootx1.pem')
-
-
-print("CA PATH:", ca_path)
-print("DB USERNAME:", db_username)
-print("DB PASSWORD:", db_pass)
+BASE_DIR = Path(__file__).resolve().parent
+ca_env = os.getenv('CA', 'certs/isrgrootx1.pem')
+ca_path = Path(ca_env)
+if not ca_path.is_absolute():
+    ca_path = BASE_DIR / ca_path
+ca_path = str(ca_path.resolve())
+db_host = os.getenv('DB_HOST', 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com')
+db_port = int(os.getenv('DB_PORT', '4000'))
+db_name = os.getenv('DB_NAME', 'test')
+db_username = os.getenv('DB_USER', '')
+db_pass = os.getenv('DB_PASS', '')
 
 config = {
-    'host': 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
-    'port': 4000,
+    'host': db_host,
+    'port': db_port,
     'user': db_username,
     'password': db_pass,
-    'database': 'test',
+    'database': db_name,
     'ssl_ca': ca_path,  
     'ssl_verify_cert': True,
    
 }
 
 def get_connection():
+    ca_file = Path(ca_path)
+    if not ca_file.exists():
+        raise FileNotFoundError(f"CA certificate not found at: {ca_file}")
     return mysql.connector.connect(**config,use_pure=True)
-
-connection = get_connection()
-cursor = connection.cursor()
 
 user_queries = [
     """
