@@ -42,6 +42,17 @@ function ContestsPage() {
         setAuthUser(null);
     };
 
+    const sidebarUser = authUser ? {
+        ...user,
+        is_logged_in: true,
+        username: authUser.username || user.username,
+        created_at: authUser.created_at,
+        avatar_url: authUser.profile?.avatar_url || "",
+    } : {
+        ...user,
+        is_logged_in: false,
+    };
+
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
             <nav className="nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none">
@@ -73,19 +84,6 @@ function ContestsPage() {
                             <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80" onClick={handleLogout}>
                                 <span className="material-symbols-outlined">logout</span>
                             </button>
-                            <div className="flex items-center gap-3 pl-3 border-l border-outline-variant/20">
-                                <div className="w-9 h-9 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20 flex items-center justify-center text-primary font-headline font-bold uppercase">
-                                    {String(authUser.username || "U").slice(0, 1)}
-                                </div>
-                                <div className="hidden md:block">
-                                    <div className="text-[11px] text-on-surface-variant uppercase tracking-[0.18em]">
-                                        Signed In
-                                    </div>
-                                    <div className="text-sm font-bold font-headline uppercase">
-                                        {authUser.username}
-                                    </div>
-                                </div>
-                            </div>
                         </>
                     ) : (
                         <>
@@ -178,7 +176,7 @@ function ContestsPage() {
                 </div>
 
                 <aside className="md:col-span-3 sidebar-shell space-y-6">
-                    <Sidebar user={user} />
+                    <Sidebar user={sidebarUser} />
 
                     <div className="bg-surface-container-low p-6 rounded-sm space-y-4">
                         <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">

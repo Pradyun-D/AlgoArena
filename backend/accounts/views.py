@@ -41,6 +41,7 @@ def _serialize_user_row(row):
 		"username": row["username"],
 		"email": row["email"],
 		"status": row["status"],
+		"created_at": row.get("created_at"),
 		"role": row.get("role_name") or "user",
 		"profile": {
 			"full_name": row.get("full_name") or "",
@@ -62,6 +63,7 @@ def _get_user_by_identifier(cursor, identifier):
 			u.email,
 			u.password_hash,
 			u.status,
+			u.created_at,
 			r.role_name,
 			p.full_name,
 			p.bio,
@@ -88,6 +90,7 @@ def _get_user_by_uuid(cursor, user_uuid):
 			u.username,
 			u.email,
 			u.status,
+			u.created_at,
 			r.role_name,
 			p.full_name,
 			p.bio,

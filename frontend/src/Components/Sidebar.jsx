@@ -1,22 +1,32 @@
+import defaultAvatar from "../../designs/default.webp";
 import { formatNumber } from "../Utils/format_num";
 
 function Sidebar({ user }) {
     const registeredRounds = Array.isArray(user.registered_rounds) ? user.registered_rounds : [];
+    const isLoggedIn = Boolean(user.is_logged_in);
+    const avatarUrl = user.avatar_url || defaultAvatar;
+    const createdAt = user.created_at ? new Date(user.created_at) : null;
+    const isNewbie = createdAt && !Number.isNaN(createdAt.getTime())
+        ? (Date.now() - createdAt.getTime()) < 30 * 24 * 60 * 60 * 1000
+        : false;
+    const userTier = isLoggedIn ? (isNewbie ? "Newbie" : "Expert") : "Unrated";
 
     return (
         <div className="bg-surface-container-low p-6 rounded-sm space-y-8 border-t-2 border-primary">
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-sm bg-surface-container flex items-center justify-center text-primary border border-outline-variant/20">
-                    <span className="material-symbols-outlined text-3xl">terminal</span>
+                <div className="w-12 h-12 rounded-sm bg-surface-container overflow-hidden border border-outline-variant/20">
+                    <img
+                        className="w-full h-full object-cover"
+                        alt={isLoggedIn ? `${user.username || "user"} avatar` : "Default avatar"}
+                        src={avatarUrl}
+                    />
                 </div>
                 <div>
                     <h3 className="text-sm font-bold font-headline uppercase tracking-tighter">
-                        {user.username || "guest_user"}
+                        {isLoggedIn ? (user.username || "guest_user") : "guest_user"}
                     </h3>
                     <span className="text-[10px] text-secondary">
-                        {typeof user.rating === "number" && user.rating > 0
-                            ? `Rating (${formatNumber(user.rating)})`
-                            : "Unrated"}
+                        {userTier}
                     </span>
                 </div>
             </div>
