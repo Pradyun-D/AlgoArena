@@ -54,13 +54,16 @@
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
+  width: 100%;
 }
 
 .auth-grid-login,
 .auth-grid-register {
   width: 100%;
   display: flex;
+  align-items: center;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .auth-grid-login {
@@ -74,6 +77,7 @@
 .auth-panel {
   position: relative;
   width: 100%;
+  margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(72, 72, 71, 0.5);
   background: rgba(26, 26, 26, 0.88);

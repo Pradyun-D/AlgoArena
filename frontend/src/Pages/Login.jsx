@@ -35,11 +35,11 @@ function LoginPage() {
     };
 
     return (
-        <div className="auth-page auth-page-login">
+        <div className="auth-page auth-page-login" >
             <header className="auth-topbar">
-                <Link className="auth-brand" to="/contests">ALGO_ARENA</Link>
+                <Link className="auth-brand" to="/contests">ALGOARENA</Link>
                 <div className="auth-topbar-actions">
-                    <Link className="auth-topbar-link" to="/register">CREATE_ACCOUNT</Link>
+                    <Link className="auth-topbar-link" to="/register">CREATE ACCOUNT</Link>
                 </div>
             </header>
 

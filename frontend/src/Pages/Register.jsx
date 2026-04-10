@@ -43,9 +43,9 @@ function RegisterPage() {
     return (
         <div className="auth-page auth-page-register">
             <header className="auth-topbar">
-                <Link className="auth-brand" to="/contests">ALGO_ARENA</Link>
+                <Link className="auth-brand" to="/contests">ALGOARENA</Link>
                 <div className="auth-topbar-actions">
-                    <Link className="auth-topbar-link" to="/login">START_SESSION</Link>
+                    <Link className="auth-topbar-link" to="/login">LOGIN</Link>
                 </div>
             </header>
 

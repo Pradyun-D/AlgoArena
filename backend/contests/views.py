@@ -307,3 +307,35 @@ def get_editorial(request,problem_id):
             cursor.close()
         if 'conn' in locals() and conn.is_connected():
             conn.close()
+
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def register_participant(request, contest_id):
+    contest_id = str(contest_id)
+    user_id = request.user.id
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            INSERT INTO contest_participants (contest_id, user_id)
+            VALUES (%s, %s)
+            """,
+            (contest_id, user_id),
+        )
+        conn.commit()
+
+        return Response({"message": "Registered successfully", "status": 201}, status=201)
+    
+    except Exception as e:
+        return Response({"error": str(e), "status": 500}, status=500)
+    
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
+import LoadingPage from "./LoadingPage";
 import "../Styles/contest_info.css";
 
 const formatDateTime = (value) => {
@@ -166,13 +167,10 @@ function ContestPage() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="main-layout">
-          <div className="card">
-            <p>Loading contest details...</p>
-          </div>
-        </div>
-      </div>
+      <LoadingPage
+        title="Loading contest details"
+        subtitle="Syncing schedule, scoring rules, and problem metadata before the round opens."
+      />
     );
   }
 
@@ -203,50 +201,75 @@ function ContestPage() {
         ? "Enter Contest"
         : "View Results";
 
+  const handleRegister= async () => {
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/contests/${contestId}/register`,
+        {},
+        { withCredentials: true }
+      );
+
+      console.log(response.data);
+    }
+    catch (err) {
+      console.error(err.response?.data || err.message);
+    }
+  };
+
   return (
     <div className="app-container">
       <div className="main-layout">
-        <aside>
+        <aside className="layout-rail">
           <nav className="sidebar-nav">
-            <Link to="/contests" className="nav-item">
-              <span>←</span>
+            <Link to="/contests" className="nav-item nav-item-back">
+              <span className="nav-item-icon">←</span>
               <span>All Contests</span>
             </Link>
             <a href="#overview" className="nav-item active">
-              <span>•</span>
+              <span className="nav-item-icon">01</span>
               <span>Overview</span>
             </a>
             <a href="#problems" className="nav-item">
-              <span>•</span>
+              <span className="nav-item-icon">02</span>
               <span>Problems</span>
             </a>
             <a href="#schedule" className="nav-item">
-              <span>•</span>
+              <span className="nav-item-icon">03</span>
               <span>Schedule</span>
             </a>
           </nav>
         </aside>
 
-        <main className="card" id="overview">
+        <main className="card contest-shell" id="overview">
           <section className="hero-section">
-            <div className="badges">
-              <span className={`badge ${isLive ? "success" : ""}`}>
-                {isLive ? "Live Competition" : contestStatus}
-              </span>
-              <span className="badge">
-                {contestInfo.visibility || "Public"}
-              </span>
+            <div className="hero-copy">
+              <div className="badges">
+                <span className={`badge ${isLive ? "success" : ""}`}>
+                  {isLive ? "Live Competition" : contestStatus}
+                </span>
+                <span className="badge badge-muted">
+                  {contestInfo.visibility || "Public"}
+                </span>
+              </div>
+
+              <h1 className="hero-title">{contestInfo.title || "Untitled Contest"}</h1>
+              <p className="hero-subtitle">
+                {contestInfo.description || "Contest description is not available yet."}
+              </p>
             </div>
 
-            <h1 className="hero-title">{contestInfo.title || "Untitled Contest"}</h1>
-            <p className="hero-subtitle">
-              {contestInfo.description || "Contest description is not available yet."}
-            </p>
+            <div className="hero-highlight">
+              <p className="eyebrow">Starts</p>
+              <p className="hero-highlight-time">{formatDateTime(contestInfo.start_time)}</p>
+              <p className="hero-highlight-meta">
+                Duration {formatDuration(contestInfo.start_time, contestInfo.end_time)}
+              </p>
+            </div>
           </section>
 
-          <section>
+          <section className="content-section">
             <h2 className="section-title">Contest Brief</h2>
-            <div>
+            <div className="markdown-body">
               <ReactMarkdown>
                 {contestInfo.description ||
                   "This contest currently has no published brief. Check back closer to the start time."}
@@ -254,7 +277,7 @@ function ContestPage() {
             </div>
           </section>
 
-          <section id="schedule">
+          <section className="content-section" id="schedule">
             <h2 className="section-title">Schedule</h2>
             <div className="grid-2-col">
               <div className="pillar-box">
@@ -276,7 +299,7 @@ function ContestPage() {
             </div>
           </section>
 
-          <section id="problems">
+          <section className="content-section" id="problems">
             <h2 className="section-title">Problem Set</h2>
             {problems.length === 0 ? (
               <div className="pillar-box">
@@ -290,12 +313,12 @@ function ContestPage() {
                   return (
                     <div className="list-row" key={problem.problem_id || index}>
                       <div>
-                        <p>{problem.title || `Problem ${index + 1}`}</p>
-                        <p className="mono" style={{ color: "var(--text-secondary)", fontSize: "12px" }}>
+                        <p className="problem-title">{problem.title || `Problem ${index + 1}`}</p>
+                        <p className="mono problem-meta">
                           Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
                         </p>
                       </div>
-                      <span className={`mono ${difficulty.className}`}>
+                      <span className={`difficulty-pill ${difficulty.className}`}>
                         {difficulty.label}
                       </span>
                     </div>
@@ -306,10 +329,10 @@ function ContestPage() {
           </section>
         </main>
 
-        <aside>
-          <div className="card">
+        <aside className="layout-rail">
+          <div className="card status-card">
             <div className="status-header">
-              <p className="mono" style={{ color: "var(--text-secondary)", fontSize: "11px", letterSpacing: "1px", textTransform: "uppercase" }}>
+              <p className="eyebrow">
                 Contest Status
               </p>
               <h2 className="status-title">
@@ -322,7 +345,7 @@ function ContestPage() {
               </p>
             </div>
 
-            <div>
+            <div className="stats-panel">
               <div className="stat-row">
                 <span className="stat-label">Contest ID</span>
                 <span className="mono">{contestInfo.contest_id || contestId}</span>
@@ -341,7 +364,7 @@ function ContestPage() {
               </div>
             </div>
 
-            <button className="btn btn-primary" type="button">
+            <button className="btn btn-primary" type="button" onClick={handleRegister}>
               {primaryCtaLabel}
             </button>
 
