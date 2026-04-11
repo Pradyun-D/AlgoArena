@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ContestCard from "../Components/ContestCard";
 import Sidebar from "../Components/Sidebar";
+import ErrorPage from "./ErrorPage";
+import LoadingPage from "./LoadingPage";
 import { clearStoredAuthUser, getStoredAuthUser } from "../Utils/auth_storage";
 
 function ContestsPage() {
@@ -9,22 +11,40 @@ function ContestsPage() {
     const [pastContests, setPastContests] = useState([]);
     const [user, setUser] = useState({});
     const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     const contestBaseUrl = "/contest/";
     const leaderboardUrl = availableContests.length > 0
         ? `/leaderboard/${availableContests[0].contest_id}/`
         : "/contests";
 
-    useEffect(() => {
-        axios.get("http://127.0.0.1:8000/contests/")
-            .then((res) => res.data)
-            .then((data) => setAvailableContests(Array.isArray(data) ? data : []))
-            .catch(() => setAvailableContests([]));
+    const loadContests = async () => {
+        try {
+            setLoading(true);
+            setError("");
 
-        axios.get("http://127.0.0.1:8000/contests/past/")
-            .then((res) => res.data)
-            .then((data) => setPastContests(Array.isArray(data) ? data : []))
-            .catch(() => setPastContests([]));
+            const [availableResponse, pastResponse] = await Promise.all([
+                axios.get("http://127.0.0.1:8000/contests/"),
+                axios.get("http://127.0.0.1:8000/contests/past/"),
+            ]);
+
+            setAvailableContests(Array.isArray(availableResponse.data) ? availableResponse.data : []);
+            setPastContests(Array.isArray(pastResponse.data) ? pastResponse.data : []);
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                err.message ||
+                "Unable to load contests right now."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadContests();
 
         axios.get("http://127.0.0.1:8000/api/auth/user/", { withCredentials: true })
             .then((res) => res.data)
@@ -52,6 +72,28 @@ function ContestsPage() {
         ...user,
         is_logged_in: false,
     };
+
+    if (loading) {
+        return (
+            <LoadingPage
+                title="Loading contest registry"
+                subtitle="Syncing live rounds, archived contests, and leaderboard shortcuts for the arena."
+            />
+        );
+    }
+
+    if (error) {
+        return (
+            <ErrorPage
+                kicker="Contest Feed Error"
+                code="500"
+                title="The contests list could not be loaded."
+                copy={error}
+                primaryAction={{ label: "Retry", onClick: loadContests }}
+                secondaryAction={{ label: "Return Home", to: "/" }}
+            />
+        );
+    }
 
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
@@ -108,6 +150,27 @@ function ContestsPage() {
                             Browse active and upcoming competitive programming rounds. Optimize your
                             performance through consistent participation in global contests.
                         </p>
+                        <div className="mt-12">
+                            <a
+                                href="/create"
+                                className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
+                                style={{
+                                    padding: "0.95rem 1.35rem",
+                                    color: "#03111c",
+                                    background: "linear-gradient(135deg, #84adff 0%, #4f8eff 48%, #69f0a7 100%)",
+                                    boxShadow: "0 18px 36px rgba(32, 112, 255, 0.22)",
+                                    border: "1px solid rgba(132, 173, 255, 0.28)",
+                                }}
+                            >
+                                <span
+                                    className="material-symbols-outlined"
+                                    style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
+                                >
+                                    add_circle
+                                </span>
+                                Create Contest
+                            </a>
+                        </div>
                     </section>
 
                     <section className="space-y-4">

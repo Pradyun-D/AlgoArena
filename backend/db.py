@@ -32,7 +32,13 @@ def get_connection():
     ca_file = Path(ca_path)
     if not ca_file.exists():
         raise FileNotFoundError(f"CA certificate not found at: {ca_file}")
-    return mysql.connector.connect(**config,use_pure=True)
+    connection = mysql.connector.connect(**config, use_pure=True)
+    cursor = connection.cursor()
+    try:
+        cursor.execute("SET time_zone = '+00:00'")
+    finally:
+        cursor.close()
+    return connection
 
 user_queries = [
     """

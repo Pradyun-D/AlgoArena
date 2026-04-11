@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import LoadingPage from "./LoadingPage";
 import "../Styles/contest_info.css";
+import ErrorPage from "./ErrorPage";
+import { truncateWords } from "../Utils/contest_description";
 
 const formatDateTime = (value) => {
   if (!value) {
@@ -176,17 +179,7 @@ function ContestPage() {
 
   if (error) {
     return (
-      <div className="app-container">
-        <div className="main-layout">
-          <div className="card">
-            <h2 className="section-title">Contest Details</h2>
-            <p className="text-danger">{error}</p>
-            <Link to="/contests" className="btn btn-outline">
-              Back to Contests
-            </Link>
-          </div>
-        </div>
-      </div>
+       <ErrorPage/>
     );
   }
 
@@ -194,6 +187,10 @@ function ContestPage() {
   const problems = Array.isArray(data?.problems) ? data.problems : [];
   const contestStatus = getContestStatus(contestInfo.start_time, contestInfo.end_time);
   const isLive = contestStatus === "Live";
+  const contestSummary = truncateWords(
+    contestInfo.description || "Contest description is not available yet.",
+    32
+  );
   const primaryCtaLabel =
     contestStatus === "Upcoming"
       ? "Register for Contest"
@@ -253,24 +250,16 @@ function ContestPage() {
               </div>
 
               <h1 className="hero-title">{contestInfo.title || "Untitled Contest"}</h1>
-              <p className="hero-subtitle">
-                {contestInfo.description || "Contest description is not available yet."}
-              </p>
+            
             </div>
 
-            <div className="hero-highlight">
-              <p className="eyebrow">Starts</p>
-              <p className="hero-highlight-time">{formatDateTime(contestInfo.start_time)}</p>
-              <p className="hero-highlight-meta">
-                Duration {formatDuration(contestInfo.start_time, contestInfo.end_time)}
-              </p>
-            </div>
+    
           </section>
 
           <section className="content-section">
             <h2 className="section-title">Contest Brief</h2>
             <div className="markdown-body">
-              <ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
                 {contestInfo.description ||
                   "This contest currently has no published brief. Check back closer to the start time."}
               </ReactMarkdown>

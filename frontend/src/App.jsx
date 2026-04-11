@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ContestsPage from "./Pages/AllContests";
+import AdminDashboard from "./Pages/AdminDashboard";
+import AdminDashboardActive from "./Pages/AdminDashboardActive";
 import ContestFormPage from "./Pages/CreateNewContest";
 import ContestPage from "./Pages/ContestInfo";
 import ErrorPage from "./Pages/ErrorPage";
@@ -16,6 +18,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile/edit" element={<ProfileSettingsPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard/active" element={<AdminDashboardActive/>} />
         <Route path="/create" element={<ContestFormPage />} />
         <Route path="/contests" element={<ContestsPage />} />
         <Route path="/contest/:contestId/" element={<ContestPage />} />

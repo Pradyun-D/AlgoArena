@@ -1,8 +1,25 @@
+const parseContestTime = (value) => {
+    if (!value) {
+        return Number.NaN;
+    }
+
+    if (value instanceof Date) {
+        return value.getTime();
+    }
+
+    const normalizedValue =
+        typeof value === "string" && !/[zZ]|[+-]\d{2}:\d{2}$/.test(value)
+            ? `${value}Z`
+            : value;
+
+    return new Date(normalizedValue).getTime();
+};
+
 export const isLiveContest = (contest) => {
     if (contest.start_time && contest.end_time) {
         const now = Date.now();
-        const start = new Date(contest.start_time).getTime();
-        const end = new Date(contest.end_time).getTime();
+        const start = parseContestTime(contest.start_time);
+        const end = parseContestTime(contest.end_time);
 
         if (Number.isNaN(start) || Number.isNaN(end)) return false;
 

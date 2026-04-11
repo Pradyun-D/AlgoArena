@@ -137,23 +137,22 @@ body {
 }
 
 .hero-section {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 24px;
-  align-items: end;
   padding: 4px 0 30px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.hero-title {
-  font-size: clamp(34px, 5vw, 52px);
+.contest-shell .hero-title {
+  font-size: clamp(20px, 2.2vw, 34px);
   font-weight: 700;
   letter-spacing: -0.04em;
-  line-height: 1.05;
+  line-height: 1.12;
   margin-bottom: 12px;
+  max-width: 18ch;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.hero-subtitle {
+.contest-shell .hero-subtitle {
   color: var(--text-secondary);
   font-family: "IBM Plex Mono", monospace;
   max-width: 70ch;
@@ -190,32 +189,12 @@ body {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.hero-highlight {
-  padding: 22px;
-  border-radius: 22px;
-  border: 1px solid rgba(112, 164, 255, 0.18);
-  background:
-    linear-gradient(180deg, rgba(25, 47, 80, 0.72) 0%, rgba(14, 23, 38, 0.92) 100%);
-}
-
 .eyebrow {
   color: var(--text-secondary);
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-}
-
-.hero-highlight-time {
-  margin-top: 10px;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.hero-highlight-meta {
-  margin-top: 8px;
-  color: var(--text-secondary);
 }
 
 .content-section {
@@ -232,10 +211,44 @@ body {
 
 .markdown-body {
   color: #d7e4ff;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .markdown-body p + p {
   margin-top: 12px;
+}
+
+.markdown-body p,
+.markdown-body li,
+.markdown-body blockquote,
+.markdown-body td,
+.markdown-body th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.markdown-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(8, 15, 27, 0.9);
+  border: 1px solid rgba(124, 154, 196, 0.18);
+}
+
+.markdown-body code {
+  word-break: break-word;
+}
+
+.markdown-body img {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  margin: 14px 0;
+  border-radius: 14px;
 }
 
 .grid-2-col {
@@ -272,7 +285,7 @@ body {
 }
 
 .problem-title {
-  font-size: 17px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -404,9 +417,6 @@ body {
     position: static;
   }
 
-  .hero-section {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 720px) {

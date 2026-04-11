@@ -102,7 +102,7 @@ def _get_contests_data():
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
-            FROM contests WHERE end_time > (SELECT CURTIME())
+            FROM contests WHERE end_time > UTC_TIMESTAMP()
             ORDER BY start_time ASC, created_at DESC
             """
         )
@@ -121,7 +121,7 @@ def _get_past_contests_data():
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
-            FROM contests WHERE end_time <= (SELECT CURTIME())
+            FROM contests WHERE end_time <= UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
             """
         )
@@ -132,6 +132,26 @@ def _get_past_contests_data():
         cursor.close()
         conn.close()
 
+def get_active_contests_data():
+    conn=get_connection()
+    cursor=conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT UTC_TIMESTAMP() AS now_utc")
+        print("db now utc:", cursor.fetchone())
+
+        cursor.execute("""
+        SELECT contest_id, title, start_time, end_time
+        FROM contests
+        ORDER BY created_at DESC
+        """)
+        print("all contests:", cursor.fetchall())
+
+        rows=cursor.fetchall()
+        print(rows)
+        return rows
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # to get all contests
@@ -339,3 +359,13 @@ def register_participant(request, contest_id):
             cursor.close()
         if 'conn' in locals() and conn.is_connected():
             conn.close()
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def active_contests(request):
+    try:
+        activeContests=get_active_contests_data()
+        return  Response(activeContests)
+
+    except Exception as e:
+            return Response({"error": str(e)}, status=500)

@@ -1,8 +1,21 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from 'axios';
+import ErrorPage from "./ErrorPage";
+import LoadingPage from "./LoadingPage";
 import "../Styles/form.css"
+const toUtcISOString = (localDateTimeValue) => {
+  if (!localDateTimeValue) {
+    return "";
+  }
 
+  const localDate = new Date(localDateTimeValue);
+  if (Number.isNaN(localDate.getTime())) {
+    return "";
+  }
+
+  return localDate.toISOString();
+};
 // ----------------IMP----------------
 // form is incomplete (more fields depending on Pradyun's advice to be added later)
 
@@ -39,12 +52,27 @@ const ContestFormPage = () => {
   const [tagInput, setTagInput] = useState("")
   const [problems, setProblems] = useState([])
   const [editingProblemIndex, setEditingProblemIndex] = useState(null)
+  const [pageLoading, setPageLoading] = useState(true)
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const [pageError, setPageError] = useState("")
 
   useEffect(()=> {
-    const savedContest=localStorage.getItem("contestDraft")
-    const savedProblems=localStorage.getItem("problemsDraft")
-    if (savedContest) setContest(JSON.parse(savedContest))
-    if (savedProblems) setProblems(JSON.parse(savedProblems))
+    try {
+      const savedContest = localStorage.getItem("contestDraft")
+      const savedProblems = localStorage.getItem("problemsDraft")
+
+      if (savedContest) {
+        setContest(JSON.parse(savedContest))
+      }
+
+      if (savedProblems) {
+        setProblems(JSON.parse(savedProblems))
+      }
+    } catch (error) {
+      setPageError("We could not restore your saved contest draft. Clear the broken draft and try again.")
+    } finally {
+      setPageLoading(false)
+    }
   },[])
 
   const handleContestChange = (e) => {
@@ -161,12 +189,15 @@ const ContestFormPage = () => {
     const payload = {
       contest: {
         ...contest,
-        end_time: calculatedEndTime,
+        start_time: toUtcISOString(contest.start_time),
+        end_time: toUtcISOString(calculatedEndTime),
       },
       problems,
     }
 
     try {
+     setSubmitLoading(true)
+     setPageError("")
      const response = await axios.post("http://127.0.0.1:8000/contests/create/", payload, {
        withCredentials: false
      });
@@ -178,11 +209,14 @@ const ContestFormPage = () => {
 
     catch (error) {
         console.log("error from create new contest ", error.message, error.response?.data)
-        alert(
+        setPageError(
           error.response?.data?.error ||
+          error.response?.data?.message ||
           error.response?.data?.detail ||
           "Contest creation failed."
         )
+    } finally {
+        setSubmitLoading(false)
     }
   }
 
@@ -190,6 +224,32 @@ const ContestFormPage = () => {
     localStorage.setItem("contestDraft", JSON.stringify(contest))
     localStorage.setItem("problemsDraft", JSON.stringify(problems))
     alert("Draft saved locally!") 
+  }
+
+  if (pageLoading || submitLoading) {
+    return (
+      <LoadingPage
+        title={submitLoading ? "Scheduling contest" : "Loading contest editor"}
+        subtitle={
+          submitLoading
+            ? "Packaging contest metadata, validating the problem set, and sending it to the arena."
+            : "Restoring your draft, contest settings, and saved problem configuration."
+        }
+      />
+    )
+  }
+
+  if (pageError) {
+    return (
+      <ErrorPage
+        kicker="Contest Builder Error"
+        code="500"
+        title="The contest editor hit a problem."
+        copy={pageError}
+        primaryAction={{ label: "Back To Editor", onClick: () => setPageError("") }}
+        secondaryAction={{ label: "View Contests", to: "/contests" }}
+      />
+    )
   }
 
   return (
@@ -224,6 +284,9 @@ const ContestFormPage = () => {
             <div className="input-group">
               <label>DESCRIPTION (MARKDOWN SUPPORTED)</label>
               <textarea name="description" className="textarea" placeholder="Enter contest details, rules, and rewards..." value={contest.description} onChange={handleContestChange} />
+              <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                Use markdown like <code># Heading</code>, <code>**bold**</code>, <code>- list item</code>, and <code>[link](https://example.com)</code>. It will render in Contest Info.
+              </p>
             </div>
           </div>
 

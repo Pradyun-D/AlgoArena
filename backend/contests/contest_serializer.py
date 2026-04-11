@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import uuid
+from datetime import timezone
 from db import get_connection
 
 
@@ -64,6 +65,12 @@ class ContestSerializer(serializers.Serializer):
             )
         return data
 
+    @staticmethod
+    def _to_utc_sql_datetime(value):
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc)
+        return value.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
+
     def create(self, validated_data):
         contest_data = validated_data["contest"].copy()
         problems_data = [problem.copy() for problem in validated_data["problems"]]
@@ -85,8 +92,8 @@ class ContestSerializer(serializers.Serializer):
                     contest_id,
                     contest_data["title"],
                     contest_data.get("description", ""),
-                    contest_data["start_time"].strftime("%Y-%m-%d %H:%M:%S"),
-                    contest_data["end_time"].strftime("%Y-%m-%d %H:%M:%S"),
+                    self._to_utc_sql_datetime(contest_data["start_time"]),
+                    self._to_utc_sql_datetime(contest_data["end_time"]),
                     contest_data["visibility"],
                     contest_data.get("created_by"),
                 ),

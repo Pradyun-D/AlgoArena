@@ -1,5 +1,6 @@
 import { isLiveContest } from "../Utils/is_live_contest";
 import ReactMarkdown from "react-markdown";
+import { truncateWords } from "../Utils/contest_description";
 
 function ContestCard({ contest, contestBaseUrl }) {
     const isLive = isLiveContest(contest);
@@ -21,6 +22,10 @@ function ContestCard({ contest, contestBaseUrl }) {
         : isCompleted
             ? "Completed"
             : (contest.status || "Scheduled");
+    const previewDescription = truncateWords(
+        contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.",
+        100
+    );
 
     return (
         <article className={`min-w-0 overflow-hidden bg-surface-container p-6 rounded-sm border-l-4 ${accentClass} transition-all hover:bg-surface-container-highest`}>
@@ -41,7 +46,7 @@ function ContestCard({ contest, contestBaseUrl }) {
 
             <div className="text-on-surface-variant text-sm leading-6 mb-6 min-h-12 prose prose-invert max-w-none break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-sm [&_img]:block [&_img]:my-3 [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">
             <ReactMarkdown>
-                {contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round."}
+                {previewDescription}
             </ReactMarkdown>
             </div>
 
