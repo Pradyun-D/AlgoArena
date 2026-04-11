@@ -6,7 +6,6 @@ import rehypeRaw from "rehype-raw";
 import LoadingPage from "./LoadingPage";
 import "../Styles/contest_info.css";
 import ErrorPage from "./ErrorPage";
-import { truncateWords } from "../Utils/contest_description";
 
 const formatDateTime = (value) => {
   if (!value) {
@@ -187,10 +186,6 @@ function ContestPage() {
   const problems = Array.isArray(data?.problems) ? data.problems : [];
   const contestStatus = getContestStatus(contestInfo.start_time, contestInfo.end_time);
   const isLive = contestStatus === "Live";
-  const contestSummary = truncateWords(
-    contestInfo.description || "Contest description is not available yet.",
-    32
-  );
   const primaryCtaLabel =
     contestStatus === "Upcoming"
       ? "Register for Contest"
@@ -307,9 +302,14 @@ function ContestPage() {
                           Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
                         </p>
                       </div>
-                      <span className={`difficulty-pill ${difficulty.className}`}>
-                        {difficulty.label}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <span className={`difficulty-pill ${difficulty.className}`}>
+                          {difficulty.label}
+                        </span>
+                        <Link className="btn btn-outline" to={`/contest/${contestId}/problems/${problem.problem_id}`}>
+                          Solve
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}
@@ -356,6 +356,10 @@ function ContestPage() {
             <button className="btn btn-primary" type="button" onClick={handleRegister}>
               {primaryCtaLabel}
             </button>
+
+            <Link to={`/contest/${contestId}/problems/edit`} className="btn btn-outline">
+              Manage Problems
+            </Link>
 
             <Link to="/contests" className="btn btn-outline">
               Back to Contest List

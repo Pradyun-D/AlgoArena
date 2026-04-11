@@ -54,6 +54,42 @@ class ProblemSerializer(serializers.Serializer):
         return data
 
 
+class TestcaseSerializer(serializers.Serializer):
+    testcase_id = serializers.UUIDField(read_only=True)
+    input_data = serializers.CharField(allow_blank=True, required=False)
+    output_data = serializers.CharField(allow_blank=True, required=False)
+    is_hidden = serializers.BooleanField(required=False, default=True)
+
+
+class ProblemManageSerializer(serializers.Serializer):
+    problem_id = serializers.UUIDField(read_only=True)
+    title = serializers.CharField(max_length=255)
+    slug = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    description = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        style={"base_template": "textarea.html"},
+    )
+    difficulty = serializers.ChoiceField(choices=["easy", "medium", "hard"])
+    time_limit_ms = serializers.IntegerField(min_value=1)
+    memory_limit_kb = serializers.IntegerField(min_value=1)
+    visibility = serializers.ChoiceField(choices=["public", "private", "contest_only"])
+    max_score = serializers.IntegerField(min_value=1)
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=255),
+        required=False,
+        allow_empty=True,
+    )
+    testcases = TestcaseSerializer(many=True, required=False)
+
+    def validate(self, data):
+        if not data["title"].strip():
+            raise serializers.ValidationError({"title": "Problem title must not be empty."})
+        data["tags"] = [tag.strip() for tag in data.get("tags", []) if tag.strip()]
+        data["slug"] = (data.get("slug") or data["title"]).strip().lower().replace(" ", "-")
+        return data
+
+
 class ContestSerializer(serializers.Serializer):
     contest = ContestInfoSerializer()
     problems = ProblemSerializer(many=True)

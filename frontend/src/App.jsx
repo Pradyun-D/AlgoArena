@@ -4,6 +4,8 @@ import AdminDashboard from "./Pages/AdminDashboard";
 import AdminDashboardActive from "./Pages/AdminDashboardActive";
 import ContestFormPage from "./Pages/CreateNewContest";
 import ContestPage from "./Pages/ContestInfo";
+import ContestProblemManagerPage from "./Pages/ContestProblemManager";
+import ProblemSolvingPage from "./Pages/ProblemSolving";
 import ErrorPage from "./Pages/ErrorPage";
 import LandingPage from "./Pages/LandingPage";
 import LoginPage from "./Pages/Login";
@@ -23,6 +25,8 @@ function App() {
         <Route path="/create" element={<ContestFormPage />} />
         <Route path="/contests" element={<ContestsPage />} />
         <Route path="/contest/:contestId/" element={<ContestPage />} />
+        <Route path="/contest/:contestId/problems/edit" element={<ContestProblemManagerPage />} />
+        <Route path="/contest/:contestId/problems/:problemId" element={<ProblemSolvingPage />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Router>
