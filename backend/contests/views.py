@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
 from .contest_serializer import ContestSerializer, EditorialSerializer, ProblemManageSerializer
 from db import get_connection
-# from .judge import judge_submission
+from .judge.submit import judge_submission
 
 # Create your views here.
 
@@ -904,3 +904,59 @@ def active_contests(request):
 
     except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def submit_solution(request, contest_id, problem_id):
+    source_code = request.data.get("source_code")
+    language_id = request.data.get("language_id")
+
+    if not source_code or not language_id:
+        return Response({"error": "source_code and language_id are required in the payload."}, status=400)
+
+    user_id = request.user.id
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Verify the problem belongs to the given contest
+        cursor.execute("""
+            SELECT 1 FROM contest_problems 
+            WHERE contest_id = %s AND problem_id = %s
+        """, (str(contest_id), str(problem_id)))
+        
+        if not cursor.fetchone():
+            return Response({"error": "Problem not found in this contest."}, status=404)
+
+        # Generate UUID for submission
+        cursor.execute("SELECT UUID()")
+        submission_id = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT INTO Submissions(submission_id, user_id, problem_id, contest_id, language_id, source_code, submitted_at, status, verdict)
+            VALUES(%s, %s, %s, %s, %s, %s, NOW(), 'In_Queue', 'Pending')
+        """, (submission_id, user_id, str(problem_id), str(contest_id), language_id, source_code))
+
+        conn.commit()
+        
+        # Trigger judge 
+        judge_submission(submission_id)
+        
+        return Response({
+            "message": "Submission recorded and sent to judge successfully.", 
+            "submission_id": submission_id
+        }, status=201)
+
+    except Exception as e:
+        if conn and conn.is_connected():
+            conn.rollback()
+        return Response({
+            "error": "An internal error occurred during submission.", 
+            "details": str(e)
+        }, status=500)
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()

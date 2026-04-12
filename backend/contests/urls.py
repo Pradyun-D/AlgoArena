@@ -30,5 +30,6 @@ urlpatterns = [
     path("<uuid:problem_id>/editorial/",views.get_editorial,name="get_editorial_api"),
     path("editorial/create/", views.create_editorial, name="create_editorial_api"),
     path("editorial/<uuid:problem_id>/", views.get_editorial, name="get_editorial_api"),
+    path("<uuid:contest_id>/<uuid:problem_id>/submit/", views.submit_solution, name="submit_solution_api"),
 ]
     
