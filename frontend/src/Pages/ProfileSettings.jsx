@@ -70,9 +70,9 @@ function ProfileSettingsPage() {
     return (
         <div className="auth-page auth-page-register">
             <header className="auth-topbar">
-                <Link className="auth-brand" to="/contests">ALGO_ARENA</Link>
+                <Link className="auth-brand" to="/contests">Algo Arena</Link>
                 <div className="auth-topbar-actions">
-                    <Link className="auth-topbar-link" to="/contests">BACK_TO_CONTESTS</Link>
+                    <Link className="auth-topbar-link" to="/contests">Back To Contests</Link>
                 </div>
             </header>
 
@@ -154,7 +154,7 @@ function ProfileSettingsPage() {
                                     Skip For Now
                                 </Link>
                                 <button className="auth-submit auth-submit-inline" type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? "SAVING..." : "SAVE_PROFILE"}
+                                    {isSubmitting ? "Saving..." : "Save Profile"}
                                 </button>
                             </div>
                         </form>

@@ -27,7 +27,7 @@ const insightCards = [
   },
   {
     eyebrow: "Next Major Event",
-    value: "WORLD_FINALS_2024",
+    value: "World Finals 2024",
     caption: "Starting in 4d 12h 08m",
     accent: "event",
     icon: "campaign",
@@ -186,7 +186,7 @@ function AdminContestListTemplate({
               <span className="material-symbols-outlined">settings</span>
             </button>
             <button className="admin-avatar-button" type="button" aria-label="Admin profile">
-              <span className="material-symbols-outlined">account_circle</span>
+              <span className="material-symbols-outlined">Account Circle</span>
             </button>
           </div>
         </header>
@@ -216,21 +216,21 @@ function AdminContestListTemplate({
                 <input
                   id="contest-search"
                   type="text"
-                  placeholder="SEARCH_CONTESTS_BY_TITLE_OR_ID..."
+                  placeholder="Search Contests By Title Or ID..."
                 />
               </label>
 
               <div className="admin-toolbar-filters">
                 <button className="admin-filter-button" type="button">
                   <span>Status: All</span>
-                  <span className="material-symbols-outlined">expand_more</span>
+                  <span className="material-symbols-outlined">Expand More</span>
                 </button>
                 <button className="admin-filter-button" type="button">
-                  <span className="material-symbols-outlined">calendar_month</span>
+                  <span className="material-symbols-outlined">Calendar Month</span>
                   <span>Date Range</span>
                 </button>
                 <button className="admin-filter-icon" type="button" aria-label="Advanced filters">
-                  <span className="material-symbols-outlined">filter_alt</span>
+                  <span className="material-symbols-outlined">Filter Alt</span>
                 </button>
               </div>
             </div>
@@ -255,7 +255,6 @@ function AdminContestListTemplate({
                             <a href={`/contest/${contest.id}/`} className="contest-link">
                               {contest.title}
                             </a>
-                            <span>ID: {contest.id}</span>
                           </div>
                         </td>
                         <td>
@@ -284,7 +283,7 @@ function AdminContestListTemplate({
                               <span className="material-symbols-outlined">edit</span>
                             </button>
                             <button type="button" aria-label={`Clone ${contest.title}`}>
-                              <span className="material-symbols-outlined">content_copy</span>
+                              <span className="material-symbols-outlined">content copy</span>
                             </button>
                             <button type="button" aria-label={`Delete ${contest.title}`} className="danger">
                               <span className="material-symbols-outlined">delete</span>
@@ -312,13 +311,13 @@ function AdminContestListTemplate({
               </p>
               <div className="admin-pagination">
                 <button type="button" aria-label="Previous page">
-                  <span className="material-symbols-outlined">chevron_left</span>
+                  <span className="material-symbols-outlined">chevron left</span>
                 </button>
                 <button type="button" className="active" aria-current="page">1</button>
                 <button type="button">2</button>
                 <button type="button">3</button>
                 <button type="button" aria-label="Next page">
-                  <span className="material-symbols-outlined">chevron_right</span>
+                  <span className="material-symbols-outlined">chevron right</span>
                 </button>
               </div>
             </div>

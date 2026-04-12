@@ -4,6 +4,7 @@ import axios from "axios";
 import LoadingPage from "./LoadingPage";
 import ErrorPage from "./ErrorPage";
 import { API_BASE_URL } from "../Utils/api";
+import { formatDisplayText } from "../Utils/format_display_text";
 import "../Styles/admin_dashboard.css";
 
 const formatDraftDate = (value) => {
@@ -159,8 +160,7 @@ function DraftsDashboard() {
                       <tr key={draft.contest_id}>
                         <td>
                           <div className="contest-primary-cell">
-                            <strong>{draft.title || "Untitled Draft"}</strong>
-                            <span>ID: {draft.contest_id}</span>
+                            <strong>{formatDisplayText(draft.title || "Untitled Draft")}</strong>
                           </div>
                         </td>
                         <td>
@@ -174,7 +174,7 @@ function DraftsDashboard() {
                         </td>
                         <td>
                           <span className="contest-status-pill status-draft">
-                            {draft.visibility || "public"}
+                            {formatDisplayText(draft.visibility || "public")}
                           </span>
                         </td>
                         <td>{formatDraftDate(draft.updated_at || draft.created_at)}</td>
@@ -193,7 +193,7 @@ function DraftsDashboard() {
                               disabled={publishingId === draft.contest_id}
                               aria-label={`Publish ${draft.title || "draft"}`}
                             >
-                              <span className="material-symbols-outlined">rocket_launch</span>
+                              <span className="material-symbols-outlined">Rocket Launch</span>
                             </button>
                           </div>
                         </td>

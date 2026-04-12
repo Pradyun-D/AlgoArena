@@ -11,12 +11,10 @@ django-environ==0.13.0
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
 idna==3.11
-jwt==1.4.0
 pip==24.0
 pycparser==3.0
 pyjwt==2.11.0
 requests==2.32.5
-rest-framework-simplejwt==0.0.2
 setuptools==65.5.0
 sqlparse==0.5.5
 tzdata==2025.3

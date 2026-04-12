@@ -33,7 +33,7 @@ function CreateNewProblem() {
           </div>
 
           <div className="problem-editor-panel-label">
-            <span className="material-symbols-outlined">edit_square</span>
+            <span className="material-symbols-outlined">Edit Square</span>
             <div>
               <p>Problem Editor</p>
               <span>v1.0.4-alpha</span>

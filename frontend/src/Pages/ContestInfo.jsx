@@ -8,6 +8,7 @@ import "../Styles/contest_info.css";
 import ErrorPage from "./ErrorPage";
 import { getStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
+import { formatDisplayText } from "../Utils/format_display_text";
 
 const formatDateTime = (value) => {
   if (!value) {
@@ -250,11 +251,11 @@ function ContestPage() {
                   {isLive ? "Live Competition" : contestStatus}
                 </span>
                 <span className="badge badge-muted">
-                  {contestInfo.visibility || "Public"}
+                  {formatDisplayText(contestInfo.visibility || "Public")}
                 </span>
               </div>
 
-              <h1 className="hero-title">{contestInfo.title || "Untitled Contest"}</h1>
+              <h1 className="hero-title">{formatDisplayText(contestInfo.title || "Untitled Contest")}</h1>
             
             </div>
 
@@ -308,7 +309,7 @@ function ContestPage() {
                   return (
                     <div className="list-row" key={problem.problem_id || index}>
                       <div>
-                        <p className="problem-title">{problem.title || `Problem ${index + 1}`}</p>
+                        <p className="problem-title">{formatDisplayText(problem.title || `Problem ${index + 1}`)}</p>
                         <p className="mono problem-meta">
                           Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
                         </p>
@@ -357,17 +358,14 @@ function ContestPage() {
             </div>
 
             <div className="stats-panel">
-              <div className="stat-row">
-                <span className="stat-label">Contest ID</span>
-                <span className="mono">{contestInfo.contest_id || contestId}</span>
-              </div>
+              
               <div className="stat-row">
                 <span className="stat-label">Problem Count</span>
                 <span>{problems.length}</span>
               </div>
               <div className="stat-row">
                 <span className="stat-label">Visibility</span>
-                <span>{contestInfo.visibility || "Public"}</span>
+                <span>{formatDisplayText(contestInfo.visibility || "Public")}</span>
               </div>
               <div className="stat-row">
                 <span className="stat-label">Created By</span>

@@ -1,6 +1,7 @@
 import { isLiveContest } from "../Utils/is_live_contest";
 import ReactMarkdown from "react-markdown";
 import { truncateWords } from "../Utils/contest_description";
+import { formatDisplayText } from "../Utils/format_display_text";
 
 function ContestCard({ contest, contestBaseUrl }) {
     const isLive = isLiveContest(contest);
@@ -21,7 +22,7 @@ function ContestCard({ contest, contestBaseUrl }) {
         ? "Live Now"
         : isCompleted
             ? "Completed"
-            : (contest.status || "Scheduled");
+            : formatDisplayText(contest.status || "Scheduled");
     const previewDescription = truncateWords(
         contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.",
         100
@@ -31,11 +32,9 @@ function ContestCard({ contest, contestBaseUrl }) {
         <article className={`min-w-0 overflow-hidden bg-surface-container p-6 rounded-sm border-l-4 ${accentClass} transition-all hover:bg-surface-container-highest`}>
             <div className="flex justify-between items-start gap-4 mb-6">
                 <div>
-                    <span className={`text-xs font-bold uppercase tracking-widest font-headline ${accentTextClass}`}>
-                        Contest #{contest.contest_id}
-                    </span>
+               
                     <h3 className="text-xl font-bold font-headline mt-1 uppercase">
-                        {contest.title}
+                        {formatDisplayText(contest.title || "Untitled Contest")}
                     </h3>
                 </div>
 

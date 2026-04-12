@@ -256,7 +256,7 @@ function ContestProblemManagerPage() {
                   selectProblem(problem);
                 }}
               >
-                <span className="material-symbols-outlined">code_blocks</span>
+                <span className="material-symbols-outlined">Code Blocks</span>
                 <span>{problem.title || `Problem ${index + 1}`}</span>
               </a>
             ))}
@@ -320,7 +320,7 @@ function ContestProblemManagerPage() {
                 <select name="visibility" value={draftProblem.visibility} onChange={updateProblemField}>
                   <option value="public">public</option>
                   <option value="private">private</option>
-                  <option value="contest_only">contest_only</option>
+                  <option value="contest_only">contest only</option>
                 </select>
               </div>
               <div className="field-group">

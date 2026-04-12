@@ -19,10 +19,10 @@ function SidebarAdminDashboard() {
     <aside className="admin-sidebar">
       <div>
         <div className="admin-sidebar-brand">
-          <h2>ALGO_ARENA//ADMIN</h2>
+          <h2>ALGO ARENA ADMIN</h2>
           <div>
             <p>Control Panel</p>
-            <span>v2.4.0-stable</span>
+        
           </div>
         </div>
 

@@ -42,7 +42,7 @@ function LoginPage() {
             <header className="auth-topbar">
                 <Link className="auth-brand" to="/contests">ALGOARENA</Link>
                 <div className="auth-topbar-actions">
-                    <Link className="auth-topbar-link" to="/register">CREATE ACCOUNT</Link>
+                    <Link className="auth-topbar-link" to="/register">Create Account</Link>
                 </div>
             </header>
 
@@ -52,7 +52,7 @@ function LoginPage() {
                         <span className="auth-dot auth-dot-red"></span>
                         <span className="auth-dot auth-dot-amber"></span>
                         <span className="auth-dot auth-dot-green"></span>
-                        <span className="auth-chrome-label">Session_Initialize.sh</span>
+                        <span className="auth-chrome-label">Session Initialize.sh</span>
                     </div>
 
                     <div className="auth-panel-body">
@@ -90,12 +90,12 @@ function LoginPage() {
                             {error ? <p className="auth-error">{error}</p> : null}
 
                             <button className="auth-submit" type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? "EXECUTING..." : "EXECUTE_LOGIN"}
+                                {isSubmitting ? "Executing..." : "Execute Login"}
                             </button>
                         </form>
 
                         <p className="auth-footer-copy">
-                            New operator? <Link to="/register">CREATE_ACCOUNT</Link>
+                            New operator? <Link to="/register">Create Account</Link>
                         </p>
                     </div>
                 </section>

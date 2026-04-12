@@ -5,6 +5,7 @@ import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
+import { formatDisplayText } from "../Utils/format_display_text";
 
 const formatDateTime = (value) => {
     if (!value) {
@@ -143,7 +144,16 @@ function MySubmissionsPage() {
                             <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/profile/edit">
                                 Profile
                             </Link>
-                            <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80" onClick={handleLogout}>
+                            <button
+                                className="p-2 transition-all rounded-sm scale-95 active:opacity-80"
+                                style={{
+                                    color: "#03111c",
+                                    background: "linear-gradient(135deg, #84adff 0%, #4f8eff 48%, #69f0a7 100%)",
+                                    boxShadow: "0 12px 24px rgba(32, 112, 255, 0.22)",
+                                    border: "1px solid rgba(132, 173, 255, 0.28)",
+                                }}
+                                onClick={handleLogout}
+                            >
                                 <span className="material-symbols-outlined">logout</span>
                             </button>
                         </>
@@ -193,23 +203,23 @@ function MySubmissionsPage() {
                                                 <td>
                                                     <div className="contest-primary-cell">
                                                         <Link to={`/contest/${sub.contest_id}/problems/${sub.problem_id}`} className="contest-link">
-                                                            {sub.problem_title || 'Unknown Problem'}
+                                                            {formatDisplayText(sub.problem_title || "Unknown Problem")}
                                                         </Link>
                                                         <span>
                                                             In: <Link to={`/contest/${sub.contest_id}/`} className="text-xs text-on-surface-variant hover:text-primary">
-                                                                {sub.contest_title || 'Unknown Contest'}
+                                                                {formatDisplayText(sub.contest_title || "Unknown Contest")}
                                                             </Link>
                                                         </span>
                                                     </div>
                                                 </td>
                                                 <td>{formatDateTime(sub.submitted_at)}</td>
-                                                <td>{sub.language_name}</td>
+                                                <td>{formatDisplayText(sub.language_name || "Unknown Language")}</td>
                                                 <td>
                                                     <span className={`contest-status-pill ${getVerdictClass(sub.verdict)}`}>
-                                                        {sub.verdict || 'Pending'}
+                                                        {formatDisplayText(sub.verdict || "Pending")}
                                                     </span>
                                                 </td>
-                                                <td>{sub.status}</td>
+                                                <td>{formatDisplayText(sub.status || "Pending")}</td>
                                                 <td>{sub.execution_time_ms !== null ? `${sub.execution_time_ms} ms` : 'N/A'}</td>
                                                 <td>{sub.memory_used_kb !== null ? `${sub.memory_used_kb} KB` : 'N/A'}</td>
                                                 <td>

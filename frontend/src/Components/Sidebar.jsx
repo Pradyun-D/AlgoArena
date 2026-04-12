@@ -35,7 +35,7 @@ function Sidebar({ user }) {
                 </div>
                 <div>
                     <h3 className="text-sm font-bold font-headline uppercase tracking-tighter">
-                        {isLoggedIn ? (user.username || "guest_user") : "guest_user"}
+                        {isLoggedIn ? (user.username || "Guest User") : "Guest User"}
                     </h3>
                     <span className="text-[10px] text-secondary" style={userTierColor ? { color: userTierColor } : undefined}>
                         {userTier}

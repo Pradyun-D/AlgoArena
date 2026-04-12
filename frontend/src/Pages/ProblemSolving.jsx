@@ -9,6 +9,7 @@ import LoadingPage from "./LoadingPage";
 import "../Styles/problem_solving.css";
 import { getStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
+import { formatDisplayText } from "../Utils/format_display_text";
 
 const LANGUAGE_PRESETS = {
   "C++20": {
@@ -539,12 +540,12 @@ function ProblemSolvingPage() {
                       <div className="solve-submission-card__main">
                         <div>
                           <span className={`solve-submission-status ${getSubmissionTone(submission)}`}>
-                            {submission.status}
+                            {formatDisplayText(submission.status || "Pending")}
                           </span>
-                          <h3>{submission.language_name || "Unknown language"}</h3>
+                          <h3>{formatDisplayText(submission.language_name || "Unknown language")}</h3>
                         </div>
                         <p>
-                          Verdict: {submission.verdict || "Pending"} | User: {submission.user_id || "Guest"}
+                          Verdict: {formatDisplayText(submission.verdict || "Pending")} | User: {submission.user_id || "Guest"}
                         </p>
                       </div>
                       <div className="solve-submission-card__meta">

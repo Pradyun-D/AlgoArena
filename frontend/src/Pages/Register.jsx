@@ -46,7 +46,7 @@ function RegisterPage() {
             <header className="auth-topbar">
                 <Link className="auth-brand" to="/contests">ALGOARENA</Link>
                 <div className="auth-topbar-actions">
-                    <Link className="auth-topbar-link" to="/login">LOGIN</Link>
+                    <Link className="auth-topbar-link" to="/login">Login</Link>
                 </div>
             </header>
 
@@ -130,13 +130,13 @@ function RegisterPage() {
 
                             <div className="auth-field-full">
                                 <button className="auth-submit" type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? "INITIALIZING..." : "INITIALIZE_ACCOUNT"}
+                                    {isSubmitting ? "Initializing..." : "Initialize Account"}
                                 </button>
                             </div>
                         </form>
 
                         <p className="auth-footer-copy">
-                            Already registered? <Link to="/login">START_SESSION</Link>
+                            Already registered? <Link to="/login">Start Session</Link>
                         </p>
                     </div>
                 </section>
