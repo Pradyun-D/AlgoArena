@@ -1155,6 +1155,94 @@ def get_editorial(request,problem_id):
             conn.close()
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def my_submissions(request):
+    user_id = _get_request_user_external_id(request)
+    if user_id is None:
+        return Response({"error": "Authenticated user is not linked to a platform account."}, status=403)
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT
+                s.submission_id, s.user_id, s.problem_id, s.contest_id, s.language_id, s.source_code,
+                l.name AS language_name, s.status, s.verdict,
+                s.max_execution_time_ms, s.max_memory_used_kb, s.submitted_at,
+                p.title as problem_title,
+                c.title as contest_title
+            FROM Submissions s
+            LEFT JOIN languages l ON l.language_id = s.language_id
+            LEFT JOIN problems p ON p.problem_id = s.problem_id
+            LEFT JOIN contests c ON c.contest_id = s.contest_id
+            WHERE s.user_id = %s
+            ORDER BY s.submitted_at DESC
+            LIMIT 100
+            """,
+            (str(user_id),),
+        )
+        submissions = cursor.fetchall()
+        serialized_submissions = []
+        for row in submissions:
+            serialized = _serialize_submission_row(row)
+            serialized['problem_title'] = row.get('problem_title')
+            serialized['contest_title'] = row.get('contest_title')
+            serialized_submissions.append(serialized)
+
+        return Response(serialized_submissions, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_submission(request, submission_id):
+    user_id = _get_request_user_external_id(request)
+    if user_id is None:
+        return Response({"error": "Authenticated user is not linked to a platform account."}, status=403)
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT
+                s.submission_id, s.user_id, s.problem_id, s.contest_id, s.language_id, s.source_code,
+                l.name AS language_name, s.status, s.verdict,
+                s.max_execution_time_ms, s.max_memory_used_kb, s.submitted_at,
+                p.title as problem_title,
+                c.title as contest_title
+            FROM Submissions s
+            LEFT JOIN languages l ON l.language_id = s.language_id
+            LEFT JOIN problems p ON p.problem_id = s.problem_id
+            LEFT JOIN contests c ON c.contest_id = s.contest_id
+            WHERE s.submission_id = %s AND s.user_id = %s
+            LIMIT 1
+            """,
+            (str(submission_id), str(user_id)),
+        )
+        submission = cursor.fetchone()
+        if not submission:
+            return Response({"error": "Submission not found or you do not have permission to view it."}, status=404)
+        serialized = _serialize_submission_row(submission)
+        serialized['problem_title'] = submission.get('problem_title')
+        serialized['contest_title'] = submission.get('contest_title')
+        return Response(serialized, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

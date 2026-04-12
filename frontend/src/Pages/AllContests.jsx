@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ContestCard from "../Components/ContestCard";
+import { Link } from "react-router-dom";
 import Sidebar from "../Components/Sidebar";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
@@ -116,42 +117,42 @@ function ContestsPage() {
         <div className="contest-page bg-background text-on-background min-h-screen">
             <nav className="nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none">
                 <div className="flex items-center gap-8">
-                    <a className="text-2xl font-black tracking-tighter text-primary font-headline uppercase" href="/contests">
+                    <Link className="text-2xl font-black tracking-tighter text-primary font-headline uppercase" to="/contests">
                         AlgoArena
-                    </a>
+                    </Link>
                     <div className="hidden md:flex gap-6 h-full items-center">
-                        <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/profile">
+                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/profile/edit">
                             Dashboard
-                        </a>
-                        <a className="text-primary border-b-2 border-[#84adff] pb-1 font-headline tracking-tight font-bold uppercase text-sm" href="/contests">
+                        </Link>
+                        <Link className="text-primary border-b-2 border-[#84adff] pb-1 font-headline tracking-tight font-bold uppercase text-sm" to="/contests">
                             Contests
-                        </a>
-                        <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href={leaderboardUrl}>
+                        </Link>
+                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to={leaderboardUrl}>
                             Leaderboard
-                        </a>
-                        <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/profile">
+                        </Link>
+                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/submissions">
                             My Submissions
-                        </a>
+                        </Link>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
                     {authUser ? (
                         <>
-                            <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/profile/edit">
+                            <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/profile/edit">
                                 Profile
-                            </a>
+                            </Link>
                             <button className="p-2 text-gray-500 hover:bg-[#1a1a1a] transition-all rounded-sm scale-95 active:opacity-80" onClick={handleLogout}>
                                 <span className="material-symbols-outlined">logout</span>
                             </button>
                         </>
                     ) : (
                         <>
-                            <a className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/login">
+                            <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/login">
                                 Login
-                            </a>
-                            <a className="text-primary border border-outline-variant/20 px-3 py-2 transition-colors font-headline tracking-tight font-bold uppercase text-sm" href="/register">
+                            </Link>
+                            <Link className="text-primary border border-outline-variant/20 px-3 py-2 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/register">
                                 Register
-                            </a>
+                            </Link>
                         </>
                     )}
                 </div>
@@ -169,8 +170,8 @@ function ContestsPage() {
                         </p>
                         {canCreateContest ? (
                             <div className="mt-12 flex flex-wrap gap-4">
-                                <a
-                                    href="/create"
+                                <Link
+                                    to="/create"
                                     className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
                                     style={{
                                         padding: "0.95rem 1.35rem",
@@ -187,10 +188,10 @@ function ContestsPage() {
                                         add_circle
                                     </span>
                                     Create Contest
-                                </a>
+                                </Link>
 
-                                <a
-                                    href="/drafts"
+                                <Link
+                                    to="/drafts"
                                     className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
                                     style={{
                                         padding: "0.95rem 1.35rem",
@@ -207,11 +208,11 @@ function ContestsPage() {
                                         draft
                                     </span>
                                     Access Drafts
-                                </a>
+                                </Link>
 
                                 {canAccessAdminDashboard ? (
-                                    <a
-                                        href="/admin/dashboard"
+                                    <Link
+                                        to="/admin/dashboard"
                                         className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
                                         style={{
                                             padding: "0.95rem 1.35rem",
@@ -228,7 +229,7 @@ function ContestsPage() {
                                             admin_panel_settings
                                         </span>
                                         Access Admin Dashboard
-                                    </a>
+                                    </Link>
                                 ) : null}
                             </div>
                         ) : null}

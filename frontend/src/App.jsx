@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ContestsPage from "./Pages/AllContests";
 import AdminDashboard from "./Pages/AdminDashboard";
+import MySubmissionsPage from "./Pages/MySubmissions";
+import SubmissionViewPage from "./Pages/SubmissionView";
 import AdminDashboardActive from "./Pages/AdminDashboardActive";
 import ContestFormPage from "./Pages/CreateNewContest";
 import DraftsDashboard from "./Pages/DraftsDashboard";
@@ -56,6 +58,8 @@ function App() {
           )}
         />
         <Route path="/contests" element={<ContestsPage />} />
+        <Route path="/submissions" element={<MySubmissionsPage />} />
+        <Route path="/submissions/:submissionId" element={<SubmissionViewPage />} />
         <Route path="/contest/:contestId/" element={<ContestPage />} />
         <Route
           path="/contest/:contestId/problems/edit"
