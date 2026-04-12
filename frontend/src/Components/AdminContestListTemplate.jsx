@@ -103,7 +103,7 @@ function AdminContestListTemplate({
     try {
       setLoading(true);
       setError("");
-      const response = await axios.get(fetchUrl);
+      const response = await axios.get(fetchUrl, { withCredentials: true });
       console.log(response)
       setContests(Array.isArray(response.data) ? response.data : []);
     } catch (err) {

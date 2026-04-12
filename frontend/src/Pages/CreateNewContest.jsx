@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from 'axios';
+import { API_BASE_URL } from "../Utils/api";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
 import "../Styles/form.css"
@@ -198,8 +199,8 @@ const ContestFormPage = () => {
     try {
      setSubmitLoading(true)
      setPageError("")
-     const response = await axios.post("http://127.0.0.1:8000/contests/create/", payload, {
-       withCredentials: false
+     const response = await axios.post(`${API_BASE_URL}/contests/create/`, payload, {
+       withCredentials: true
      });
      console.log(response.data)
      localStorage.removeItem("contestDraft")

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { setStoredAuthUser } from "../Utils/auth_storage";
+import { API_BASE_URL } from "../Utils/api";
 import "../Styles/auth_pages.css";
 
 function LoginPage() {
@@ -21,7 +22,9 @@ function LoginPage() {
         setIsSubmitting(true);
 
         try {
-            const response = await axios.post("http://127.0.0.1:8000/accounts/api/login/", form);
+            const response = await axios.post(`${API_BASE_URL}/accounts/api/login/`, form, {
+                withCredentials: true,
+            });
             setStoredAuthUser(response.data.user);
             navigate("/contests");
         } catch (err) {

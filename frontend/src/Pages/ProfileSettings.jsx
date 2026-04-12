@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
+import { API_BASE_URL } from "../Utils/api";
 import "../Styles/auth_pages.css";
 
 function ProfileSettingsPage() {
@@ -50,7 +51,7 @@ function ProfileSettingsPage() {
 
         try {
             const response = await axios.put(
-                `http://127.0.0.1:8000/accounts/api/profile/${authUser.uuid}/`,
+                `${API_BASE_URL}/accounts/api/profile/${authUser.uuid}/`,
                 form,
             );
             setStoredAuthUser(response.data.user);

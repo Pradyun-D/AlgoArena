@@ -6,6 +6,8 @@ import rehypeRaw from "rehype-raw";
 import LoadingPage from "./LoadingPage";
 import "../Styles/contest_info.css";
 import ErrorPage from "./ErrorPage";
+import { getStoredAuthUser } from "../Utils/auth_storage";
+import { API_BASE_URL } from "../Utils/api";
 
 const formatDateTime = (value) => {
   if (!value) {
@@ -113,6 +115,7 @@ function ContestPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
+  const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
 
   useEffect(() => {
     const fetchContestInfo = async () => {
@@ -121,7 +124,7 @@ function ContestPage() {
         setError("");
 
         const response = await axios.get(
-          `http://127.0.0.1:8000/contests/${contestId}/details`
+          `${API_BASE_URL}/contests/${contestId}/details`
         );
 
         const payload = response.data?.data;
@@ -147,6 +150,12 @@ function ContestPage() {
       fetchContestInfo();
     }
   }, [contestId]);
+
+  useEffect(() => {
+    const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+    window.addEventListener("storage", syncAuthUser);
+    return () => window.removeEventListener("storage", syncAuthUser);
+  }, []);
 
   useEffect(() => {
     if (!data?.contest) {
@@ -186,6 +195,7 @@ function ContestPage() {
   const problems = Array.isArray(data?.problems) ? data.problems : [];
   const contestStatus = getContestStatus(contestInfo.start_time, contestInfo.end_time);
   const isLive = contestStatus === "Live";
+  const canManageProblems = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
   const primaryCtaLabel =
     contestStatus === "Upcoming"
       ? "Register for Contest"
@@ -196,7 +206,7 @@ function ContestPage() {
   const handleRegister= async () => {
     try {
       const response = await axios.post(
-        `http://127.0.0.1:8000/contests/${contestId}/register`,
+        `${API_BASE_URL}/contests/${contestId}/register`,
         {},
         { withCredentials: true }
       );
@@ -293,6 +303,7 @@ function ContestPage() {
               <div>
                 {problems.map((problem, index) => {
                   const difficulty = normalizeDifficulty(problem.difficulty);
+                  const solveLocked = contestStatus === "Upcoming";
 
                   return (
                     <div className="list-row" key={problem.problem_id || index}>
@@ -306,9 +317,20 @@ function ContestPage() {
                         <span className={`difficulty-pill ${difficulty.className}`}>
                           {difficulty.label}
                         </span>
-                        <Link className="btn btn-outline" to={`/contest/${contestId}/problems/${problem.problem_id}`}>
-                          Solve
-                        </Link>
+                        {solveLocked ? (
+                          <span
+                            className="btn btn-outline"
+                            aria-disabled="true"
+                            title="Problem solving unlocks when the contest starts."
+                            style={{ opacity: 0.55, cursor: "not-allowed", pointerEvents: "none" }}
+                          >
+                            Solve
+                          </span>
+                        ) : (
+                          <Link className="btn btn-outline" to={`/contest/${contestId}/problems/${problem.problem_id}`}>
+                            Solve
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
@@ -357,9 +379,11 @@ function ContestPage() {
               {primaryCtaLabel}
             </button>
 
-            <Link to={`/contest/${contestId}/problems/edit`} className="btn btn-outline">
-              Manage Problems
-            </Link>
+            {canManageProblems ? (
+              <Link to={`/contest/${contestId}/problems/edit`} className="btn btn-outline">
+                Manage Problems
+              </Link>
+            ) : null}
 
             <Link to="/contests" className="btn btn-outline">
               Back to Contest List

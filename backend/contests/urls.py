@@ -8,6 +8,8 @@ urlpatterns = [
 
     # admin routes
    
+    path("admin/dashboard/", views.admin_dashboard_contests, name="admin_dashboard_contests_api"),
+    path("admin/dashboard/active/", views.admin_dashboard_active_contests, name="admin_dashboard_active_contests_api"),
 
     path("create/", views.create_contest, name="create_contest_api"),
     path("<uuid:contest_id>/delete/", views.delete_contest, name="delete_contest_api"),

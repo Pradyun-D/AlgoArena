@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../Utils/api";
 import LoadingPage from "./LoadingPage";
 import ErrorPage from "./ErrorPage";
 import "../Styles/new_problem.css";
@@ -40,7 +41,9 @@ function ContestProblemManagerPage() {
       try {
         setLoading(true);
         setError("");
-        const response = await axios.get(`http://127.0.0.1:8000/contests/${contestId}/problems/manage`);
+        const response = await axios.get(`${API_BASE_URL}/contests/${contestId}/problems/manage`, {
+          withCredentials: true,
+        });
         const payload = response.data?.data;
         if (!payload?.contest) {
           throw new Error(response.data?.error || "Unable to load contest problems.");
@@ -164,8 +167,9 @@ function ContestProblemManagerPage() {
       };
 
       await axios.put(
-        `http://127.0.0.1:8000/contests/${contestId}/problems/${draftProblem.problem_id}/`,
-        payload
+        `${API_BASE_URL}/contests/${contestId}/problems/${draftProblem.problem_id}/`,
+        payload,
+        { withCredentials: true }
       );
 
       setProblems((current) =>

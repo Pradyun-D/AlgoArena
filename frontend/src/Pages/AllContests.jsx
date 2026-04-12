@@ -4,7 +4,8 @@ import ContestCard from "../Components/ContestCard";
 import Sidebar from "../Components/Sidebar";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
-import { clearStoredAuthUser, getStoredAuthUser } from "../Utils/auth_storage";
+import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
+import { API_BASE_URL } from "../Utils/api";
 
 function ContestsPage() {
     const [availableContests, setAvailableContests] = useState([]);
@@ -25,8 +26,8 @@ function ContestsPage() {
             setError("");
 
             const [availableResponse, pastResponse] = await Promise.all([
-                axios.get("http://127.0.0.1:8000/contests/"),
-                axios.get("http://127.0.0.1:8000/contests/past/"),
+                axios.get(`${API_BASE_URL}/contests/`),
+                axios.get(`${API_BASE_URL}/contests/past/`),
             ]);
 
             setAvailableContests(Array.isArray(availableResponse.data) ? availableResponse.data : []);
@@ -46,9 +47,15 @@ function ContestsPage() {
     useEffect(() => {
         loadContests();
 
-        axios.get("http://127.0.0.1:8000/api/auth/user/", { withCredentials: true })
-            .then((res) => res.data)
-            .then((data) => setUser(data || {}))
+        axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
+            .then((res) => res.data?.user || null)
+            .then((data) => {
+                if (data) {
+                    setStoredAuthUser(data);
+                    setAuthUser(data);
+                }
+                setUser(data || {});
+            })
             .catch(() => setUser({}));
 
         const syncAuthUser = () => setAuthUser(getStoredAuthUser());
@@ -57,9 +64,16 @@ function ContestsPage() {
         return () => window.removeEventListener("storage", syncAuthUser);
     }, []);
 
-    const handleLogout = () => {
-        clearStoredAuthUser();
-        setAuthUser(null);
+    const handleLogout = async () => {
+        try {
+            await axios.post(`${API_BASE_URL}/accounts/api/logout/`, {}, { withCredentials: true });
+        } catch {
+            // Clear local state even if the server-side logout request fails.
+        } finally {
+            clearStoredAuthUser();
+            setAuthUser(null);
+            setUser({});
+        }
     };
 
     const sidebarUser = authUser ? {
@@ -72,6 +86,9 @@ function ContestsPage() {
         ...user,
         is_logged_in: false,
     };
+
+    const canCreateContest = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
+    const canAccessAdminDashboard = Boolean(authUser && authUser.role === "admin");
 
     if (loading) {
         return (
@@ -150,27 +167,51 @@ function ContestsPage() {
                             Browse active and upcoming competitive programming rounds. Optimize your
                             performance through consistent participation in global contests.
                         </p>
-                        <div className="mt-12">
-                            <a
-                                href="/create"
-                                className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
-                                style={{
-                                    padding: "0.95rem 1.35rem",
-                                    color: "#03111c",
-                                    background: "linear-gradient(135deg, #84adff 0%, #4f8eff 48%, #69f0a7 100%)",
-                                    boxShadow: "0 18px 36px rgba(32, 112, 255, 0.22)",
-                                    border: "1px solid rgba(132, 173, 255, 0.28)",
-                                }}
-                            >
-                                <span
-                                    className="material-symbols-outlined"
-                                    style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
+                        {canCreateContest ? (
+                            <div className="mt-12 flex flex-wrap gap-4">
+                                <a
+                                    href="/create"
+                                    className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
+                                    style={{
+                                        padding: "0.95rem 1.35rem",
+                                        color: "#03111c",
+                                        background: "linear-gradient(135deg, #84adff 0%, #4f8eff 48%, #69f0a7 100%)",
+                                        boxShadow: "0 18px 36px rgba(32, 112, 255, 0.22)",
+                                        border: "1px solid rgba(132, 173, 255, 0.28)",
+                                    }}
                                 >
-                                    add_circle
-                                </span>
-                                Create Contest
-                            </a>
-                        </div>
+                                    <span
+                                        className="material-symbols-outlined"
+                                        style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
+                                    >
+                                        add_circle
+                                    </span>
+                                    Create Contest
+                                </a>
+
+                                {canAccessAdminDashboard ? (
+                                    <a
+                                        href="/admin/dashboard"
+                                        className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
+                                        style={{
+                                            padding: "0.95rem 1.35rem",
+                                            color: "#d9ecff",
+                                            background: "linear-gradient(135deg, #12253c 0%, #193657 48%, #28507b 100%)",
+                                            boxShadow: "0 18px 36px rgba(10, 21, 37, 0.28)",
+                                            border: "1px solid rgba(132, 173, 255, 0.2)",
+                                        }}
+                                    >
+                                        <span
+                                            className="material-symbols-outlined"
+                                            style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
+                                        >
+                                            admin_panel_settings
+                                        </span>
+                                        Access Admin Dashboard
+                                    </a>
+                                ) : null}
+                            </div>
+                        ) : null}
                     </section>
 
                     <section className="space-y-4">

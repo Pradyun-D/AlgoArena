@@ -11,6 +11,8 @@ import LandingPage from "./Pages/LandingPage";
 import LoginPage from "./Pages/Login";
 import RegisterPage from "./Pages/Register";
 import ProfileSettingsPage from "./Pages/ProfileSettings";
+import ProblemSetterRoute from "./Components/ProblemSetterRoute";
+import AdminRoute from "./Components/AdminRoute";
 
 function App() {
   return (
@@ -20,12 +22,40 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/profile/edit" element={<ProfileSettingsPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/dashboard/active" element={<AdminDashboardActive/>} />
-        <Route path="/create" element={<ContestFormPage />} />
+        <Route
+          path="/admin/dashboard"
+          element={(
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          )}
+        />
+        <Route
+          path="/admin/dashboard/active"
+          element={(
+            <AdminRoute>
+              <AdminDashboardActive />
+            </AdminRoute>
+          )}
+        />
+        <Route
+          path="/create"
+          element={(
+            <ProblemSetterRoute>
+              <ContestFormPage />
+            </ProblemSetterRoute>
+          )}
+        />
         <Route path="/contests" element={<ContestsPage />} />
         <Route path="/contest/:contestId/" element={<ContestPage />} />
-        <Route path="/contest/:contestId/problems/edit" element={<ContestProblemManagerPage />} />
+        <Route
+          path="/contest/:contestId/problems/edit"
+          element={(
+            <ProblemSetterRoute>
+              <ContestProblemManagerPage />
+            </ProblemSetterRoute>
+          )}
+        />
         <Route path="/contest/:contestId/problems/:problemId" element={<ProblemSolvingPage />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>

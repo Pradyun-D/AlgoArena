@@ -7,6 +7,8 @@ import rehypeRaw from "rehype-raw";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
 import "../Styles/problem_solving.css";
+import { getStoredAuthUser } from "../Utils/auth_storage";
+import { API_BASE_URL } from "../Utils/api";
 
 const LANGUAGE_PRESETS = {
   "C++20": {
@@ -114,6 +116,7 @@ function ProblemSolvingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [bannerMessage, setBannerMessage] = useState("");
+  const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
 
@@ -124,7 +127,7 @@ function ProblemSolvingPage() {
         setError("");
 
         const response = await axios.get(
-          `http://127.0.0.1:8000/contests/${contestId}/problems/${problemId}/solve`
+          `${API_BASE_URL}/contests/${contestId}/problems/${problemId}/solve`
         );
 
         const payload = response.data?.data;
@@ -156,6 +159,12 @@ function ProblemSolvingPage() {
     }
   }, [contestId, problemId]);
 
+  useEffect(() => {
+    const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+    window.addEventListener("storage", syncAuthUser);
+    return () => window.removeEventListener("storage", syncAuthUser);
+  }, []);
+
   const languages = useMemo(() => solveData?.languages || [], [solveData]);
   const visibleTestcases = solveData?.visible_testcases || [];
   const selectedLanguage = useMemo(
@@ -169,6 +178,7 @@ function ProblemSolvingPage() {
   const selectedPreset = getLanguagePreset(selectedLanguage?.name);
   const problem = solveData?.problem || null;
   const contest = solveData?.contest || null;
+  const canManageProblems = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
 
   useEffect(() => {
     if (!editorRef.current || !monacoRef.current) {
@@ -229,7 +239,7 @@ function ProblemSolvingPage() {
       setActivePanel("submissions");
 
       const response = await axios.post(
-        `http://127.0.0.1:8000/contests/${contestId}/problems/${problemId}/submit`,
+        `${API_BASE_URL}/contests/${contestId}/problems/${problemId}/submit`,
         {
           language_id: Number(selectedLanguage.language_id),
           language_name: selectedLanguage.name,
@@ -301,9 +311,11 @@ function ProblemSolvingPage() {
           <Link to={`/contest/${contestId}/`} className="solve-header-link">
             Contest
           </Link>
-          <Link to={`/contest/${contestId}/problems/edit`} className="solve-header-link">
-            Manage
-          </Link>
+          {canManageProblems ? (
+            <Link to={`/contest/${contestId}/problems/edit`} className="solve-header-link">
+              Manage
+            </Link>
+          ) : null}
         </div>
       </header>
 

@@ -1,9 +1,12 @@
 from django.shortcuts import render
+from django.contrib.auth import login as django_login, logout as django_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password, make_password
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from .auth_sync import build_auth_response, clear_auth_cookies, get_current_external_user, sync_django_user_from_external_row
+from .permissions import IsAuthenticated
 from db import get_connection
 import uuid
 
@@ -167,6 +170,9 @@ def register_account(request):
 		conn.commit()
 
 		user = _get_user_by_uuid(cursor, user_uuid)
+		if user:
+			user["password_hash"] = password_hash
+			sync_django_user_from_external_row(user)
 		return Response({"message": "Account created successfully.", "user": _serialize_user_row(user)}, status=201)
 	except Exception as e:
 		conn.rollback()
@@ -198,10 +204,39 @@ def login_account(request):
 		if not check_password(password, user["password_hash"]):
 			return Response({"error": "Invalid credentials."}, status=401)
 
-		return Response({"message": "Login successful.", "user": _serialize_user_row(user)}, status=200)
+		django_user = sync_django_user_from_external_row(user)
+		django_login(request, django_user, backend="django.contrib.auth.backends.ModelBackend")
+		return build_auth_response(
+			django_user,
+			{"message": "Login successful.", "user": _serialize_user_row(user)},
+			status_code=200,
+		)
 	finally:
 		cursor.close()
 		conn.close()
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def session_account(request):
+	conn = get_connection()
+	cursor = conn.cursor(dictionary=True)
+	try:
+		user = get_current_external_user(request, cursor=cursor)
+		if not user:
+			return Response({"error": "Authenticated user is not linked to a platform account."}, status=404)
+		return Response({"user": _serialize_user_row(user)}, status=200)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def logout_account(request):
+	django_logout(request)
+	response = Response({"message": "Logout successful."}, status=200)
+	return clear_auth_cookies(response)
 
 
 @api_view(["GET", "PUT"])

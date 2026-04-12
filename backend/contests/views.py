@@ -2,6 +2,7 @@ from django.contrib.auth.models import PermissionManager
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from datetime import datetime
 import uuid
 from accounts.permissions import IsProblemSetter, IsAdmin,IsProblemSetterOwner,IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -138,6 +139,19 @@ def _serialize_submission_row(row):
     }
 
 
+def _get_request_user_external_id(request):
+    if not getattr(request.user, "is_authenticated", False):
+        return None
+    return getattr(request.user, "external_user_id", None)
+
+
+def _contest_has_started(contest):
+    start_time = contest.get("start_time") if contest else None
+    if start_time is None:
+        return True
+    return start_time <= datetime.utcnow()
+
+
 
 def _get_contests_data():
     conn = get_connection()
@@ -212,15 +226,31 @@ def past_contests(request):
     return Response(_get_past_contests_data())
 
 
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def admin_dashboard_contests(request):
+    return Response(_get_contests_data())
+
+
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def admin_dashboard_active_contests(request):
+    return Response(get_active_contests_data())
+
+
 
 # to create a contest (problemsetter/user)
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsProblemSetter])
 def create_contest(request):
+    created_by = _get_request_user_external_id(request)
+    if created_by is None:
+        return Response({"error": "Authenticated user is not linked to a platform account."}, status=403)
+
     payload = dict(request.data)
     contest_data = dict(payload.get("contest", {}))
-    contest_data["created_by"] = getattr(request.user, "id", None)
+    contest_data["created_by"] = created_by
     payload["contest"] = contest_data
 
     serializer = ContestSerializer(data=payload)
@@ -338,7 +368,7 @@ def get_contest_info(request,contest_id):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsProblemSetter])
 def get_contest_problem_editor_data(request, contest_id):
     contest_id = str(contest_id)
     try:
@@ -357,6 +387,8 @@ def get_contest_problem_editor_data(request, contest_id):
         contest = cursor.fetchone()
         if not contest:
             return Response({"error": "Contest not found."}, status=404)
+        if not _contest_has_started(contest):
+            return Response({"error": "Problem solving is locked until the contest starts."}, status=403)
 
         cursor.execute(
             """
@@ -550,7 +582,7 @@ def get_problem_solving_data(request, contest_id, problem_id):
 
 
 @api_view(["PUT"])
-@permission_classes([AllowAny])
+@permission_classes([IsProblemSetter])
 def update_contest_problem(request, contest_id, problem_id):
     contest_id = str(contest_id)
     problem_id = str(problem_id)
@@ -564,6 +596,21 @@ def update_contest_problem(request, contest_id, problem_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT contest_id, start_time
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        contest = cursor.fetchone()
+        if not contest:
+            return Response({"error": "Contest not found."}, status=404)
+        if not _contest_has_started(contest):
+            return Response({"error": "Submissions are locked until the contest starts."}, status=403)
 
         cursor.execute(
             """
@@ -722,7 +769,7 @@ def create_problem_submission(request, contest_id, problem_id):
             selected_language_id = languages[0]["language_id"]
 
         submission_id = str(uuid.uuid4())
-        user_id = request.user.id if getattr(request.user, "is_authenticated", False) else None
+        user_id = _get_request_user_external_id(request)
 
         cursor.execute(
             """
@@ -786,7 +833,7 @@ def create_editorial(request):
     serializer=EditorialSerializer(data=request.data)
     if serializer.is_valid():
         try:
-            serializer.save(created_by=request.user.id)
+            serializer.save(created_by=_get_request_user_external_id(request))
             return Response({"message":"Editorial created successfully","status":200})
         except Exception as e:
             return Response({"error": str(e),"status":500})
@@ -820,7 +867,9 @@ def get_editorial(request,problem_id):
 @permission_classes([IsAuthenticated])
 def register_participant(request, contest_id):
     contest_id = str(contest_id)
-    user_id = request.user.id
+    user_id = _get_request_user_external_id(request)
+    if user_id is None:
+        return Response({"error": "Authenticated user is not linked to a platform account.", "status": 403}, status=403)
 
     try:
         conn = get_connection()

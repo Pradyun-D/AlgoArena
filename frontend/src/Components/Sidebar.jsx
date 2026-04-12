@@ -5,11 +5,23 @@ function Sidebar({ user }) {
     const registeredRounds = Array.isArray(user.registered_rounds) ? user.registered_rounds : [];
     const isLoggedIn = Boolean(user.is_logged_in);
     const avatarUrl = user.avatar_url || defaultAvatar;
+    const role = String(user.role || "").toLowerCase();
     const createdAt = user.created_at ? new Date(user.created_at) : null;
     const isNewbie = createdAt && !Number.isNaN(createdAt.getTime())
         ? (Date.now() - createdAt.getTime()) < 30 * 24 * 60 * 60 * 1000
         : false;
-    const userTier = isLoggedIn ? (isNewbie ? "Newbie" : "Expert") : "Unrated";
+    const userTier = role === "admin"
+        ? "Admin"
+        : role === "problem_setter"
+            ? "Problem Setter"
+            : isLoggedIn
+                ? (isNewbie ? "Newbie" : "Expert")
+                : "Unrated";
+    const userTierColor = role === "admin"
+        ? "#ff3b30"
+        : role === "problem_setter"
+            ? "#ff9f0a"
+            : undefined;
 
     return (
         <div className="bg-surface-container-low p-6 rounded-sm space-y-8 border-t-2 border-primary">
@@ -25,7 +37,7 @@ function Sidebar({ user }) {
                     <h3 className="text-sm font-bold font-headline uppercase tracking-tighter">
                         {isLoggedIn ? (user.username || "guest_user") : "guest_user"}
                     </h3>
-                    <span className="text-[10px] text-secondary">
+                    <span className="text-[10px] text-secondary" style={userTierColor ? { color: userTierColor } : undefined}>
                         {userTier}
                     </span>
                 </div>

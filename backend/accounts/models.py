@@ -8,12 +8,24 @@ class CustomUser(AbstractUser):
         ('problem_setter', 'Problem Setter'),
         ('admin', 'Admin'),
     )
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('suspended', 'Suspended'),
+        ('banned', 'Banned'),
+    )
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     email = models.EmailField(_('email address'), unique=True)
+    account_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    external_user_id = models.PositiveBigIntegerField(unique=True, null=True, blank=True)
+    external_uuid = models.CharField(max_length=36, unique=True, null=True, blank=True)
 
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
+
+    def has_platform_role(self, *roles):
+        return self.role in roles
 
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
