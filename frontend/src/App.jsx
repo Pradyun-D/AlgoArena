@@ -3,6 +3,7 @@ import ContestsPage from "./Pages/AllContests";
 import AdminDashboard from "./Pages/AdminDashboard";
 import AdminDashboardActive from "./Pages/AdminDashboardActive";
 import ContestFormPage from "./Pages/CreateNewContest";
+import DraftsDashboard from "./Pages/DraftsDashboard";
 import ContestPage from "./Pages/ContestInfo";
 import ContestProblemManagerPage from "./Pages/ContestProblemManager";
 import ProblemSolvingPage from "./Pages/ProblemSolving";
@@ -43,6 +44,14 @@ function App() {
           element={(
             <ProblemSetterRoute>
               <ContestFormPage />
+            </ProblemSetterRoute>
+          )}
+        />
+        <Route
+          path="/drafts"
+          element={(
+            <ProblemSetterRoute>
+              <DraftsDashboard />
             </ProblemSetterRoute>
           )}
         />

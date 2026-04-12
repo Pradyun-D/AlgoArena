@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import axios from 'axios';
 import { API_BASE_URL } from "../Utils/api";
 import ErrorPage from "./ErrorPage";
@@ -28,6 +28,8 @@ const toUtcISOString = (localDateTimeValue) => {
 
 const ContestFormPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftId = searchParams.get("draft");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const emptyProblem = {
     title: "",
@@ -55,26 +57,70 @@ const ContestFormPage = () => {
   const [editingProblemIndex, setEditingProblemIndex] = useState(null)
   const [pageLoading, setPageLoading] = useState(true)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [submitMode, setSubmitMode] = useState("schedule")
   const [pageError, setPageError] = useState("")
+  const [loadedDraftTitle, setLoadedDraftTitle] = useState("")
 
   useEffect(()=> {
-    try {
-      const savedContest = localStorage.getItem("contestDraft")
-      const savedProblems = localStorage.getItem("problemsDraft")
+    const loadEditorState = async () => {
+      try {
+        if (draftId) {
+          const response = await axios.get(`${API_BASE_URL}/contests/drafts/${draftId}/`, {
+            withCredentials: true,
+          })
+          const draft = response.data?.draft
+          if (!draft) {
+            throw new Error("Draft not found.")
+          }
 
-      if (savedContest) {
-        setContest(JSON.parse(savedContest))
-      }
+          const startTime = draft.start_time
+            ? new Date(draft.start_time).toISOString().slice(0, 16)
+            : ""
+          const endTime = draft.end_time
+            ? new Date(draft.end_time).toISOString().slice(0, 16)
+            : ""
+          let duration = ""
+          if (startTime && endTime) {
+            const start = new Date(draft.start_time)
+            const end = new Date(draft.end_time)
+            const diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
+            duration = Number.isFinite(diffMinutes) && diffMinutes > 0 ? String(diffMinutes) : ""
+          }
 
-      if (savedProblems) {
-        setProblems(JSON.parse(savedProblems))
+          setContest({
+            title: draft.title || "",
+            description: draft.description || "",
+            start_time: startTime,
+            duration,
+            visibility: draft.visibility || "public",
+          })
+          setLoadedDraftTitle(draft.title || "Draft")
+          return
+        }
+
+        const savedContest = localStorage.getItem("contestDraft")
+        const savedProblems = localStorage.getItem("problemsDraft")
+
+        if (savedContest) {
+          setContest(JSON.parse(savedContest))
+        }
+
+        if (savedProblems) {
+          setProblems(JSON.parse(savedProblems))
+        }
+      } catch (error) {
+        setPageError(
+          error.response?.data?.error ||
+          error.message ||
+          "We could not restore your saved contest draft. Clear the broken draft and try again."
+        )
+      } finally {
+        setPageLoading(false)
       }
-    } catch (error) {
-      setPageError("We could not restore your saved contest draft. Clear the broken draft and try again.")
-    } finally {
-      setPageLoading(false)
     }
-  },[])
+
+    loadEditorState()
+  },[draftId])
 
   const handleContestChange = (e) => {
     const { name, value } = e.target
@@ -197,6 +243,7 @@ const ContestFormPage = () => {
     }
 
     try {
+     setSubmitMode("schedule")
      setSubmitLoading(true)
      setPageError("")
      const response = await axios.post(`${API_BASE_URL}/contests/create/`, payload, {
@@ -221,10 +268,41 @@ const ContestFormPage = () => {
     }
   }
 
-  const handleSaveDraft = () => {
-    localStorage.setItem("contestDraft", JSON.stringify(contest))
-    localStorage.setItem("problemsDraft", JSON.stringify(problems))
-    alert("Draft saved locally!") 
+  const handleSaveDraft = async () => {
+    const payload = {
+      contest: {
+        ...contest,
+        start_time: contest.start_time ? toUtcISOString(contest.start_time) : null,
+        end_time: calculatedEndTime ? toUtcISOString(calculatedEndTime) : null,
+      },
+    }
+
+    try {
+      setSubmitMode("draft")
+      setSubmitLoading(true)
+      setPageError("")
+      if (draftId) {
+        await axios.put(`${API_BASE_URL}/contests/drafts/${draftId}/`, payload, {
+          withCredentials: true,
+        })
+      } else {
+        await axios.post(`${API_BASE_URL}/contests/drafts/create/`, payload, {
+          withCredentials: true,
+        })
+      }
+      localStorage.setItem("contestDraft", JSON.stringify(contest))
+      localStorage.setItem("problemsDraft", JSON.stringify(problems))
+      navigate("/drafts")
+    } catch (error) {
+      setPageError(
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.response?.data?.detail ||
+        "Draft saving failed."
+      )
+    } finally {
+      setSubmitLoading(false)
+    }
   }
 
   if (pageLoading || submitLoading) {
@@ -233,7 +311,9 @@ const ContestFormPage = () => {
         title={submitLoading ? "Scheduling contest" : "Loading contest editor"}
         subtitle={
           submitLoading
-            ? "Packaging contest metadata, validating the problem set, and sending it to the arena."
+            ? submitMode === "draft"
+              ? "Saving the current contest metadata as a reusable draft."
+              : "Packaging contest metadata, validating the problem set, and sending it to the arena."
             : "Restoring your draft, contest settings, and saved problem configuration."
         }
       />
@@ -260,6 +340,7 @@ const ContestFormPage = () => {
         <div className="modal-header">
           <div>
             <h2 className="title">CREATE NEW CONTEST</h2>
+            {draftId ? <p className="subtitle">Editing draft: {loadedDraftTitle || draftId}</p> : null}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {/* Added Theme Toggle Button */}

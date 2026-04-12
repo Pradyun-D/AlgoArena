@@ -189,6 +189,26 @@ function ContestsPage() {
                                     Create Contest
                                 </a>
 
+                                <a
+                                    href="/drafts"
+                                    className="inline-block font-headline font-black uppercase tracking-widest rounded-sm"
+                                    style={{
+                                        padding: "0.95rem 1.35rem",
+                                        color: "#e8f0ff",
+                                        background: "linear-gradient(135deg, #1f2937 0%, #293548 48%, #374151 100%)",
+                                        boxShadow: "0 18px 36px rgba(15, 23, 42, 0.22)",
+                                        border: "1px solid rgba(148, 163, 184, 0.24)",
+                                    }}
+                                >
+                                    <span
+                                        className="material-symbols-outlined"
+                                        style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
+                                    >
+                                        draft
+                                    </span>
+                                    Access Drafts
+                                </a>
+
                                 {canAccessAdminDashboard ? (
                                     <a
                                         href="/admin/dashboard"

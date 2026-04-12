@@ -12,6 +12,10 @@ urlpatterns = [
     path("admin/dashboard/active/", views.admin_dashboard_active_contests, name="admin_dashboard_active_contests_api"),
 
     path("create/", views.create_contest, name="create_contest_api"),
+    path("drafts/", views.list_drafts, name="list_drafts_api"),
+    path("drafts/create/", views.create_draft, name="create_draft_api"),
+    path("drafts/<uuid:contest_id>/", views.draft_detail, name="draft_detail_api"),
+    path("drafts/<uuid:contest_id>/publish/", views.publish_draft, name="publish_draft_api"),
     path("<uuid:contest_id>/delete/", views.delete_contest, name="delete_contest_api"),
     path("editorial/create/",views.create_editorial,name="create_editorial_api"),
 

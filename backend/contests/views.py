@@ -2,7 +2,7 @@ from django.contrib.auth.models import PermissionManager
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from accounts.permissions import IsProblemSetter, IsAdmin,IsProblemSetterOwner,IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -152,6 +152,49 @@ def _contest_has_started(contest):
     return start_time <= datetime.utcnow()
 
 
+def _parse_optional_datetime(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("Invalid datetime format.") from exc
+
+    if parsed.tzinfo is not None:
+        parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+
+    return parsed
+
+
+def _to_sql_datetime(value):
+    if value is None:
+        return None
+    return value.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _validate_publishable_draft(draft):
+    if not draft:
+        return "Draft not found."
+
+    title = str(draft.get("title") or "").strip()
+    description = str(draft.get("description") or "").strip()
+    start_time = draft.get("start_time")
+    end_time = draft.get("end_time")
+
+    if not title or title == "Untitled Draft":
+        return "Add a real contest title before publishing this draft."
+    if not description:
+        return "Add a contest description before publishing this draft."
+    if start_time is None or end_time is None:
+        return "Set both start and end time before publishing this draft."
+    if start_time >= end_time:
+        return "End time must occur after start time."
+
+    return None
+
+
 
 def _get_contests_data():
     conn = get_connection()
@@ -236,6 +279,256 @@ def admin_dashboard_contests(request):
 @permission_classes([IsAdmin])
 def admin_dashboard_active_contests(request):
     return Response(get_active_contests_data())
+
+
+@api_view(["GET"])
+@permission_classes([IsProblemSetter])
+def list_drafts(request):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at, updated_at
+            FROM drafts
+            ORDER BY updated_at DESC, created_at DESC
+            """
+        )
+        return Response(cursor.fetchall(), status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["POST"])
+@permission_classes([IsProblemSetter])
+def create_draft(request):
+    created_by = _get_request_user_external_id(request)
+    if created_by is None:
+        return Response({"error": "Authenticated user is not linked to a platform account."}, status=403)
+
+    draft_payload = dict(request.data.get("contest", request.data) or {})
+    title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
+    description = str(draft_payload.get("description", "") or "").strip()
+    visibility = str(draft_payload.get("visibility", "public") or "public").strip().lower()
+    if visibility not in {"public", "private"}:
+        visibility = "public"
+
+    try:
+        start_time = _parse_optional_datetime(draft_payload.get("start_time"))
+        end_time = _parse_optional_datetime(draft_payload.get("end_time"))
+    except ValueError as e:
+        return Response({"error": str(e)}, status=400)
+
+    if start_time and end_time and start_time >= end_time:
+        return Response({"error": "End time must occur after start time."}, status=400)
+
+    contest_id = str(uuid.uuid4())
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            INSERT INTO drafts
+            (contest_id, title, description, start_time, end_time, visibility, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                contest_id,
+                title,
+                description,
+                _to_sql_datetime(start_time),
+                _to_sql_datetime(end_time),
+                visibility,
+                created_by,
+            ),
+        )
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at, updated_at
+            FROM drafts
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        return Response(
+            {"message": "Draft saved successfully.", "draft": cursor.fetchone()},
+            status=201,
+        )
+    except Exception as e:
+        if 'conn' in locals() and conn:
+            conn.rollback()
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsProblemSetter])
+def draft_detail(request, contest_id):
+    contest_id = str(contest_id)
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at, updated_at
+            FROM drafts
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        draft = cursor.fetchone()
+        if not draft:
+            return Response({"error": "Draft not found."}, status=404)
+
+        if request.method == "GET":
+            return Response({"draft": draft}, status=200)
+
+        draft_payload = dict(request.data.get("contest", request.data) or {})
+        title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
+        description = str(draft_payload.get("description", "") or "").strip()
+        visibility = str(draft_payload.get("visibility", draft.get("visibility", "public")) or "public").strip().lower()
+        if visibility not in {"public", "private"}:
+            visibility = "public"
+
+        try:
+            start_time = _parse_optional_datetime(draft_payload.get("start_time"))
+            end_time = _parse_optional_datetime(draft_payload.get("end_time"))
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
+
+        if start_time and end_time and start_time >= end_time:
+            return Response({"error": "End time must occur after start time."}, status=400)
+
+        cursor.execute(
+            """
+            UPDATE drafts
+            SET title = %s,
+                description = %s,
+                start_time = %s,
+                end_time = %s,
+                visibility = %s,
+                updated_at = UTC_TIMESTAMP()
+            WHERE contest_id = %s
+            """,
+            (
+                title,
+                description,
+                _to_sql_datetime(start_time),
+                _to_sql_datetime(end_time),
+                visibility,
+                contest_id,
+            ),
+        )
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at, updated_at
+            FROM drafts
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        return Response({"message": "Draft updated successfully.", "draft": cursor.fetchone()}, status=200)
+    except Exception as e:
+        if 'conn' in locals() and conn:
+            conn.rollback()
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["POST"])
+@permission_classes([IsProblemSetter])
+def publish_draft(request, contest_id):
+    contest_id = str(contest_id)
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at, updated_at
+            FROM drafts
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        draft = cursor.fetchone()
+        if not draft:
+            return Response({"error": "Draft not found."}, status=404)
+
+        publish_error = _validate_publishable_draft(draft)
+        if publish_error:
+            return Response({"error": publish_error}, status=400)
+
+        cursor.execute(
+            """
+            INSERT INTO contests
+            (contest_id, title, description, start_time, end_time, visibility, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                draft["contest_id"],
+                draft["title"],
+                draft.get("description", ""),
+                draft.get("start_time"),
+                draft.get("end_time"),
+                draft.get("visibility", "public"),
+                draft.get("created_by"),
+            ),
+        )
+        cursor.execute("DELETE FROM drafts WHERE contest_id = %s", (contest_id,))
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        return Response(
+            {"message": "Draft published successfully.", "contest": cursor.fetchone()},
+            status=201,
+        )
+    except Exception as e:
+        if 'conn' in locals() and conn:
+            conn.rollback()
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
 
 
 
