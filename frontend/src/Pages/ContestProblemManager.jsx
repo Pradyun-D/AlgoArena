@@ -167,7 +167,7 @@ function ContestProblemManagerPage() {
       };
 
       await axios.put(
-        `${API_BASE_URL}/contests/${contestId}/problems/${draftProblem.problem_id}/`,
+        `${API_BASE_URL}/contests/${contestId}/problems/${draftProblem.problem_id}/update`,
         payload,
         { withCredentials: true }
       );

@@ -405,7 +405,6 @@ function ProblemSolvingPage() {
                 <div className="solve-samples__header">
                   <div>
                     <span className="solve-panel-kicker">Visible Testcases</span>
-                    <h2>Samples available to the competitor</h2>
                   </div>
                   <span className="solve-sample-note">
                     {solveData?.hidden_testcase_count || 0} hidden testcase(s) stay private

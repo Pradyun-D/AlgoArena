@@ -25,6 +25,15 @@ for env_file in (BASE_DIR / '.env', ROOT_DIR / '.env'):
         environ.Env.read_env(env_file)
         break
 
+from datetime import timedelta
+
+# ...
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

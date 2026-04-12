@@ -995,7 +995,7 @@ def update_contest_problem(request, contest_id, problem_id):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def create_problem_submission(request, contest_id, problem_id):
     contest_id = str(contest_id)
     problem_id = str(problem_id)
