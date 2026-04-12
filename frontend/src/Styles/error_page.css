@@ -143,3 +143,35 @@
     width: 100%;
   }
 }
+
+body.light-mode .error-page {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(84, 138, 255, 0.14), transparent 24%),
+    radial-gradient(circle at 82% 24%, rgba(123, 255, 213, 0.08), transparent 18%),
+    linear-gradient(180deg, #f7fbff 0%, #eff5fb 52%, #e7edf6 100%);
+}
+
+body.light-mode .error-shell {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 34px 90px rgba(47, 125, 244, 0.08);
+}
+
+body.light-mode .error-kicker {
+  color: var(--primary);
+}
+
+body.light-mode .error-code,
+body.light-mode .error-title,
+body.light-mode .error-btn-secondary {
+  color: var(--on-background);
+}
+
+body.light-mode .error-copy {
+  color: var(--on-surface-variant);
+}
+
+body.light-mode .error-btn-secondary {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(20, 32, 51, 0.04);
+}

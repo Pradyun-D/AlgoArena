@@ -593,3 +593,122 @@
     min-height: 3rem;
   }
 }
+
+body.light-mode .admin-dashboard-page {
+  background:
+    linear-gradient(180deg, #f6f8fb 0%, #f3f5f9 100%);
+  color: var(--on-background);
+}
+
+body.light-mode .admin-sidebar {
+  background: #f3f5f9;
+  border-right-color: #e5e9f0;
+}
+
+body.light-mode .admin-sidebar-brand span,
+body.light-mode .admin-topbar-link,
+body.light-mode .admin-page-description,
+body.light-mode .admin-mini-stat span,
+body.light-mode .admin-searchbar,
+body.light-mode .admin-insight-card p,
+body.light-mode .admin-insight-card span {
+  color: var(--on-surface-variant);
+}
+
+body.light-mode .admin-sidebar-nav a,
+body.light-mode .admin-sidebar-support a {
+  color: var(--on-surface-variant);
+}
+
+body.light-mode .admin-sidebar-nav a:hover,
+body.light-mode .admin-sidebar-support a:hover,
+body.light-mode .admin-sidebar-nav a.active {
+  color: var(--on-background);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+body.light-mode .admin-create-button {
+  background: linear-gradient(180deg, #2f7df4 0%, #1f6be4 100%);
+  color: #ffffff;
+}
+
+body.light-mode .admin-topbar {
+  border-bottom-color: #e5e9f0;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+body.light-mode .admin-topbar-link.active,
+body.light-mode .admin-topbar-link:hover,
+body.light-mode .admin-icon-button,
+body.light-mode .admin-avatar-button {
+  color: var(--on-background);
+}
+
+body.light-mode .admin-avatar-button {
+  background: #eef3fb;
+}
+
+body.light-mode .admin-mini-stat,
+body.light-mode .admin-panel,
+body.light-mode .admin-insight-card {
+  background: #ffffff;
+  border-color: #e7ebf2;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+body.light-mode .admin-panel {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+body.light-mode .admin-searchbar,
+body.light-mode .admin-filter-button,
+body.light-mode .admin-filter-icon {
+  background: #f7f9fc;
+  border-color: #e5e9f0;
+  color: var(--on-background);
+}
+
+body.light-mode .admin-searchbar input {
+  background: transparent;
+  color: var(--on-background);
+}
+
+body.light-mode .admin-contest-table th,
+body.light-mode .admin-contest-table td,
+body.light-mode .admin-table-footer {
+  border-color: #edf1f6;
+  color: var(--on-background);
+}
+
+body.light-mode .admin-contest-table th {
+  background: #f3f6fa;
+  color: #7d8aa0;
+}
+
+body.light-mode .contest-actions button:hover,
+body.light-mode .admin-pagination button:hover {
+  background: #eef3fb;
+}
+
+body.light-mode .admin-section-kicker,
+body.light-mode .admin-sidebar-brand p {
+  color: #4f7edc;
+}
+
+body.light-mode .admin-mini-stat.blue strong,
+body.light-mode .admin-insight-card.trend,
+body.light-mode .admin-pagination button.active {
+  color: #2f7df4;
+}
+
+body.light-mode .admin-mini-stat.green strong,
+body.light-mode .status-live {
+  color: #1f9d62;
+}
+
+body.light-mode .admin-insight-card.event {
+  background:
+    linear-gradient(135deg, rgba(47, 125, 244, 0.05), rgba(255, 255, 255, 0.96)),
+    #ffffff;
+}

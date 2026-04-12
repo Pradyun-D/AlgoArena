@@ -21,12 +21,18 @@
 }
 
 .light-mode {
-  --bg-main: #f6f8fa;
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f3f4f6;
-  --border-subtle: #d0d7de;
-  --text-primary: #1f2328;
-  --text-secondary: #656d76;
+  --bg-main: #f3f6fb;
+  --bg-surface: rgba(251, 252, 254, 0.98);
+  --bg-surface-hover: #f5f8fc;
+  --bg-panel: #f7f9fc;
+  --border-subtle: #dde6f0;
+  --text-primary: #1a2333;
+  --text-secondary: #6f7f96;
+  --text-accent: #3e79ee;
+  --color-success: #27b36d;
+  --color-danger: #f26a63;
+  --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --gradient-btn: linear-gradient(135deg, #69a7ff 0%, #3f7bf0 52%, #2459d9 100%);
 }
 
 * {
@@ -44,6 +50,13 @@ body {
   font-family: "Sora", "Segoe UI", sans-serif;
   line-height: 1.6;
   font-size: 14px;
+}
+
+body.light-mode {
+  background:
+    radial-gradient(circle at top left, rgba(62, 121, 238, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(39, 179, 109, 0.06), transparent 24%),
+    linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
 }
 
 /* --- MAIN LAYOUT --- */
@@ -384,6 +397,86 @@ body {
   background: rgba(255, 255, 255, 0.02);
   border-color: var(--border-subtle);
   color: var(--text-primary);
+}
+
+body.light-mode .sidebar-nav {
+  gap: 14px;
+}
+
+body.light-mode .nav-item {
+  color: #61748d;
+}
+
+body.light-mode .nav-item:hover,
+body.light-mode .nav-item.active {
+  background: #edf3fb;
+  border-color: #d7e4f5;
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+body.light-mode .nav-item-icon {
+  background: rgba(62, 121, 238, 0.12);
+  color: var(--text-accent);
+}
+
+body.light-mode .badge {
+  background: rgba(62, 121, 238, 0.08);
+  border-color: rgba(62, 121, 238, 0.14);
+}
+
+body.light-mode .badge.success {
+  background: rgba(39, 179, 109, 0.1);
+  border-color: rgba(39, 179, 109, 0.16);
+}
+
+body.light-mode .badge-muted {
+  background: #f5f8fc;
+  border-color: #e1e8f1;
+}
+
+body.light-mode .markdown-body {
+  color: #4a5c74;
+}
+
+body.light-mode .markdown-body pre {
+  background: #f5f8fc;
+  border-color: #dde6f0;
+}
+
+body.light-mode .pillar-box,
+body.light-mode .list-row,
+body.light-mode .stats-panel {
+  background: #f7f9fc;
+  border-color: #dde6f0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+body.light-mode .problem-meta,
+body.light-mode .stat-label {
+  color: #72839a;
+}
+
+body.light-mode .difficulty-pill {
+  background: #eef3f9;
+  border-color: #dbe5f0;
+}
+
+body.light-mode .status-timer {
+  color: #f1746c;
+}
+
+body.light-mode .pillar-box p:last-child,
+body.light-mode .list-row,
+body.light-mode .stats-panel span:last-child,
+body.light-mode .problem-title {
+  color: #1f2b3d;
+}
+
+body.light-mode .btn-outline {
+  background: #fbfcfe;
+  border-color: #d9e3ef;
+  color: #334155;
 }
 
 .mono {

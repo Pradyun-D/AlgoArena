@@ -4,6 +4,7 @@ import axios from "axios";
 import { getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
 import "../Styles/auth_pages.css";
+import ThemeToggle from "../Components/ThemeToggle";
 
 function ProfileSettingsPage() {
     const navigate = useNavigate();
@@ -72,6 +73,7 @@ function ProfileSettingsPage() {
             <header className="auth-topbar">
                 <Link className="auth-brand" to="/contests">Algo Arena</Link>
                 <div className="auth-topbar-actions">
+                    <ThemeToggle />
                     <Link className="auth-topbar-link" to="/contests">Back To Contests</Link>
                 </div>
             </header>

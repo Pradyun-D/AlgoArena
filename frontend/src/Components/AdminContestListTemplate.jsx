@@ -4,6 +4,7 @@ import SidebarAdminDashboard from "./SidebarAdminDashboard";
 import ErrorPage from "../Pages/ErrorPage";
 import LoadingPage from "../Pages/LoadingPage";
 import "../Styles/admin_dashboard.css";
+import ThemeToggle from "./ThemeToggle";
 
 const topMetrics = [
   { label: "Global Users", value: "128,402", accent: "blue" },
@@ -179,6 +180,7 @@ function AdminContestListTemplate({
           </div>
 
           <div className="admin-topbar-actions">
+            <ThemeToggle />
             <button className="admin-icon-button" type="button" aria-label="Notifications">
               <span className="material-symbols-outlined">notifications</span>
             </button>
@@ -186,7 +188,7 @@ function AdminContestListTemplate({
               <span className="material-symbols-outlined">settings</span>
             </button>
             <button className="admin-avatar-button" type="button" aria-label="Admin profile">
-              <span className="material-symbols-outlined">Account Circle</span>
+              <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>
         </header>
@@ -223,14 +225,14 @@ function AdminContestListTemplate({
               <div className="admin-toolbar-filters">
                 <button className="admin-filter-button" type="button">
                   <span>Status: All</span>
-                  <span className="material-symbols-outlined">Expand More</span>
+                  <span className="material-symbols-outlined">expand_more</span>
                 </button>
                 <button className="admin-filter-button" type="button">
-                  <span className="material-symbols-outlined">Calendar Month</span>
+                  <span className="material-symbols-outlined">calendar_month</span>
                   <span>Date Range</span>
                 </button>
                 <button className="admin-filter-icon" type="button" aria-label="Advanced filters">
-                  <span className="material-symbols-outlined">Filter Alt</span>
+                  <span className="material-symbols-outlined">filter_alt</span>
                 </button>
               </div>
             </div>
@@ -283,7 +285,7 @@ function AdminContestListTemplate({
                               <span className="material-symbols-outlined">edit</span>
                             </button>
                             <button type="button" aria-label={`Clone ${contest.title}`}>
-                              <span className="material-symbols-outlined">content copy</span>
+                              <span className="material-symbols-outlined">content_copy</span>
                             </button>
                             <button type="button" aria-label={`Delete ${contest.title}`} className="danger">
                               <span className="material-symbols-outlined">delete</span>
@@ -311,13 +313,13 @@ function AdminContestListTemplate({
               </p>
               <div className="admin-pagination">
                 <button type="button" aria-label="Previous page">
-                  <span className="material-symbols-outlined">chevron left</span>
+                  <span className="material-symbols-outlined">chevron_left</span>
                 </button>
                 <button type="button" className="active" aria-current="page">1</button>
                 <button type="button">2</button>
                 <button type="button">3</button>
                 <button type="button" aria-label="Next page">
-                  <span className="material-symbols-outlined">chevron right</span>
+                  <span className="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>
             </div>

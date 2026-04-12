@@ -4,6 +4,8 @@ import axios from 'axios';
 import { API_BASE_URL } from "../Utils/api";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
+import ThemeToggle from "../Components/ThemeToggle";
+import { useTheme } from "../Theme/ThemeProvider";
 import "../Styles/form.css"
 const toUtcISOString = (localDateTimeValue) => {
   if (!localDateTimeValue) {
@@ -30,7 +32,7 @@ const ContestFormPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftId = searchParams.get("draft");
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { isDarkMode } = useTheme();
   const emptyProblem = {
     title: "",
     description: "",
@@ -249,10 +251,14 @@ const ContestFormPage = () => {
      const response = await axios.post(`${API_BASE_URL}/contests/create/`, payload, {
        withCredentials: true
      });
-     console.log(response.data)
+     const createdContestId = response.data?.contest?.contest_id
      localStorage.removeItem("contestDraft")
      localStorage.removeItem("problemsDraft")
-     navigate('/contests')
+     if (createdContestId) {
+       navigate(`/contest/${createdContestId}/problems/edit`)
+     } else {
+       navigate('/contests')
+     }
     }
 
     catch (error) {
@@ -334,7 +340,6 @@ const ContestFormPage = () => {
   }
 
   return (
-    // Applied the dynamic class here based on state
     <div className={`overlay ${isDarkMode ? 'dark-mode' : ''}`} style={{ background: 'var(--bg-body)' }}>
       <div className="modal">
         <div className="modal-header">
@@ -343,13 +348,7 @@ const ContestFormPage = () => {
             {draftId ? <p className="subtitle">Editing draft: {loadedDraftTitle || draftId}</p> : null}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            {/* Added Theme Toggle Button */}
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', cursor: 'pointer' }}
-            >
-              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
-            </button>
+            <ThemeToggle />
             <button className="close-btn" onClick={() => navigate('/contests')}>×</button>
           </div>
         </div>
@@ -421,8 +420,13 @@ const ContestFormPage = () => {
           </div>
 
           <div className="section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '16px 0' }}>
-               <p className="section-title" style={{ margin: 0 }}>PROBLEM SELECTION</p>
+            <div className="section-header-row">
+               <div>
+                 <p className="section-title" style={{ margin: 0 }}>INITIAL PROBLEM SET</p>
+                 <p className="section-helper-text">
+                   Add the required problems here so the contest can be created. After creation, use the Modify Problems page for detailed statement and testcase edits.
+                 </p>
+               </div>
                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Selected: {problems.length}/10</span>
             </div>
 
@@ -485,6 +489,16 @@ const ContestFormPage = () => {
                 </div>
               ))}
             </div>
+
+            {problems.length === 0 ? (
+              <div className="inline-note">
+                Add at least one problem before scheduling the contest.
+              </div>
+            ) : (
+              <div className="inline-note">
+                After the contest is created, you will be taken to the Modify Problems page to refine these problems further.
+              </div>
+            )}
           </div>
         </div>
 

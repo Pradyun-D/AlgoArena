@@ -193,7 +193,7 @@ function DraftsDashboard() {
                               disabled={publishingId === draft.contest_id}
                               aria-label={`Publish ${draft.title || "draft"}`}
                             >
-                              <span className="material-symbols-outlined">Rocket Launch</span>
+                              <span className="material-symbols-outlined">rocket_launch</span>
                             </button>
                           </div>
                         </td>

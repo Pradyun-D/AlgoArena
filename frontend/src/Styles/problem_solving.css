@@ -605,3 +605,71 @@
     align-items: flex-start;
   }
 }
+
+body.light-mode .solve-page-shell {
+  background:
+    radial-gradient(circle at top left, rgba(132, 173, 255, 0.1), transparent 26%),
+    radial-gradient(circle at top right, rgba(107, 254, 156, 0.08), transparent 22%),
+    linear-gradient(180deg, #f8fbff 0%, #eef3fa 100%);
+}
+
+body.light-mode .solve-topbar {
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom-color: rgba(204, 213, 225, 0.9);
+}
+
+body.light-mode .solve-header-link,
+body.light-mode .solve-sidebar,
+body.light-mode .solve-sidebar__contest,
+body.light-mode .solve-sidebar__meta,
+body.light-mode .solve-sidebar__tags,
+body.light-mode .solve-sidebar__notes,
+body.light-mode .solve-panel-stats div,
+body.light-mode .solve-sample-card,
+body.light-mode .solve-bottom-panel,
+body.light-mode .solve-submission-card,
+body.light-mode .solve-empty-state,
+body.light-mode .solve-editor-toolbar,
+body.light-mode .solve-bottom-panel__tabs button,
+body.light-mode .solve-banner-message {
+  border-color: rgba(204, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--on-background);
+}
+
+body.light-mode .solve-sidebar,
+body.light-mode .solve-problem-panel {
+  border-right-color: rgba(204, 213, 225, 0.9);
+}
+
+body.light-mode .solve-workspace,
+body.light-mode .solve-editor-surface,
+body.light-mode .solve-bottom-panel {
+  background: rgba(248, 251, 255, 0.55);
+}
+
+body.light-mode .solve-breadcrumbs,
+body.light-mode .solve-sidebar__contest p,
+body.light-mode .solve-sidebar__notes p,
+body.light-mode .solve-sidebar__meta span,
+body.light-mode .solve-panel-stats div,
+body.light-mode .solve-sample-note,
+body.light-mode .solve-submission-card__main p,
+body.light-mode .solve-submission-card__meta,
+body.light-mode .solve-console {
+  color: var(--on-surface-variant);
+}
+
+body.light-mode .solve-markdown p,
+body.light-mode .solve-markdown li {
+  color: var(--on-background);
+}
+
+body.light-mode .solve-markdown code {
+  background: rgba(47, 125, 244, 0.08);
+}
+
+body.light-mode .solve-markdown pre {
+  background: rgba(244, 247, 251, 0.95);
+  border-color: rgba(204, 213, 225, 0.95);
+}

@@ -295,3 +295,36 @@
     width: 100%;
   }
 }
+
+body.light-mode .auth-page {
+  background:
+    radial-gradient(circle at top left, rgba(47, 125, 244, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(28, 166, 95, 0.1), transparent 24%),
+    var(--background);
+}
+
+body.light-mode .auth-topbar {
+  border-bottom-color: rgba(204, 213, 225, 0.8);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+body.light-mode .auth-panel {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 60px rgba(47, 125, 244, 0.08);
+}
+
+body.light-mode .auth-panel-chrome {
+  border-bottom-color: rgba(204, 213, 225, 0.8);
+  background: rgba(244, 247, 251, 0.92);
+}
+
+body.light-mode .auth-input {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(244, 247, 251, 0.95);
+  color: var(--on-surface);
+}
+
+body.light-mode .auth-input::placeholder {
+  color: rgba(93, 104, 120, 0.6);
+}

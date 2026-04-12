@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "../Styles/landing_page.css";
+import ThemeToggle from "../Components/ThemeToggle";
 
 const featureItems = [
   {
@@ -43,6 +44,7 @@ function LandingPage() {
         </nav>
 
         <div className="landing-actions">
+          <ThemeToggle className="landing-theme-toggle" />
           <Link to="/login" className="landing-link-button">
             Log In
           </Link>

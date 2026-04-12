@@ -680,8 +680,6 @@ def get_contest_problem_editor_data(request, contest_id):
         contest = cursor.fetchone()
         if not contest:
             return Response({"error": "Contest not found."}, status=404)
-        if not _contest_has_started(contest):
-            return Response({"error": "Problem solving is locked until the contest starts."}, status=403)
 
         cursor.execute(
             """
@@ -902,8 +900,6 @@ def update_contest_problem(request, contest_id, problem_id):
         contest = cursor.fetchone()
         if not contest:
             return Response({"error": "Contest not found."}, status=404)
-        if not _contest_has_started(contest):
-            return Response({"error": "Submissions are locked until the contest starts."}, status=403)
 
         cursor.execute(
             """

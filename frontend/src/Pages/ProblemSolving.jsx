@@ -10,6 +10,8 @@ import "../Styles/problem_solving.css";
 import { getStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
 import { formatDisplayText } from "../Utils/format_display_text";
+import ThemeToggle from "../Components/ThemeToggle";
+import { useTheme } from "../Theme/ThemeProvider";
 
 const LANGUAGE_PRESETS = {
   "C++20": {
@@ -120,6 +122,7 @@ function ProblemSolvingPage() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     const fetchSolveData = async () => {
@@ -309,6 +312,7 @@ function ProblemSolvingPage() {
         </div>
 
         <div className="solve-topbar__actions">
+          <ThemeToggle />
           <Link to={`/contest/${contestId}/`} className="solve-header-link">
             Contest
           </Link>
@@ -477,7 +481,7 @@ function ProblemSolvingPage() {
                   height="100%"
                   defaultLanguage={selectedPreset.monacoLanguage}
                   language={selectedPreset.monacoLanguage}
-                  theme="vs-dark"
+                  theme={isDarkMode ? "vs-dark" : "vs"}
                   value={sourceCode}
                   onChange={(value) => setSourceCode(value || "")}
                   beforeMount={(monaco) => {

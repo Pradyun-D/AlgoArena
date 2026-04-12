@@ -301,3 +301,48 @@
     align-items: flex-start;
   }
 }
+
+body.light-mode .contest-loader-page {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(79, 126, 255, 0.16), transparent 24%),
+    radial-gradient(circle at 80% 18%, rgba(91, 255, 176, 0.1), transparent 18%),
+    linear-gradient(180deg, #f7fbff 0%, #edf4fb 50%, #e8eef6 100%);
+}
+
+body.light-mode .contest-loader-terminal {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 32px 80px rgba(47, 125, 244, 0.1);
+}
+
+body.light-mode .contest-loader-terminal-bar {
+  border-bottom-color: rgba(204, 213, 225, 0.8);
+  background: rgba(244, 247, 251, 0.92);
+}
+
+body.light-mode .contest-loader-terminal-label,
+body.light-mode .loader-status-badge,
+body.light-mode .loader-ping,
+body.light-mode .contest-loader-subtitle {
+  color: var(--on-surface-variant);
+}
+
+body.light-mode .contest-loader-title,
+body.light-mode .loader-feed-label {
+  color: var(--on-background);
+}
+
+body.light-mode .contest-loader-progress,
+body.light-mode .contest-loader-feed-row {
+  background: rgba(20, 32, 51, 0.04);
+}
+
+body.light-mode .loader-ring {
+  border-color: rgba(29, 41, 57, 0.18);
+}
+
+body.light-mode .loader-core {
+  box-shadow:
+    inset -24px -20px 54px rgba(16, 24, 40, 0.18),
+    0 0 48px rgba(82, 116, 196, 0.12);
+}

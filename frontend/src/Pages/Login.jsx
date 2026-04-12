@@ -4,6 +4,7 @@ import axios from "axios";
 import { setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
 import "../Styles/auth_pages.css";
+import ThemeToggle from "../Components/ThemeToggle";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -42,6 +43,7 @@ function LoginPage() {
             <header className="auth-topbar">
                 <Link className="auth-brand" to="/contests">ALGOARENA</Link>
                 <div className="auth-topbar-actions">
+                    <ThemeToggle />
                     <Link className="auth-topbar-link" to="/register">Create Account</Link>
                 </div>
             </header>

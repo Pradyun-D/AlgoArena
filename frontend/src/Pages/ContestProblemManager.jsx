@@ -256,7 +256,7 @@ function ContestProblemManagerPage() {
                   selectProblem(problem);
                 }}
               >
-                <span className="material-symbols-outlined">Code Blocks</span>
+                <span className="material-symbols-outlined">code_blocks</span>
                 <span>{problem.title || `Problem ${index + 1}`}</span>
               </a>
             ))}

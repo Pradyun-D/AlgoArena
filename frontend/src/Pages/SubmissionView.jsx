@@ -5,6 +5,8 @@ import Editor from "@monaco-editor/react";
 import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
 import { API_BASE_URL } from "../Utils/api";
+import { useTheme } from "../Theme/ThemeProvider";
+import ArenaNavbar from "../Components/ArenaNavbar";
 
 const LANGUAGE_PRESETS = {
     "C++20": { monacoLanguage: "cpp" },
@@ -23,6 +25,11 @@ function SubmissionViewPage() {
     const [submission, setSubmission] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const { isDarkMode } = useTheme();
+    const navLinks = [
+        { label: "Contests", to: "/contests", active: false },
+        { label: "My Submissions", to: "/submissions", active: true },
+    ];
 
     const loadSubmission = async () => {
         try {
@@ -78,27 +85,19 @@ function SubmissionViewPage() {
 
     return (
         <div className="bg-background text-on-background min-h-screen">
-            <nav className="nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none bg-background/80 backdrop-blur-sm">
-                <div className="flex items-center gap-8">
-                    <Link className="text-2xl font-black tracking-tighter text-primary font-headline uppercase" to="/contests">
-                        AlgoArena
-                    </Link>
-                    <div className="hidden md:flex gap-4 h-full items-center">
-                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/contests">
-                            Contests
-                        </Link>
-                        <Link className="text-primary border-b-2 border-[#84adff] pb-1 font-headline tracking-tight font-bold uppercase text-sm" to="/submissions">
-                            My Submissions
-                        </Link>
-                    </div>
-                </div>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="px-4 py-2 bg-primary text-on-primary rounded-sm font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors"
-                >
-                    Go Back
-                </button>
-            </nav>
+            <ArenaNavbar
+                navLinks={navLinks}
+                showAuthActions={false}
+                className="bg-background/80 backdrop-blur-sm"
+                rightContent={(
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="px-4 py-2 bg-primary text-on-primary rounded-sm font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                    >
+                        Go Back
+                    </button>
+                )}
+            />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="bg-surface-container-high rounded-lg w-full flex flex-col shadow-2xl border border-outline-variant/20">
@@ -120,7 +119,7 @@ function SubmissionViewPage() {
                             height="70vh"
                             language={getLanguagePreset(submission.language_name).monacoLanguage}
                             value={submission.source_code}
-                            theme="vs-dark"
+                            theme={isDarkMode ? "vs-dark" : "vs"}
                             options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, padding: { top: 16 } }}
                         />
                     </div>

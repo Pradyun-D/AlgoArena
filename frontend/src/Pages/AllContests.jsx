@@ -7,6 +7,7 @@ import ErrorPage from "./ErrorPage";
 import LoadingPage from "./LoadingPage";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
+import ArenaNavbar from "../Components/ArenaNavbar";
 
 function ContestsPage() {
     const [availableContests, setAvailableContests] = useState([]);
@@ -90,6 +91,11 @@ function ContestsPage() {
 
     const canCreateContest = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
     const canAccessAdminDashboard = Boolean(authUser && authUser.role === "admin");
+    const navLinks = [
+        { label: "Contests", to: "/contests", active: true },
+        { label: "Leaderboard", to: leaderboardUrl, active: false },
+        { label: "My Submissions", to: "/submissions", active: false },
+    ];
 
     if (loading) {
         return (
@@ -115,54 +121,7 @@ function ContestsPage() {
 
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
-            <nav className="nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none">
-                <div className="flex items-center gap-8">
-                    <Link className="text-2xl font-black tracking-tighter text-primary font-headline uppercase" to="/contests">
-                        AlgoArena
-                    </Link>
-                    <div className="hidden md:flex gap-6 h-full items-center">
-                        <Link className="text-primary border-b-2 border-[#84adff] pb-1 font-headline tracking-tight font-bold uppercase text-sm" to="/contests">
-                            Contests
-                        </Link>
-                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to={leaderboardUrl}>
-                            Leaderboard
-                        </Link>
-                        <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/submissions">
-                            My Submissions
-                        </Link>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    {authUser ? (
-                        <>
-                            <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/profile/edit">
-                                Profile
-                            </Link>
-                            <button
-                                className="p-2 transition-all rounded-sm scale-95 active:opacity-80"
-                                style={{
-                                    color: "#03111c",
-                                    background: "linear-gradient(135deg, #84adff 0%, #4f8eff 48%, #69f0a7 100%)",
-                                    boxShadow: "0 12px 24px rgba(32, 112, 255, 0.22)",
-                                    border: "1px solid rgba(132, 173, 255, 0.28)",
-                                }}
-                                onClick={handleLogout}
-                            >
-                                <span className="material-symbols-outlined">logout</span>
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <Link className="text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/login">
-                                Login
-                            </Link>
-                            <Link className="text-primary border border-outline-variant/20 px-3 py-2 transition-colors font-headline tracking-tight font-bold uppercase text-sm" to="/register">
-                                Register
-                            </Link>
-                        </>
-                    )}
-                </div>
-            </nav>
+            <ArenaNavbar navLinks={navLinks} authUser={authUser} onLogout={handleLogout} />
 
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 <div className="md:col-span-9 space-y-12">
@@ -191,7 +150,7 @@ function ContestsPage() {
                                         className="material-symbols-outlined"
                                         style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
                                     >
-                                        add circle
+                                        add_circle
                                     </span>
                                     Create Contest
                                 </Link>
@@ -232,7 +191,7 @@ function ContestsPage() {
                                             className="material-symbols-outlined"
                                             style={{ fontSize: "1rem", verticalAlign: "middle", marginRight: "0.5rem" }}
                                         >
-                                            Admin Panel Settings
+                                          admin_panel_settings
                                         </span>
                                         Access Admin Dashboard
                                     </Link>
