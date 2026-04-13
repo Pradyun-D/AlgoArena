@@ -152,6 +152,37 @@ def _contest_has_started(contest):
     return start_time <= datetime.utcnow()
 
 
+def _fetch_contest_with_registration(cursor, contest_id, user_id):
+    cursor.execute(
+        """
+        SELECT
+            c.contest_id,
+            c.title,
+            c.description,
+            c.start_time,
+            c.end_time,
+            c.visibility,
+            c.created_by,
+            c.created_at,
+            EXISTS(
+                SELECT 1
+                FROM contest_participants cp
+                WHERE cp.contest_id = c.contest_id
+                  AND cp.user_id = %s
+            ) AS is_registered
+        FROM contests c
+        WHERE c.contest_id = %s
+        LIMIT 1
+        """,
+        (str(user_id) if user_id is not None else None, contest_id),
+    )
+    return cursor.fetchone()
+
+
+def _is_privileged_contest_user(request):
+    return getattr(request.user, "role", None) in {"admin", "problem_setter"}
+
+
 def _parse_optional_datetime(value):
     raw = str(value or "").strip()
     if not raw:
@@ -593,22 +624,17 @@ def delete_contest(request,contest_id):
 @permission_classes([AllowAny])
 def get_contest_info(request,contest_id):
     contest_id = str(contest_id)
+    user_id = _get_request_user_external_id(request)
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute(
-            """
-            SELECT contest_id, title, description, start_time, end_time, visibility,
-                   created_by, created_at
-            FROM contests
-            WHERE contest_id = %s
-            """,
-            (contest_id,),
-        )
-        result_contest=cursor.fetchone()
+        result_contest = _fetch_contest_with_registration(cursor, contest_id, user_id)
 
         if not result_contest:
-            return Response({"message":"Contest with this id doesn't exist","status":200}) 
+            return Response({"message":"Contest with this id doesn't exist","status":404}) 
+
+        if _contest_has_started(result_contest) and not result_contest.get("is_registered") and not _is_privileged_contest_user(request):
+            return Response({"error": "Contest is running.", "status": 403}, status=403)
         
         cursor.execute(
             """
@@ -653,6 +679,39 @@ def get_contest_info(request,contest_id):
         return Response({"data": serializer.data, "status": 200})
     except Exception as e:
         return Response({"error": str(e),"status":500})
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_contest_registration_status(request, contest_id):
+    contest_id = str(contest_id)
+    user_id = _get_request_user_external_id(request)
+
+    try:
+        if user_id is None:
+            return Response({"is_registered": False}, status=200)
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT EXISTS(
+                SELECT 1
+                FROM contest_participants
+                WHERE contest_id = %s AND user_id = %s
+            ) AS is_registered
+            """,
+            (contest_id, str(user_id)),
+        )
+        row = cursor.fetchone() or {}
+        return Response({"is_registered": bool(row.get("is_registered"))}, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()
@@ -760,23 +819,18 @@ def get_contest_problem_editor_data(request, contest_id):
 def get_problem_solving_data(request, contest_id, problem_id):
     contest_id = str(contest_id)
     problem_id = str(problem_id)
+    user_id = _get_request_user_external_id(request)
 
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute(
-            """
-            SELECT contest_id, title, description, start_time, end_time, visibility,
-                   created_by, created_at
-            FROM contests
-            WHERE contest_id = %s
-            """,
-            (contest_id,),
-        )
-        contest = cursor.fetchone()
+        contest = _fetch_contest_with_registration(cursor, contest_id, user_id)
         if not contest:
             return Response({"error": "Contest not found."}, status=404)
+
+        if _contest_has_started(contest) and not contest.get("is_registered") and not _is_privileged_contest_user(request):
+            return Response({"error": "Contest is running.", "status": 403}, status=403)
 
         cursor.execute(
             """
@@ -1006,6 +1060,33 @@ def create_problem_submission(request, contest_id, problem_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT contest_id, start_time
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        contest = cursor.fetchone()
+        if not contest:
+            return Response({"error": "Contest not found."}, status=404)
+
+        external_user_id = _get_request_user_external_id(request)
+        cursor.execute(
+            """
+            SELECT 1
+            FROM contest_participants
+            WHERE contest_id = %s AND user_id = %s
+            LIMIT 1
+            """,
+            (contest_id, str(external_user_id) if external_user_id is not None else None),
+        )
+        is_registered = bool(cursor.fetchone())
+        if _contest_has_started(contest) and not is_registered and not _is_privileged_contest_user(request):
+            return Response({"error": "Contest is running.", "status": 403}, status=403)
 
         cursor.execute(
             """
@@ -1254,16 +1335,35 @@ def register_participant(request, contest_id):
 
         cursor.execute(
             """
+            SELECT contest_id, start_time
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        contest = cursor.fetchone()
+        if not contest:
+            return Response({"error": "Contest not found.", "status": 404}, status=404)
+
+        if _contest_has_started(contest) and not _is_privileged_contest_user(request):
+            return Response({"error": "Contest is running.", "status": 403}, status=403)
+
+        cursor.execute(
+            """
             INSERT INTO contest_participants (contest_id, user_id)
             VALUES (%s, %s)
             """,
-            (contest_id, user_id),
+            (contest_id, str(user_id)),
         )
         conn.commit()
 
         return Response({"message": "Registered successfully", "status": 201}, status=201)
     
     except Exception as e:
+        # MySQL error for duplicate entry is 1062
+        if 'Duplicate entry' in str(e):
+            return Response({"message": "You are already registered for this contest."}, status=409)
         return Response({"error": str(e), "status": 500}, status=500)
     
     finally:

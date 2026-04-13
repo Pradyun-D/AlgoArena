@@ -17,6 +17,7 @@ urlpatterns = [
     path('<uuid:contest_id>/delete/', views.delete_contest, name='delete_contest'),
 
     path('<uuid:contest_id>/details/', views.get_contest_info, name='get_contest_info'),
+    path('<uuid:contest_id>/registration-status/', views.get_contest_registration_status, name='get_contest_registration_status'),
 
     path('<uuid:contest_id>/problems/manage', views.get_contest_problem_editor_data, name='get_contest_problem_editor_data'),
     path('<uuid:contest_id>/problems/<uuid:problem_id>/solve', views.get_problem_solving_data, name='get_problem_solving_data'),

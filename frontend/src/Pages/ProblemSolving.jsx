@@ -118,6 +118,7 @@ function ProblemSolvingPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState(null);
   const [bannerMessage, setBannerMessage] = useState("");
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const editorRef = useRef(null);
@@ -129,9 +130,11 @@ function ProblemSolvingPage() {
       try {
         setLoading(true);
         setError("");
+        setErrorStatus(null);
 
         const response = await axios.get(
-          `${API_BASE_URL}/contests/${contestId}/problems/${problemId}/solve`
+          `${API_BASE_URL}/contests/${contestId}/problems/${problemId}/solve`,
+          { withCredentials: true }
         );
 
         const payload = response.data?.data;
@@ -148,6 +151,7 @@ function ProblemSolvingPage() {
           setSourceCode(getLanguagePreset(firstLanguage.name).starterCode);
         }
       } catch (err) {
+        setErrorStatus(err.response?.status ?? null);
         setError(
           err.response?.data?.error ||
           err.message ||
@@ -285,11 +289,12 @@ function ProblemSolvingPage() {
   }
 
   if (error || !problem) {
+    const isRunningContest = errorStatus === 403 || /contest is running/i.test(error);
     return (
       <ErrorPage
-        kicker="Workspace Error"
-        code="500"
-        title="The problem workspace could not be opened."
+        kicker={isRunningContest ? "Contest Locked" : "Workspace Error"}
+        code={isRunningContest ? "403" : "500"}
+        title={isRunningContest ? "Contest is running" : "The problem workspace could not be opened."}
         copy={error || "Problem details are unavailable for this contest."}
         primaryAction={{ label: "Back To Contest", to: `/contest/${contestId}/` }}
         secondaryAction={{ label: "View Contests", to: "/contests" }}

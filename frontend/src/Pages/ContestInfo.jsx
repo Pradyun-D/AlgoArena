@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import LoadingPage from "./LoadingPage";
 import "../Styles/contest_info.css";
 import ErrorPage from "./ErrorPage";
-import { getStoredAuthUser } from "../Utils/auth_storage";
+import { getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
 import { formatDisplayText } from "../Utils/format_display_text";
 
@@ -115,33 +115,36 @@ function ContestPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorStatus, setErrorStatus] = useState(null);
   const [countdown, setCountdown] = useState("");
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
+  const location = useLocation();
 
   useEffect(() => {
     const fetchContestInfo = async () => {
       try {
         setLoading(true);
         setError("");
+        setErrorStatus(null);
 
-        const response = await axios.get(
-          `${API_BASE_URL}/contests/${contestId}/details`
-        );
+        const contestResponse = await axios.get(`${API_BASE_URL}/contests/${contestId}/details/`, { withCredentials: true });
 
-        const payload = response.data?.data;
+        const payload = contestResponse.data?.data;
 
         if (!payload?.contest) {
-          throw new Error(response.data?.message || "Contest data not found.");
+          throw new Error(contestResponse.data?.message || "Contest data not found.");
         }
 
         setData(payload);
       } catch (err) {
+        setData(null);
         setError(
           err.response?.data?.message ||
             err.response?.data?.error ||
             err.message ||
             "Unable to load contest details."
         );
+        setErrorStatus(err.response?.status ?? null);
       } finally {
         setLoading(false);
       }
@@ -150,9 +153,21 @@ function ContestPage() {
     if (contestId) {
       fetchContestInfo();
     }
-  }, [contestId]);
+  }, [contestId, location.key]);
 
   useEffect(() => {
+    axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
+      .then((response) => response.data?.user || null)
+      .then((user) => {
+        if (user) {
+          setStoredAuthUser(user);
+        }
+        setAuthUser(user);
+      })
+      .catch(() => {
+        setAuthUser(getStoredAuthUser());
+      });
+
     const syncAuthUser = () => setAuthUser(getStoredAuthUser());
     window.addEventListener("storage", syncAuthUser);
     return () => window.removeEventListener("storage", syncAuthUser);
@@ -187,8 +202,15 @@ function ContestPage() {
   }
 
   if (error) {
+    const isRunningContest = errorStatus === 403 || /contest is running/i.test(error);
     return (
-       <ErrorPage/>
+       <ErrorPage
+        kicker={isRunningContest ? "Contest Locked" : "Contest Error"}
+        code={isRunningContest ? "403" : "404"}
+        title={isRunningContest ? "Contest is running" : "Contest Not Found"}
+        copy={error}
+        primaryAction={{ to: "/contests", label: "Back to Contests" }}
+       />
     );
   }
 
@@ -196,27 +218,35 @@ function ContestPage() {
   const problems = Array.isArray(data?.problems) ? data.problems : [];
   const contestStatus = getContestStatus(contestInfo.start_time, contestInfo.end_time);
   const isLive = contestStatus === "Live";
+  const isUpcoming = contestStatus === "Upcoming";
+  const isPrivilegedUser = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
   const canManageProblems = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
-  const primaryCtaLabel =
-    contestStatus === "Upcoming"
-      ? "Register for Contest"
-      : contestStatus === "Live"
-        ? "Enter Contest"
-        : "View Results";
 
-  const handleRegister= async () => {
-    try {
-      const response = await axios.post(
-        `${API_BASE_URL}/contests/${contestId}/register`,
-        {},
-        { withCredentials: true }
-      );
-
-      console.log(response.data);
+  const getActionButton = () => {
+    if (contestInfo.is_registered) {
+        const firstProblemId = problems && problems.length > 0 ? problems[0].problem_id : null;
+        if (isLive && firstProblemId) {
+          return <Link to={`/contest/${contestId}/problems/${firstProblemId}`} className="btn btn-primary">Enter Contest</Link>;
+        }
+        return <button className="btn btn-primary success" disabled>Registration Completed</button>;
     }
-    catch (err) {
-      console.error(err.response?.data || err.message);
+    if (isPrivilegedUser) {
+        const firstProblemId = problems && problems.length > 0 ? problems[0].problem_id : null;
+        if (isLive && firstProblemId) {
+          return <Link to={`/contest/${contestId}/problems/${firstProblemId}`} className="btn btn-primary">Enter Contest</Link>;
+        }
+        return <button className="btn btn-primary success" disabled>Access Granted</button>;
     }
+    if (!authUser) {
+        return <Link to="/login" className="btn btn-primary">Login to Register</Link>;
+    }
+    if (isUpcoming) {
+        return <Link to={`/contest/${contestId}/register`} className="btn btn-primary">Register for Contest</Link>;
+    }
+    if (isLive) {
+        return <span className="btn btn-primary opacity-60 cursor-not-allowed">Registration Closed</span>;
+    }
+    return <span className="btn btn-primary opacity-60 cursor-not-allowed">Contest Ended</span>;
   };
 
   return (
@@ -373,9 +403,7 @@ function ContestPage() {
               </div>
             </div>
 
-            <button className="btn btn-primary" type="button" onClick={handleRegister}>
-              {primaryCtaLabel}
-            </button>
+            {getActionButton()}
 
             {canManageProblems ? (
               <Link to={`/contest/${contestId}/problems/edit`} className="btn btn-outline">

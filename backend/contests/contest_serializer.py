@@ -8,6 +8,7 @@ class ContestInfoSerializer(serializers.Serializer):
     contest_id = serializers.UUIDField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     created_by = serializers.IntegerField(required=False, allow_null=True)
+    is_registered = serializers.BooleanField(read_only=True, required=False, default=False)
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(
         allow_blank=True,
