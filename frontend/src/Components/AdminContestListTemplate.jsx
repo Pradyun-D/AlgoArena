@@ -1,7 +1,5 @@
-import { useEffect, useState, forwardRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css"; 
 import { Link, useNavigate } from "react-router-dom";
 import SidebarAdminDashboard from "./SidebarAdminDashboard";
 import ErrorPage from "../Pages/ErrorPage";
@@ -91,18 +89,6 @@ const getContestStatus = (startTime, endTime, visibility) => {
   return "Live";
 };
 
-const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
-  <button 
-    className="admin-filter-button admin-date-filter-button"
-    onClick={onClick} 
-    ref={ref} 
-    type="button"
-  >
-    <span className="material-symbols-outlined">calendar_month</span>
-    <span>{value || "Filter by Date Range"}</span>
-  </button>
-));
-
 function AdminContestListTemplate({
   activeTab = "dashboard",
   title,
@@ -121,15 +107,13 @@ function AdminContestListTemplate({
   const [contests, setContests] = useState([]);
   const [actionMessage, setActionMessage] = useState("");
   const [deletingContestId, setDeletingContestId] = useState("");
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [startDate, endDate] = dateRange;
+  const [startDateInput, setStartDateInput] = useState("");
+  const [endDateInput, setEndDateInput] = useState("");
 
-  const fetchContests = async () => {
+  const fetchContests = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -146,11 +130,11 @@ function AdminContestListTemplate({
     } finally {
       setLoading(false);
     }
-  };
+  }, [errorFallback, fetchUrl]);
 
   useEffect(() => {
     fetchContests();
-  }, [fetchUrl]);
+  }, [fetchContests]);
 
   const handleDeleteContest = async (contestId, contestTitle) => {
     const confirmed = window.confirm(`Delete "${contestTitle}"? This action cannot be undone.`);
@@ -207,11 +191,11 @@ function AdminContestListTemplate({
       statusFilter === "All" || contest.status === statusFilter;
 
     let matchesDate = true;
-    if (startDate) {
-      matchesDate = matchesDate && contest.rawStartTime >= startDate.getTime();
+    if (startDateInput) {
+      matchesDate = matchesDate && contest.rawStartTime >= new Date(`${startDateInput}T00:00:00`).getTime();
     }
-    if (endDate) {
-      matchesDate = matchesDate && contest.rawStartTime <= (endDate.getTime() + 86400000);
+    if (endDateInput) {
+      matchesDate = matchesDate && contest.rawStartTime <= new Date(`${endDateInput}T23:59:59`).getTime();
     }
 
     return matchesSearch && matchesStatus && matchesDate;
@@ -219,7 +203,7 @@ function AdminContestListTemplate({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, startDate, endDate]);
+  }, [searchQuery, statusFilter, startDateInput, endDateInput]);
 
   const totalPages = Math.max(1, Math.ceil(filteredContests.length / PAGE_SIZE));
   const paginatedContests = filteredContests.slice(
@@ -319,15 +303,27 @@ function AdminContestListTemplate({
                   <option value="Completed">Completed</option>
                 </select>
 
-                <DatePicker
-                  selectsRange={true}
-                  startDate={startDate}
-                  endDate={endDate}
-                  onChange={(update) => setDateRange(update)}
-                  isClearable={true}
-                  customInput={<CustomDateInput />}
-                  wrapperClassName="date-picker-wrapper"
-                />
+                <label className="admin-filter-button admin-date-filter-button" htmlFor="admin-contest-start-date">
+                  <span className="material-symbols-outlined">calendar_month</span>
+                  <input
+                    id="admin-contest-start-date"
+                    type="date"
+                    value={startDateInput}
+                    onChange={(e) => setStartDateInput(e.target.value)}
+                    aria-label="Filter contests starting from"
+                  />
+                </label>
+
+                <label className="admin-filter-button admin-date-filter-button" htmlFor="admin-contest-end-date">
+                  <span className="material-symbols-outlined">event_busy</span>
+                  <input
+                    id="admin-contest-end-date"
+                    type="date"
+                    value={endDateInput}
+                    onChange={(e) => setEndDateInput(e.target.value)}
+                    aria-label="Filter contests ending by"
+                  />
+                </label>
               </div>
             </div>
 

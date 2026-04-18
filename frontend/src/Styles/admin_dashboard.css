@@ -307,6 +307,7 @@
   min-width: 15rem;
   padding: 0 1.15rem;
   white-space: nowrap;
+  gap: 0.7rem;
 }
 
 .admin-date-filter-button .material-symbols-outlined {
@@ -320,9 +321,22 @@
   flex-shrink: 0;
 }
 
-.date-picker-wrapper {
-  display: inline-flex;
-  flex: 0 0 auto;
+.admin-date-filter-button input[type="date"] {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.admin-date-filter-button input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
 }
 
 .admin-filter-icon {
