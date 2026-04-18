@@ -1,20 +1,22 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import ContestsPage from "./Pages/AllContests";
-import AdminDashboard from "./Pages/AdminDashboard";
-import AdminUsersPage from "./Pages/AdminUsersPage";
-import MySubmissionsPage from "./Pages/MySubmissions";
-import SubmissionViewPage from "./Pages/SubmissionView";
-import ContestRegistrationPage from "./Pages/ContestRegistration";
-import ContestFormPage from "./Pages/CreateNewContest";
-import DraftsDashboard from "./Pages/DraftsDashboard";
-import ContestPage from "./Pages/ContestInfo";
-import ContestProblemManagerPage from "./Pages/ContestProblemManager";
-import ProblemSolvingPage from "./Pages/ProblemSolving";
-import ErrorPage from "./Pages/ErrorPage";
-import LandingPage from "./Pages/LandingPage";
-import LoginPage from "./Pages/Login";
-import RegisterPage from "./Pages/Register";
-import ProfileSettingsPage from "./Pages/ProfileSettings";
+import ContestsPage from "./Pages/Contests/AllContests";
+import AdminDashboard from "./Pages/Admin/AdminDashboard";
+import AdminUsersPage from "./Pages/Admin/AdminUsersPage";
+import AdminSettingsPage from "./Pages/Admin/AdminSettingsPage";
+import AdminProfilePage from "./Pages/Admin/AdminProfilePage";
+import MySubmissionsPage from "./Pages/Contests/MySubmissions";
+import SubmissionViewPage from "./Pages/Contests/SubmissionView";
+import ContestRegistrationPage from "./Pages/Contests/ContestRegistration";
+import ContestFormPage from "./Pages/Contests/CreateNewContest";
+import DraftsDashboard from "./Pages/Contests/DraftsDashboard";
+import ContestPage from "./Pages/Contests/ContestInfo";
+import ContestProblemManagerPage from "./Pages/Contests/ContestProblemManager";
+import ProblemSolvingPage from "./Pages/Contests/ProblemSolving";
+import ErrorPage from "./Pages/Auth_and_Profile/ErrorPage";
+import LandingPage from "./Pages/Auth_and_Profile/LandingPage";
+import LoginPage from "./Pages/Auth_and_Profile/Login";
+import RegisterPage from "./Pages/Auth_and_Profile/Register";
+import ProfileSettingsPage from "./Pages/Auth_and_Profile/ProfileSettings";
 import ProblemSetterRoute from "./Components/ProblemSetterRoute";
 import AdminRoute from "./Components/AdminRoute";
 import { ThemeProvider } from "./Theme/ThemeProvider";
@@ -41,6 +43,22 @@ function App() {
             element={(
               <AdminRoute>
                 <AdminUsersPage />
+              </AdminRoute>
+            )}
+          />
+          <Route
+            path="/admin/settings"
+            element={(
+              <AdminRoute>
+                <AdminSettingsPage />
+              </AdminRoute>
+            )}
+          />
+          <Route
+            path="/admin/profile"
+            element={(
+              <AdminRoute>
+                <AdminProfilePage />
               </AdminRoute>
             )}
           />

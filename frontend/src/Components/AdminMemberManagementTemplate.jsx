@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SidebarAdminDashboard from "./SidebarAdminDashboard";
 import ThemeToggle from "./ThemeToggle";
-import ErrorPage from "../Pages/ErrorPage";
-import LoadingPage from "../Pages/LoadingPage";
+import ErrorPage from "../Pages/Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
 import { API_BASE_URL } from "../Utils/api";
 import "../Styles/admin_dashboard.css";
 
@@ -88,6 +88,7 @@ function AdminMemberManagementTemplate({
   loadingTitle,
   loadingSubtitle,
 }) {
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -258,18 +259,16 @@ function AdminMemberManagementTemplate({
         <header className="admin-topbar">
           <div className="admin-topbar-tabs">
             <Link className={`admin-topbar-link ${activeTab === "dashboard" ? "active" : ""}`} to="/admin/dashboard">Dashboard</Link>
+            <Link className="admin-topbar-link" to="/contests">Contests</Link>
             <Link className={`admin-topbar-link ${activeTab === "permissions" ? "active" : ""}`} to="/admin/permissions">Permissions</Link>
           </div>
 
           <div className="admin-topbar-actions">
             <ThemeToggle />
-            <button className="admin-icon-button" type="button" aria-label="Notifications">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button className="admin-icon-button" type="button" aria-label="Settings">
+            <button className="admin-icon-button" type="button" aria-label="Settings" onClick={() => navigate("/admin/settings")}>
               <span className="material-symbols-outlined">settings</span>
             </button>
-            <button className="admin-avatar-button" type="button" aria-label="Admin profile">
+            <button className="admin-avatar-button" type="button" aria-label="Admin profile" onClick={() => navigate("/admin/profile")}>
               <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>

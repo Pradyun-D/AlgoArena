@@ -1,5 +1,5 @@
-import AdminContestListTemplate from "../Components/AdminContestListTemplate";
-import { API_BASE_URL } from "../Utils/api";
+import AdminContestListTemplate from "../../Components/AdminContestListTemplate";
+import { API_BASE_URL } from "../../Utils/api";
 
 function AdminDashboardDrafts() {
   return (

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import axios from 'axios';
-import { API_BASE_URL } from "../Utils/api";
-import ErrorPage from "./ErrorPage";
-import LoadingPage from "./LoadingPage";
-import ThemeToggle from "../Components/ThemeToggle";
-import { useTheme } from "../Theme/ThemeProvider";
-import "../Styles/form.css"
+import { API_BASE_URL } from "../../Utils/api";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import ThemeToggle from "../../Components/ThemeToggle";
+import { useTheme } from "../../Theme/ThemeProvider";
+import "../../Styles/form.css"
 const toUtcISOString = (localDateTimeValue) => {
   if (!localDateTimeValue) {
     return "";

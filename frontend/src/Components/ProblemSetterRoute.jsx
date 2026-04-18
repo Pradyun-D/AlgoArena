@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
-import LoadingPage from "../Pages/LoadingPage";
-import ErrorPage from "../Pages/ErrorPage";
+import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
+import ErrorPage from "../Pages/Auth_and_Profile/ErrorPage";
 import { clearStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
 import { API_BASE_URL } from "../Utils/api";
 

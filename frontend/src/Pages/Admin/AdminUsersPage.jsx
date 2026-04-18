@@ -1,5 +1,5 @@
-import AdminMemberManagementTemplate from "../Components/AdminMemberManagementTemplate";
-import { API_BASE_URL } from "../Utils/api";
+import AdminMemberManagementTemplate from "../../Components/AdminMemberManagementTemplate";
+import { API_BASE_URL } from "../../Utils/api";
 
 function AdminUsersPage() {
   return (

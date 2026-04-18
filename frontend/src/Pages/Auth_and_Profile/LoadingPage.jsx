@@ -1,4 +1,4 @@
-import "../Styles/loading_page.css";
+import "../../Styles/loading_page.css";
 
 function LoadingPage({
   title = "Preparing contest arena",

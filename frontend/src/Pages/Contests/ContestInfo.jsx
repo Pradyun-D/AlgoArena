@@ -3,12 +3,12 @@ import { Link, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import LoadingPage from "./LoadingPage";
-import "../Styles/contest_info.css";
-import ErrorPage from "./ErrorPage";
-import { getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
-import { API_BASE_URL } from "../Utils/api";
-import { formatDisplayText } from "../Utils/format_display_text";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import "../../Styles/contest_info.css";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import { getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { API_BASE_URL } from "../../Utils/api";
+import { formatDisplayText } from "../../Utils/format_display_text";
 
 const formatDateTime = (value) => {
   if (!value) {

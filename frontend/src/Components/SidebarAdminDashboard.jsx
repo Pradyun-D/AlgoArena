@@ -2,8 +2,10 @@ import { NavLink, useNavigate } from "react-router-dom"
 
 const navItems = [
   { label: "Overview", icon: "dashboard", to: "/admin/dashboard" },
+  { label: "Permissions", icon: "admin_panel_settings", to: "/admin/permissions" },
   { label: "Drafts", icon: "description", to: "/drafts" },
-  
+  { label: "Settings", icon: "settings", to: "/admin/settings" },
+  { label: "Profile", icon: "account_circle", to: "/admin/profile" },
 ];
 
 const footerItems = [

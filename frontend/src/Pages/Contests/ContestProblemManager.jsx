@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL } from "../Utils/api";
-import LoadingPage from "./LoadingPage";
-import ErrorPage from "./ErrorPage";
-import "../Styles/new_problem.css";
-import "../Styles/form.css";
-import "../Styles/auth_pages.css";
+import { API_BASE_URL } from "../../Utils/api";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import "../../Styles/new_problem.css";
+import "../../Styles/form.css";
+import "../../Styles/auth_pages.css";
 
 const createEmptyTestcase = () => ({
   testcase_id: crypto.randomUUID(),

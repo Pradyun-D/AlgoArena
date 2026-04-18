@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Editor from "@monaco-editor/react";
-import ErrorPage from "./ErrorPage";
-import LoadingPage from "./LoadingPage";
-import { API_BASE_URL } from "../Utils/api";
-import { useTheme } from "../Theme/ThemeProvider";
-import ArenaNavbar from "../Components/ArenaNavbar";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import { API_BASE_URL } from "../../Utils/api";
+import { useTheme } from "../../Theme/ThemeProvider";
+import ArenaNavbar from "../../Components/ArenaNavbar";
 
 const LANGUAGE_PRESETS = {
     "C++20": { monacoLanguage: "cpp" },

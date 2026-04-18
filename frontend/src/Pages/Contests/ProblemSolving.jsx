@@ -4,14 +4,14 @@ import axios from "axios";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import ErrorPage from "./ErrorPage";
-import LoadingPage from "./LoadingPage";
-import "../Styles/problem_solving.css";
-import { getStoredAuthUser } from "../Utils/auth_storage";
-import { API_BASE_URL } from "../Utils/api";
-import { formatDisplayText } from "../Utils/format_display_text";
-import ThemeToggle from "../Components/ThemeToggle";
-import { useTheme } from "../Theme/ThemeProvider";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import "../../Styles/problem_solving.css";
+import { getStoredAuthUser } from "../../Utils/auth_storage";
+import { API_BASE_URL } from "../../Utils/api";
+import { formatDisplayText } from "../../Utils/format_display_text";
+import ThemeToggle from "../../Components/ThemeToggle";
+import { useTheme } from "../../Theme/ThemeProvider";
 
 const LANGUAGE_PRESETS = {
   "C++20": {

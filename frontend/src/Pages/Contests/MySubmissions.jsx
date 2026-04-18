@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import ErrorPage from "./ErrorPage";
-import LoadingPage from "./LoadingPage";
-import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
-import { API_BASE_URL } from "../Utils/api";
-import { formatDisplayText } from "../Utils/format_display_text";
-import ArenaNavbar from "../Components/ArenaNavbar";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { API_BASE_URL } from "../../Utils/api";
+import { formatDisplayText } from "../../Utils/format_display_text";
+import ArenaNavbar from "../../Components/ArenaNavbar";
 
 const formatDateTime = (value) => {
     if (!value) {

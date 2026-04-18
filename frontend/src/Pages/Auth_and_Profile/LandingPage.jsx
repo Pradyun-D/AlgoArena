@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import "../Styles/landing_page.css";
-import ThemeToggle from "../Components/ThemeToggle";
+import "../../Styles/landing_page.css";
+import ThemeToggle from "../../Components/ThemeToggle";
 
 const featureItems = [
   {

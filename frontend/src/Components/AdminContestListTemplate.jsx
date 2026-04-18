@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import SidebarAdminDashboard from "./SidebarAdminDashboard";
-import ErrorPage from "../Pages/ErrorPage";
-import LoadingPage from "../Pages/LoadingPage";
+import ErrorPage from "../Pages/Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
 import "../Styles/admin_dashboard.css";
 import ThemeToggle from "./ThemeToggle";
 import { API_BASE_URL } from "../Utils/api";
@@ -240,7 +240,7 @@ function AdminContestListTemplate({
 
       <main className="admin-dashboard-main">
         <header className="admin-topbar">
-        <div className="admin-topbar-tabs">
+          <div className="admin-topbar-tabs">
             <Link className={`admin-topbar-link ${activeTab === "dashboard" ? "active" : ""}`} to="/admin/dashboard">Dashboard</Link>
             <Link className="admin-topbar-link" to="/contests">Contests</Link>
             <Link className={`admin-topbar-link ${activeTab === "permissions" ? "active" : ""}`} to="/admin/permissions">Permissions</Link>
@@ -248,13 +248,10 @@ function AdminContestListTemplate({
 
           <div className="admin-topbar-actions">
             <ThemeToggle />
-            <button className="admin-icon-button" type="button" aria-label="Notifications">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <button className="admin-icon-button" type="button" aria-label="Settings">
+            <button className="admin-icon-button" type="button" aria-label="Settings" onClick={() => navigate("/admin/settings")}>
               <span className="material-symbols-outlined">settings</span>
             </button>
-            <button className="admin-avatar-button" type="button" aria-label="Admin profile">
+            <button className="admin-avatar-button" type="button" aria-label="Admin profile" onClick={() => navigate("/admin/profile")}>
               <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>

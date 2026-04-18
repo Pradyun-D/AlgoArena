@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ContestCard from "../Components/ContestCard";
+import ContestCard from "../../Components/ContestCard";
 import { Link } from "react-router-dom";
-import Sidebar from "../Components/Sidebar";
-import ErrorPage from "./ErrorPage";
-import LoadingPage from "./LoadingPage";
-import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
-import { API_BASE_URL } from "../Utils/api";
-import ArenaNavbar from "../Components/ArenaNavbar";
+import Sidebar from "../../Components/Sidebar";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { API_BASE_URL } from "../../Utils/api";
+import ArenaNavbar from "../../Components/ArenaNavbar";
 
 function ContestsPage() {
     const [availableContests, setAvailableContests] = useState([]);

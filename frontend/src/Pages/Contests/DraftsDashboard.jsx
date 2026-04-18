@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import LoadingPage from "./LoadingPage";
-import ErrorPage from "./ErrorPage";
-import { API_BASE_URL } from "../Utils/api";
-import { formatDisplayText } from "../Utils/format_display_text";
-import "../Styles/admin_dashboard.css";
+import LoadingPage from "../Auth_and_Profile/LoadingPage";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import { API_BASE_URL } from "../../Utils/api";
+import { formatDisplayText } from "../../Utils/format_display_text";
+import "../../Styles/admin_dashboard.css";
 
 const formatDraftDate = (value) => {
   if (!value) {

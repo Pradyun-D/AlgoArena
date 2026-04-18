@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL } from "../Utils/api";
-import { getStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
-import "../Styles/auth_pages.css";
-import ThemeToggle from "../Components/ThemeToggle";
-import { useTheme } from "../Theme/ThemeProvider";
-import ErrorPage from "./ErrorPage";
+import { API_BASE_URL } from "../../Utils/api";
+import { getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import "../../Styles/auth_pages.css";
+import ThemeToggle from "../../Components/ThemeToggle";
+import { useTheme } from "../../Theme/ThemeProvider";
+import ErrorPage from "../Auth_and_Profile/ErrorPage";
 
 function ContestRegistrationPage() {
     const navigate = useNavigate();

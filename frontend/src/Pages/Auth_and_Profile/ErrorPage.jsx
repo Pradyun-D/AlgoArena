@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import "../Styles/error_page.css";
+import "../../Styles/error_page.css";
 
 function ErrorAction({ action, className }) {
   if (!action?.label) {

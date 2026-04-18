@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Styles/new_problem.css";
+import "../../Styles/new_problem.css";
 
 const initialProblem = {
   title: "",
