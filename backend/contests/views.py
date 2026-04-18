@@ -118,6 +118,10 @@ def _get_request_user_external_id(request):
     return getattr(request.user, "external_user_id", None)
 
 
+def _can_view_private_contests(request):
+    return getattr(request.user, "role", None) in {"admin", "problem_setter"}
+
+
 def _contest_is_live(contest):
     if not contest:
         return False
@@ -156,6 +160,33 @@ def _fetch_contest_with_registration(cursor, contest_id, user_id):
         (str(user_id) if user_id is not None else None, contest_id),
     )
     return cursor.fetchone()
+
+
+def _attach_creator_username(cursor, contest_row):
+    if not contest_row:
+        return contest_row
+
+    created_by = contest_row.get("created_by")
+    if created_by is None:
+        contest_row["created_by_username"] = None
+        return contest_row
+
+    try:
+        cursor.execute(
+            """
+            SELECT username
+            FROM `user`
+            WHERE user_id = %s
+            LIMIT 1
+            """,
+            (created_by,),
+        )
+        user_row = cursor.fetchone() or {}
+        contest_row["created_by_username"] = user_row.get("username")
+    except Exception:
+        contest_row["created_by_username"] = None
+
+    return contest_row
 
 
 def _is_privileged_contest_user(request):
@@ -212,14 +243,169 @@ def _validate_publishable_draft(draft):
         return "Set both start and end time before publishing this draft."
     if start_time >= end_time:
         return "End time must occur after start time."
+    if int(draft.get("problem_count") or 0) < 1:
+        return "Add at least one problem before publishing this draft."
 
     return None
 
 
-def _get_contests_data():
+def _extract_draft_problems(payload):
+    if "problems" not in payload:
+        return None
+
+    problems = payload.get("problems", [])
+    if not isinstance(problems, list):
+        return []
+    return [dict(problem) for problem in problems if isinstance(problem, dict)]
+
+
+def _fetch_draft_problems(cursor, contest_id):
+    cursor.execute(
+        """
+        SELECT
+            p.problem_id,
+            p.title,
+            p.slug,
+            p.description,
+            p.difficulty,
+            p.time_limit_ms,
+            p.memory_limit_kb,
+            p.visibility,
+            cp.max_score
+        FROM contest_problems cp
+        JOIN problems p ON p.problem_id = cp.problem_id
+        WHERE cp.contest_id = %s
+        ORDER BY p.created_at ASC, p.problem_id ASC
+        """,
+        (contest_id,),
+    )
+    problems = cursor.fetchall()
+
+    problem_ids = [str(problem["problem_id"]) for problem in problems]
+    tags_by_problem = {problem_id: [] for problem_id in problem_ids}
+
+    if problem_ids:
+        placeholders = ", ".join(["%s"] * len(problem_ids))
+        cursor.execute(
+            f"""
+            SELECT pt.problem_id, t.name
+            FROM problem_tags pt
+            JOIN tags t ON t.tag_id = pt.tag_id
+            WHERE pt.problem_id IN ({placeholders})
+            ORDER BY t.name ASC
+            """,
+            tuple(problem_ids),
+        )
+        for row in cursor.fetchall():
+            tags_by_problem.setdefault(str(row["problem_id"]), []).append(row["name"])
+
+    for problem in problems:
+        problem["problem_id"] = str(problem["problem_id"])
+        problem["tags"] = tags_by_problem.get(problem["problem_id"], [])
+
+    return problems
+
+
+def _attach_draft_problems(cursor, draft):
+    if not draft:
+        return draft
+    problems = _fetch_draft_problems(cursor, draft["contest_id"])
+    draft["problems"] = problems
+    draft["problem_count"] = len(problems)
+    return draft
+
+
+def _delete_draft_problems(cursor, contest_id):
+    cursor.execute(
+        """
+        SELECT problem_id
+        FROM contest_problems
+        WHERE contest_id = %s
+        """,
+        (contest_id,),
+    )
+    problem_ids = [str(row["problem_id"]) for row in cursor.fetchall()]
+
+    if problem_ids:
+        placeholders = ", ".join(["%s"] * len(problem_ids))
+        cursor.execute(
+            f"DELETE FROM problem_tags WHERE problem_id IN ({placeholders})",
+            tuple(problem_ids),
+        )
+        cursor.execute(
+            f"DELETE FROM contest_problems WHERE contest_id = %s AND problem_id IN ({placeholders})",
+            (contest_id, *problem_ids),
+        )
+        cursor.execute(
+            f"DELETE FROM problems WHERE problem_id IN ({placeholders})",
+            tuple(problem_ids),
+        )
+
+
+def _persist_draft_problems_as_contest_problems(cursor, draft, problems):
+    saved_problems = []
+
+    for problem in problems:
+        problem_id = str(uuid.uuid4())
+        raw_tags = problem.get("tags", [])
+        tags = raw_tags if isinstance(raw_tags, list) else []
+        normalized_tags = [str(tag).strip() for tag in tags if str(tag).strip()]
+        title = str(problem.get("title", "") or "").strip()
+        slug = str(problem.get("slug") or title).strip().lower().replace(" ", "-")
+
+        cursor.execute(
+            """
+            INSERT INTO problems
+            (problem_id, title, slug, description, difficulty, time_limit_ms,
+             memory_limit_kb, visibility, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                problem_id,
+                title,
+                slug,
+                problem.get("description", ""),
+                problem.get("difficulty", "easy"),
+                problem.get("time_limit_ms"),
+                problem.get("memory_limit_kb"),
+                problem.get("visibility", "public"),
+                draft.get("created_by"),
+            ),
+        )
+        cursor.execute(
+            """
+            INSERT INTO contest_problems (contest_id, problem_id, max_score)
+            VALUES (%s, %s, %s)
+            """,
+            (draft["contest_id"], problem_id, problem.get("max_score")),
+        )
+
+        for tag_name in normalized_tags:
+            cursor.execute("INSERT IGNORE INTO tags (name) VALUES (%s)", (tag_name,))
+            cursor.execute("SELECT tag_id FROM tags WHERE name = %s", (tag_name,))
+            tag_row = cursor.fetchone()
+            if tag_row:
+                cursor.execute(
+                    """
+                    INSERT IGNORE INTO problem_tags (problem_id, tag_id)
+                    VALUES (%s, %s)
+                    """,
+                    (problem_id, tag_row["tag_id"]),
+                )
+
+        saved_problem = dict(problem)
+        saved_problem["problem_id"] = problem_id
+        saved_problem["tags"] = normalized_tags
+        saved_problems.append(saved_problem)
+
+    return saved_problems
+
+
+def _get_contests_data(include_private=False):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
+        visibility_clause = "" if include_private else "WHERE visibility <> 'private'"
         cursor.execute(
             """
             SELECT 
@@ -241,8 +427,11 @@ def _get_contests_data():
                     SELECT COUNT(*) 
                     FROM contest_participants cp 
                     WHERE cp.contest_id = contests.contest_id
-                ), 0) AS participants_count
+                    ), 0) AS participants_count
             FROM contests
+            """
+            + visibility_clause
+            + """
             ORDER BY start_time ASC, created_at ASC
             """
         )
@@ -332,7 +521,7 @@ def get_active_contests_data():
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def all_contests(request):
-    return Response(_get_contests_data())
+    return Response(_get_contests_data(include_private=_can_view_private_contests(request)))
 
 
 @api_view(["GET"])
@@ -349,10 +538,16 @@ def list_drafts(request):
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility,
-                   created_by, created_at, updated_at
-            FROM drafts
-            ORDER BY updated_at DESC, created_at DESC
+            SELECT c.contest_id, c.title, c.description, c.start_time, c.end_time, c.visibility,
+                   c.created_by, c.created_at, c.updated_at,
+                   COALESCE((
+                       SELECT COUNT(*)
+                       FROM contest_problems cp
+                       WHERE cp.contest_id = c.contest_id
+                   ), 0) AS problem_count
+            FROM contests c
+            WHERE c.visibility = 'private'
+            ORDER BY c.updated_at DESC, c.created_at DESC
             """
         )
         return Response(cursor.fetchall(), status=200)
@@ -375,9 +570,7 @@ def create_draft(request):
     draft_payload = dict(request.data.get("contest", request.data) or {})
     title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
     description = str(draft_payload.get("description", "") or "").strip()
-    visibility = str(draft_payload.get("visibility", "public") or "public").strip().lower()
-    if visibility not in {"public", "private"}:
-        visibility = "public"
+    visibility = "private"
 
     try:
         start_time = _parse_optional_datetime(draft_payload.get("start_time"))
@@ -395,7 +588,7 @@ def create_draft(request):
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            INSERT INTO drafts
+            INSERT INTO contests
             (contest_id, title, description, start_time, end_time, visibility, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
@@ -411,20 +604,25 @@ def create_draft(request):
         )
         conn.commit()
 
+        problems = _extract_draft_problems(draft_payload) or []
+        if problems:
+            _persist_draft_problems_as_contest_problems(cursor, {"contest_id": contest_id, "created_by": created_by}, problems)
+            conn.commit()
+
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM drafts
+            FROM contests
             WHERE contest_id = %s
             LIMIT 1
             """,
             (contest_id,),
         )
-        return Response(
-            {"message": "Draft saved successfully.", "draft": cursor.fetchone()},
-            status=201,
-        )
+        draft = cursor.fetchone()
+        draft["problems"] = problems
+        draft["problem_count"] = len(problems)
+        return Response({"message": "Draft saved successfully.", "draft": draft}, status=201)
     except Exception as e:
         if 'conn' in locals() and conn:
             conn.rollback()
@@ -448,7 +646,7 @@ def draft_detail(request, contest_id):
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM drafts
+            FROM contests
             WHERE contest_id = %s
             LIMIT 1
             """,
@@ -458,15 +656,15 @@ def draft_detail(request, contest_id):
         if not draft:
             return Response({"error": "Draft not found."}, status=404)
 
+        draft = _attach_draft_problems(cursor, draft)
+
         if request.method == "GET":
             return Response({"draft": draft}, status=200)
 
         draft_payload = dict(request.data.get("contest", request.data) or {})
         title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
         description = str(draft_payload.get("description", "") or "").strip()
-        visibility = str(draft_payload.get("visibility", draft.get("visibility", "public")) or "public").strip().lower()
-        if visibility not in {"public", "private"}:
-            visibility = "public"
+        visibility = "private"
 
         try:
             start_time = _parse_optional_datetime(draft_payload.get("start_time"))
@@ -479,7 +677,7 @@ def draft_detail(request, contest_id):
 
         cursor.execute(
             """
-            UPDATE drafts
+            UPDATE contests
             SET title = %s,
                 description = %s,
                 start_time = %s,
@@ -497,19 +695,26 @@ def draft_detail(request, contest_id):
                 contest_id,
             ),
         )
+        problems = _extract_draft_problems(draft_payload)
+        if problems is not None:
+            _delete_draft_problems(cursor, contest_id)
+            if problems:
+                _persist_draft_problems_as_contest_problems(cursor, draft, problems)
         conn.commit()
 
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM drafts
+            FROM contests
             WHERE contest_id = %s
             LIMIT 1
             """,
             (contest_id,),
         )
-        return Response({"message": "Draft updated successfully.", "draft": cursor.fetchone()}, status=200)
+        updated_draft = cursor.fetchone()
+        updated_draft = _attach_draft_problems(cursor, updated_draft)
+        return Response({"message": "Draft updated successfully.", "draft": updated_draft}, status=200)
     except Exception as e:
         if 'conn' in locals() and conn:
             conn.rollback()
@@ -533,7 +738,7 @@ def publish_draft(request, contest_id):
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM drafts
+            FROM contests
             WHERE contest_id = %s
             LIMIT 1
             """,
@@ -543,27 +748,20 @@ def publish_draft(request, contest_id):
         if not draft:
             return Response({"error": "Draft not found."}, status=404)
 
+        draft = _attach_draft_problems(cursor, draft)
         publish_error = _validate_publishable_draft(draft)
         if publish_error:
             return Response({"error": publish_error}, status=400)
 
         cursor.execute(
             """
-            INSERT INTO contests
-            (contest_id, title, description, start_time, end_time, visibility, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            UPDATE contests
+            SET visibility = 'public',
+                updated_at = UTC_TIMESTAMP()
+            WHERE contest_id = %s
             """,
-            (
-                draft["contest_id"],
-                draft["title"],
-                draft.get("description", ""),
-                draft.get("start_time"),
-                draft.get("end_time"),
-                draft.get("visibility", "public"),
-                draft.get("created_by"),
-            ),
+            (contest_id,),
         )
-        cursor.execute("DELETE FROM drafts WHERE contest_id = %s", (contest_id,))
         conn.commit()
 
         cursor.execute(
@@ -757,6 +955,8 @@ def get_contest_info(request,contest_id):
 
         if not result_contest:
             return Response({"message":"Contest with this id doesn't exist","status":404}) 
+
+        result_contest = _attach_creator_username(cursor, result_contest)
 
         if _contest_is_live(result_contest) and not result_contest.get("is_registered") and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
@@ -1168,6 +1368,119 @@ def update_contest_problem(request, contest_id, problem_id):
 
         conn.commit()
         return Response({"message": "Problem updated successfully.", "status": 200}, status=200)
+    except Exception as e:
+        if 'conn' in locals() and conn:
+            conn.rollback()
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if 'cursor' in locals() and cursor is not None:
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+
+
+@api_view(["POST"])
+@permission_classes([IsProblemSetter])
+def create_contest_problem(request, contest_id):
+    contest_id = str(contest_id)
+
+    serializer = ProblemManageSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    validated = serializer.validated_data
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT contest_id, created_by
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        contest = cursor.fetchone()
+        if not contest:
+            return Response({"error": "Contest not found."}, status=404)
+
+        problem_id = str(uuid.uuid4())
+        cursor.execute(
+            """
+            INSERT INTO problems
+            (problem_id, title, slug, description, difficulty, time_limit_ms,
+             memory_limit_kb, visibility, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                problem_id,
+                validated["title"],
+                validated["slug"],
+                validated.get("description", ""),
+                validated["difficulty"],
+                validated["time_limit_ms"],
+                validated["memory_limit_kb"],
+                validated["visibility"],
+                contest.get("created_by"),
+            ),
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO contest_problems (contest_id, problem_id, max_score)
+            VALUES (%s, %s, %s)
+            """,
+            (contest_id, problem_id, validated["max_score"]),
+        )
+
+        cursor.execute("DELETE FROM problem_tags WHERE problem_id = %s", (problem_id,))
+        for tag_name in validated.get("tags", []):
+            cursor.execute("INSERT IGNORE INTO tags (name) VALUES (%s)", (tag_name,))
+            cursor.execute("SELECT tag_id FROM tags WHERE name = %s LIMIT 1", (tag_name,))
+            tag_row = cursor.fetchone()
+            if tag_row:
+                cursor.execute(
+                    """
+                    INSERT IGNORE INTO problem_tags (problem_id, tag_id)
+                    VALUES (%s, %s)
+                    """,
+                    (problem_id, tag_row["tag_id"]),
+                )
+
+        for testcase in validated.get("testcases", []):
+            cursor.execute(
+                """
+                INSERT INTO testcases (testcase_id, problem_id, input, expected_output, is_sample)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (
+                    str(testcase.get("testcase_id") or uuid.uuid4()),
+                    problem_id,
+                    testcase.get("input_data", ""),
+                    testcase.get("output_data", ""),
+                    not testcase.get("is_hidden", True),
+                ),
+            )
+
+        conn.commit()
+
+        response_problem = {
+            "problem_id": problem_id,
+            "title": validated["title"],
+            "slug": validated["slug"],
+            "description": validated.get("description", ""),
+            "difficulty": validated["difficulty"],
+            "time_limit_ms": validated["time_limit_ms"],
+            "memory_limit_kb": validated["memory_limit_kb"],
+            "visibility": validated["visibility"],
+            "max_score": validated["max_score"],
+            "tags": validated.get("tags", []),
+            "testcases": validated.get("testcases", []),
+        }
+        return Response({"message": "Problem created successfully.", "problem": response_problem}, status=201)
     except Exception as e:
         if 'conn' in locals() and conn:
             conn.rollback()

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
@@ -6,6 +6,8 @@ import { setStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import "../../Styles/auth_pages.css";
 import ThemeToggle from "../../Components/ThemeToggle";
+import LoadingPage from "./LoadingPage";
+import { fetchSessionUser } from "../../Utils/session_auth";
 
 const formStagger = {
   hidden: {},
@@ -29,6 +31,33 @@ function RegisterPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const redirectIfAuthenticated = async () => {
+      try {
+        const sessionUser = await fetchSessionUser();
+        if (!isMounted) return;
+        if (sessionUser) {
+          navigate("/contests", { replace: true });
+          return;
+        }
+      } catch {
+        // Fall through to the registration form if session refresh fails.
+      }
+      if (isMounted) {
+        setCheckingSession(false);
+      }
+    };
+
+    redirectIfAuthenticated();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -43,7 +72,7 @@ function RegisterPage() {
     try {
       const response = await axios.post(`${API_BASE_URL}/accounts/api/register/`, form);
       setStoredAuthUser(response.data.user);
-      navigate("/profile/edit");
+      navigate("/contests");
     } catch (err) {
       setError(
         err.response?.data?.error ||
@@ -55,6 +84,15 @@ function RegisterPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <LoadingPage
+        title="Checking your session"
+        subtitle="Redirecting you to contests if you are already signed in."
+      />
+    );
+  }
 
   return (
     <div className="auth-page auth-page-register">

@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 from datetime import datetime, timedelta
 
@@ -46,6 +47,138 @@ class CreateContestPermissionTests(TestCase):
         contest_serializer_cls.assert_called_once()
 
 
+class DraftPersistenceTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user_model = get_user_model()
+
+    @patch("contests.views.get_connection")
+    def test_draft_detail_returns_only_its_saved_problems(self, get_connection_mock):
+        setter = self.user_model.objects.create_user(
+            username="draft_setter",
+            email="draftsetter@algoarena.dev",
+            password="testpass123",
+            role="problem_setter",
+            external_user_id=301,
+        )
+        self.client.force_authenticate(user=setter)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.side_effect = [
+            {
+                "contest_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "title": "Draft Alpha",
+                "description": "Draft description",
+                "start_time": datetime.utcnow(),
+                "end_time": datetime.utcnow() + timedelta(hours=2),
+                "visibility": "public",
+                "created_by": 301,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+        ]
+        cursor.fetchall.side_effect = [
+            [
+                {
+                    "problem_id": "11111111-1111-1111-1111-111111111111",
+                    "title": "Draft Problem",
+                    "slug": "draft-problem",
+                    "description": "Solve it",
+                    "difficulty": "easy",
+                    "time_limit_ms": 1000,
+                    "memory_limit_kb": 256,
+                    "visibility": "contest_only",
+                    "max_score": 100,
+                }
+            ],
+            [
+                {
+                    "problem_id": "11111111-1111-1111-1111-111111111111",
+                    "name": "math",
+                }
+            ]
+        ]
+
+        response = self.client.get("/contests/drafts/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["draft"]["problems"]), 1)
+        self.assertEqual(response.data["draft"]["problems"][0]["title"], "Draft Problem")
+
+    @patch("contests.views.get_connection")
+    def test_publish_draft_rejects_draft_without_problems(self, get_connection_mock):
+        setter = self.user_model.objects.create_user(
+            username="draft_setter_two",
+            email="draftsetter2@algoarena.dev",
+            password="testpass123",
+            role="problem_setter",
+            external_user_id=302,
+        )
+        self.client.force_authenticate(user=setter)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.side_effect = [
+            {
+                "contest_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                "title": "Draft Beta",
+                "description": "Draft description",
+                "start_time": datetime.utcnow(),
+                "end_time": datetime.utcnow() + timedelta(hours=2),
+                "visibility": "public",
+                "created_by": 302,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            }
+        ]
+        cursor.fetchall.return_value = []
+
+        response = self.client.post(
+            "/contests/drafts/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb/publish/",
+            {},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["error"], "Add at least one problem before publishing this draft.")
+
+    @patch("contests.views.get_connection")
+    def test_create_contest_problem_returns_created_problem(self, get_connection_mock):
+        setter = self.user_model.objects.create_user(
+            username="problem_creator",
+            email="problemcreator@algoarena.dev",
+            password="testpass123",
+            role="problem_setter",
+            external_user_id=303,
+        )
+        self.client.force_authenticate(user=setter)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.return_value = {
+            "contest_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+            "created_by": 303,
+        }
+
+        response = self.client.post(
+            "/contests/cccccccc-cccc-cccc-cccc-cccccccccccc/problems/create",
+            {
+                "title": "New Problem",
+                "slug": "new-problem",
+                "description": "Solve it",
+                "difficulty": "easy",
+                "time_limit_ms": 1000,
+                "memory_limit_kb": 256,
+                "visibility": "contest_only",
+                "max_score": 100,
+                "tags": [],
+                "testcases": [],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["problem"]["title"], "New Problem")
+
+
 class ContestRegistrationStatusTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -78,6 +211,43 @@ class ContestRegistrationStatusTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["is_registered"], False)
         get_connection_mock.assert_not_called()
+
+
+class AllContestsVisibilityTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user_model = get_user_model()
+
+    @patch("contests.views.get_connection")
+    def test_all_contests_hides_private_contests_for_public_users(self, get_connection_mock):
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchall.return_value = []
+
+        response = self.client.get("/contests/")
+
+        self.assertEqual(response.status_code, 200)
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertIn("WHERE visibility <> 'private'", executed_sql)
+
+    @patch("contests.views.get_connection")
+    def test_all_contests_keeps_private_contests_visible_for_problem_setters(self, get_connection_mock):
+        setter = self.user_model.objects.create_user(
+            username="registry_setter",
+            email="registrysetter@algoarena.dev",
+            password="testpass123",
+            role="problem_setter",
+            external_user_id=404,
+        )
+        self.client.force_authenticate(user=setter)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchall.return_value = []
+
+        response = self.client.get("/contests/")
+
+        self.assertEqual(response.status_code, 200)
+        executed_sql = cursor.execute.call_args[0][0]
+        self.assertNotIn("WHERE visibility <> 'private'", executed_sql)
 
 
 class LiveContestAccessTests(TestCase):

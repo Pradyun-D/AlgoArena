@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../../Styles/landing_page.css";
 import ThemeToggle from "../../Components/ThemeToggle";
 import { motion } from "motion/react";
+import { getStoredAuthUser } from "../../Utils/auth_storage";
+import { fetchSessionUser } from "../../Utils/session_auth";
 
 // ── Reusable animation variants ──────────────────────────────────────────────
 
@@ -43,6 +46,36 @@ const featureItems = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 function LandingPage() {
+  const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncSessionUser = async () => {
+      try {
+        const user = await fetchSessionUser();
+        if (!isMounted) return;
+        setAuthUser(user);
+      } catch {
+        if (!isMounted) return;
+        setAuthUser(getStoredAuthUser());
+      } finally {
+        if (isMounted) {
+          setSessionReady(true);
+        }
+      }
+    };
+
+    syncSessionUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const signedInName = authUser?.full_name || authUser?.username || authUser?.email || "operator";
+
   return (
     <div className="landing-page">
       <div className="landing-noise" aria-hidden="true" />
@@ -72,12 +105,25 @@ function LandingPage() {
 
         <div className="landing-actions">
           <ThemeToggle className="landing-theme-toggle" />
-          <Link to="/login" className="landing-link-button">
-            Log In
-          </Link>
-          <Link to="/register" className="landing-primary-button">
-            Register
-          </Link>
+          {authUser ? (
+            <>
+              <span className="landing-session-pill">
+                Signed in as {signedInName}
+              </span>
+              <Link to="/contests" className="landing-link-button">
+                Contests
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="landing-link-button">
+                Log In
+              </Link>
+              <Link to="/register" className="landing-primary-button">
+                Register
+              </Link>
+            </>
+          )}
         </div>
       </motion.header>
 
@@ -97,7 +143,7 @@ function LandingPage() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <span className="hero-status-dot" />
-              <span>Deep Space Arena Online</span>
+              <span>{authUser ? "Session Active" : "Deep Space Arena Online"}</span>
             </motion.div>
 
             <motion.p
@@ -109,22 +155,33 @@ function LandingPage() {
             </motion.p>
 
             <motion.h1
-              className="hero-title"
+              className={`hero-title ${authUser ? "hero-title--signed-in" : ""}`}
               variants={fadeUp}
               transition={{ duration: 0.55, ease: "easeOut" }}
             >
-              Enter a coding arena
-              <br />
-              built like a starfield.
+              {authUser ? (
+                <>
+                  Welcome back, {signedInName}
+                  <br />
+                  your next contest is waiting.
+                </>
+              ) : (
+                <>
+                  Enter a coding arena
+                  <br />
+                  built like a starfield.
+                </>
+              )}
             </motion.h1>
 
             <motion.p
-              className="hero-description"
+              className={`hero-description ${authUser ? "hero-description--signed-in" : ""}`}
               variants={fadeUp}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              Run contests, climb live leaderboards, and push submissions through a cleaner,
-              faster interface with a cinematic space backdrop.
+              {authUser
+                ? "Your session is already active. Jump straight back into contests, submissions, and leaderboards."
+                : "Run contests, climb live leaderboards, and push submissions through a cleaner, faster interface with a cinematic space backdrop."}
             </motion.p>
 
             <motion.div
@@ -133,11 +190,17 @@ function LandingPage() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <Link to="/contests" className="landing-primary-button">
-                Enter Arena
+                {authUser ? "Go to Contests" : "Enter Arena"}
               </Link>
-              <Link to="/register" className="landing-secondary-button">
-                Create Account
-              </Link>
+              {authUser ? (
+                <Link to="/submissions" className="landing-secondary-button">
+                  My Submissions
+                </Link>
+              ) : (
+                <Link to="/register" className="landing-secondary-button">
+                  Create Account
+                </Link>
+              )}
             </motion.div>
           </motion.div>
 
@@ -187,6 +250,20 @@ function LandingPage() {
             </motion.div>
           </motion.div>
         </section>
+
+        {sessionReady && authUser ? (
+          <motion.section
+            className="landing-session-banner"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+          >
+            <span className="landing-session-banner__label">Signed in</span>
+            <p>
+              You are already logged in as <strong>{signedInName}</strong>. Head straight to the contests page to continue.
+            </p>
+          </motion.section>
+        ) : null}
 
         {/* ── Feature strip — stagger in on scroll ── */}
         <motion.section

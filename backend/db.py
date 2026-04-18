@@ -265,31 +265,3 @@ insert_language_queries = [
         (89, 'Multi-file program');
     """
 ]
-
-draft_query = [
-    """
-    CREATE TABLE IF NOT EXISTS drafts (
-        contest_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        start_time TIMESTAMP,
-        end_time TIMESTAMP,
-        visibility ENUM('public', 'private') DEFAULT 'public',
-        created_by INT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY(created_by) REFERENCES user(user_id)
-    );
-    """
-]
-
-if __name__ == "__main__":
-    connection=get_connection()
-    cursor=connection.cursor()
-
-    for query in draft_query:
-        cursor.execute(query)
-
-    connection.commit()
-    cursor.close()
-    connection.close()

@@ -25,6 +25,14 @@
   font-family: "Inter", sans-serif;
 }
 
+body.light-mode .problem-editor-page {
+  background:
+    radial-gradient(circle at top right, rgba(79, 134, 255, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(99, 241, 165, 0.08), transparent 28%),
+    #f6f8fc;
+  color: #132033;
+}
+
 .problem-editor-sidebar {
   display: flex;
   flex-direction: column;
@@ -32,6 +40,12 @@
   padding: 1.7rem 1rem 1.2rem;
   background: #121315;
   border-right: 1px solid var(--problem-border);
+}
+
+body.light-mode .problem-editor-sidebar {
+  background: rgba(255, 255, 255, 0.82);
+  border-right-color: rgba(16, 24, 40, 0.08);
+  backdrop-filter: blur(16px);
 }
 
 .problem-editor-brand h2 {
@@ -62,6 +76,11 @@
   padding: 0.95rem 0.85rem;
   background: var(--problem-panel);
   border: 1px solid var(--problem-border);
+}
+
+body.light-mode .problem-editor-panel-label {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(16, 24, 40, 0.08);
 }
 
 .problem-editor-panel-label .material-symbols-outlined {
@@ -103,6 +122,16 @@
   color: var(--problem-text);
 }
 
+body.light-mode .problem-editor-nav a {
+  color: #5a687b;
+}
+
+body.light-mode .problem-editor-nav a.active,
+body.light-mode .problem-editor-nav a:hover {
+  background: rgba(79, 134, 255, 0.08);
+  color: #10223f;
+}
+
 .problem-editor-nav .material-symbols-outlined {
   font-size: 1rem;
 }
@@ -118,6 +147,12 @@
   letter-spacing: 0.12em;
   font-weight: 800;
   cursor: pointer;
+}
+
+body.light-mode .problem-editor-draft-button {
+  background: linear-gradient(135deg, rgba(79, 134, 255, 0.14), rgba(99, 241, 165, 0.12));
+  color: #12223d;
+  border: 1px solid rgba(79, 134, 255, 0.2);
 }
 
 .problem-editor-main {
@@ -143,6 +178,18 @@
   margin: 0.55rem 0 0;
   color: var(--problem-text-muted);
   max-width: 46rem;
+}
+
+body.light-mode .problem-editor-header p,
+body.light-mode .problem-editor-section-copy span,
+body.light-mode .problem-editor-panel-label span:last-child {
+  color: #5e6b7d;
+}
+
+body.light-mode .problem-editor-header h1,
+body.light-mode .problem-editor-section-copy h2,
+body.light-mode .problem-editor-panel-label p {
+  color: #132033;
 }
 
 .problem-editor-header-actions {
@@ -171,6 +218,11 @@
 .ghost-action {
   background: #1a1b1e;
   color: #c3cbda;
+}
+
+body.light-mode .ghost-action {
+  background: #e8eef8;
+  color: #20314d;
 }
 
 .primary-action {
@@ -217,6 +269,12 @@
   box-shadow: var(--problem-shadow);
 }
 
+body.light-mode .problem-editor-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(16, 24, 40, 0.08);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
 .field-group label {
   display: block;
   margin-bottom: 0.55rem;
@@ -238,15 +296,35 @@
   outline: none;
 }
 
+body.light-mode .field-group input,
+body.light-mode .field-group select,
+body.light-mode .problem-statement-input {
+  background: #f8fbff;
+  color: #132033;
+  border-color: rgba(16, 24, 40, 0.12);
+}
+
 .field-group input::placeholder,
 .problem-statement-input::placeholder {
   color: #646c7b;
+}
+
+body.light-mode .field-group input::placeholder,
+body.light-mode .problem-statement-input::placeholder {
+  color: #7e8b9d;
 }
 
 .field-group input:focus,
 .field-group select:focus,
 .problem-statement-input:focus {
   border-color: var(--problem-border-strong);
+}
+
+body.light-mode .field-group input:focus,
+body.light-mode .field-group select:focus,
+body.light-mode .problem-statement-input:focus {
+  border-color: rgba(79, 134, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(79, 134, 255, 0.12);
 }
 
 .field-grid {
@@ -264,6 +342,11 @@
   grid-template-columns: repeat(2, 1fr);
   border: 1px solid rgba(255, 255, 255, 0.04);
   background: var(--problem-panel-soft);
+}
+
+body.light-mode .segmented-toggle {
+  background: #f7f9fd;
+  border-color: rgba(16, 24, 40, 0.12);
 }
 
 .segmented-toggle button {
@@ -289,6 +372,11 @@
   gap: 0.2rem;
   padding: 0.8rem 0.8rem 0;
   background: #1a1b1d;
+}
+
+body.light-mode .statement-toolbar {
+  background: #eef3fb;
+  border-bottom: 1px solid rgba(16, 24, 40, 0.08);
 }
 
 .statement-toolbar button {
@@ -318,12 +406,40 @@
   line-height: 1.65;
 }
 
+body.light-mode .problem-statement-input,
+body.light-mode .problem-statement-preview {
+  background: #f8fbff;
+  color: #132033;
+}
+
 .problem-statement-preview {
   color: #dbe6fb;
 }
 
+body.light-mode .problem-statement-preview {
+  color: #132033;
+}
+
 .problem-statement-preview p {
   color: #7f8797;
+}
+
+body.light-mode .problem-statement-preview p {
+  color: #6c7a8d;
+}
+
+.problem-editor-empty-state {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 0.85rem;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  color: var(--problem-text-muted);
+}
+
+body.light-mode .problem-editor-empty-state {
+  border-color: rgba(16, 24, 40, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+  color: #5e6b7d;
 }
 
 .problem-statement-preview pre {

@@ -19,6 +19,9 @@ const toUtcISOString = (localDateTimeValue) => {
 
   return localDate.toISOString();
 };
+
+const getDraftContestStorageKey = (id) => (id ? `contestDraft:${id}` : "contestDraft:temp");
+const getDraftProblemsStorageKey = (id) => (id ? `problemsDraft:${id}` : "problemsDraft:temp");
 // ----------------IMP----------------
 // form is incomplete (more fields depending on Pradyun's advice to be added later)
 
@@ -70,6 +73,7 @@ const ContestFormPage = () => {
     const loadEditorState = async () => {
       try {
         if (draftId) {
+          const problemsStorageKey = getDraftProblemsStorageKey(draftId)
           const response = await axios.get(`${API_BASE_URL}/contests/drafts/${draftId}/`, {
             withCredentials: true,
           })
@@ -99,6 +103,12 @@ const ContestFormPage = () => {
             duration,
             visibility: draft.visibility || "public",
           })
+          const savedProblems = localStorage.getItem(problemsStorageKey)
+          if (Array.isArray(draft.problems) && draft.problems.length > 0) {
+            setProblems(draft.problems)
+          } else if (savedProblems) {
+            setProblems(JSON.parse(savedProblems))
+          }
           setLoadedDraftTitle(draft.title || "Draft")
           return
         }
@@ -137,8 +147,8 @@ const ContestFormPage = () => {
           return
         }
 
-        const savedContest = localStorage.getItem("contestDraft")
-        const savedProblems = localStorage.getItem("problemsDraft")
+        const savedContest = localStorage.getItem(getDraftContestStorageKey())
+        const savedProblems = localStorage.getItem(getDraftProblemsStorageKey())
 
         if (savedContest) {
           setContest(JSON.parse(savedContest))
@@ -295,8 +305,8 @@ const ContestFormPage = () => {
          withCredentials: true
        });
        const createdContestId = response.data?.contest?.contest_id
-       localStorage.removeItem("contestDraft")
-       localStorage.removeItem("problemsDraft")
+       localStorage.removeItem(getDraftContestStorageKey())
+       localStorage.removeItem(getDraftProblemsStorageKey())
        if (createdContestId) {
          navigate(`/contest/${createdContestId}/problems/edit`)
        } else {
@@ -325,23 +335,27 @@ const ContestFormPage = () => {
         start_time: contest.start_time ? toUtcISOString(contest.start_time) : null,
         end_time: calculatedEndTime ? toUtcISOString(calculatedEndTime) : null,
       },
+      problems,
     }
 
     try {
       setSubmitMode("draft")
       setSubmitLoading(true)
       setPageError("")
+      let savedDraftId = draftId
       if (draftId) {
-        await axios.put(`${API_BASE_URL}/contests/drafts/${draftId}/`, payload, {
+        const response = await axios.put(`${API_BASE_URL}/contests/drafts/${draftId}/`, payload, {
           withCredentials: true,
         })
+        savedDraftId = response.data?.draft?.contest_id || draftId
       } else {
-        await axios.post(`${API_BASE_URL}/contests/drafts/create/`, payload, {
+        const response = await axios.post(`${API_BASE_URL}/contests/drafts/create/`, payload, {
           withCredentials: true,
         })
+        savedDraftId = response.data?.draft?.contest_id || draftId
       }
-      localStorage.setItem("contestDraft", JSON.stringify(contest))
-      localStorage.setItem("problemsDraft", JSON.stringify(problems))
+      localStorage.setItem(getDraftContestStorageKey(savedDraftId), JSON.stringify(contest))
+      localStorage.setItem(getDraftProblemsStorageKey(savedDraftId), JSON.stringify(problems))
       navigate("/drafts")
     } catch (error) {
       setPageError(
