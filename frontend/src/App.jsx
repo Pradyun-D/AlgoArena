@@ -1,10 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ContestsPage from "./Pages/AllContests";
 import AdminDashboard from "./Pages/AdminDashboard";
+import AdminUsersPage from "./Pages/AdminUsersPage";
 import MySubmissionsPage from "./Pages/MySubmissions";
 import SubmissionViewPage from "./Pages/SubmissionView";
 import ContestRegistrationPage from "./Pages/ContestRegistration";
-import AdminDashboardActive from "./Pages/AdminDashboardActive";
 import ContestFormPage from "./Pages/CreateNewContest";
 import DraftsDashboard from "./Pages/DraftsDashboard";
 import ContestPage from "./Pages/ContestInfo";
@@ -37,12 +37,20 @@ function App() {
             )}
           />
           <Route
-            path="/admin/dashboard/active"
+            path="/admin/permissions"
             element={(
               <AdminRoute>
-                <AdminDashboardActive />
+                <AdminUsersPage />
               </AdminRoute>
             )}
+          />
+          <Route
+            path="/admin/users"
+            element={<Navigate to="/admin/permissions" replace />}
+          />
+          <Route
+            path="/admin/problem-setters"
+            element={<Navigate to="/admin/permissions" replace />}
           />
           <Route
             path="/create"

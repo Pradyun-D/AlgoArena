@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from datetime import datetime, timezone
 import uuid
-from accounts.permissions import IsProblemSetter, IsAdmin,IsProblemSetterOwner,IsAuthenticated
+from accounts.permissions import IsProblemSetter, IsProblemSetterOwner, IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
@@ -205,6 +205,17 @@ def _to_sql_datetime(value):
     return value.strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _can_manage_contest(request, contest_row):
+    if getattr(request.user, "role", None) == "admin":
+        return True
+
+    owner_id = getattr(request.user, "external_user_id", None)
+    if owner_id is None:
+        return False
+
+    return contest_row.get("created_by") == owner_id
+
+
 def _validate_publishable_draft(draft):
     if not draft:
         return "Draft not found."
@@ -272,14 +283,14 @@ def get_active_contests_data():
         print("db now utc:", cursor.fetchone())
 
         cursor.execute("""
-        SELECT contest_id, title, start_time, end_time
-        FROM contests
-        ORDER BY created_at DESC
+          SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+            FROM contests WHERE start_time<=UTC_TIMESTAMP() AND  end_time > UTC_TIMESTAMP()
+            ORDER BY end_time DESC, created_at DESC
         """)
-        print("all contests:", cursor.fetchall())
+      
 
         rows=cursor.fetchall()
-        print(rows)
+        
         return rows
     finally:
         cursor.close()
@@ -298,18 +309,6 @@ def all_contests(request):
 @permission_classes([AllowAny])
 def past_contests(request):
     return Response(_get_past_contests_data())
-
-
-@api_view(["GET"])
-@permission_classes([IsAdmin])
-def admin_dashboard_contests(request):
-    return Response(_get_contests_data())
-
-
-@api_view(["GET"])
-@permission_classes([IsAdmin])
-def admin_dashboard_active_contests(request):
-    return Response(get_active_contests_data())
 
 
 @api_view(["GET"])
@@ -585,6 +584,88 @@ def create_contest(request):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
     return Response(serializer.errors, status=400)
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsProblemSetter])
+def contest_metadata_detail(request, contest_id):
+    contest_id = str(contest_id)
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        contest = cursor.fetchone()
+
+        if not contest:
+            return Response({"error": "Contest not found."}, status=404)
+
+        if not _can_manage_contest(request, contest):
+            return Response({"error": "You do not have permission to edit this contest."}, status=403)
+
+        if request.method == "GET":
+            return Response({"contest": contest}, status=200)
+
+        serializer = ContestInfoSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        validated = serializer.validated_data
+        cursor.execute(
+            """
+            UPDATE contests
+            SET title = %s,
+                description = %s,
+                start_time = %s,
+                end_time = %s,
+                visibility = %s,
+                updated_at = UTC_TIMESTAMP()
+            WHERE contest_id = %s
+            """,
+            (
+                validated["title"],
+                validated.get("description", ""),
+                _to_sql_datetime(validated["start_time"]),
+                _to_sql_datetime(validated["end_time"]),
+                validated["visibility"],
+                contest_id,
+            ),
+        )
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT contest_id, title, description, start_time, end_time, visibility,
+                   created_by, created_at
+            FROM contests
+            WHERE contest_id = %s
+            LIMIT 1
+            """,
+            (contest_id,),
+        )
+        updated_contest = cursor.fetchone()
+        return Response({"message": "Contest details updated successfully.", "contest": updated_contest}, status=200)
+    except Exception as e:
+        if conn and conn.is_connected():
+            conn.rollback()
+        return Response({"error": str(e)}, status=500)
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 
 # to delete a contest (problemsetter/user)

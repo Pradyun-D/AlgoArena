@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.github',
 
     'accounts',
+    'adminpanel',
     'contests',
 ]
 

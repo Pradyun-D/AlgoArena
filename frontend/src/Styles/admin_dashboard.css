@@ -198,6 +198,10 @@
   gap: 0.9rem;
 }
 
+.admin-header-metrics--wide {
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+}
+
 .admin-mini-stat {
   min-width: 150px;
   padding: 1rem 1.1rem;
@@ -241,6 +245,15 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.admin-panel-toolbar--stacked {
+  flex-direction: column;
+}
+
+.admin-panel-toolbar-main {
+  display: flex;
+  gap: 1rem;
 }
 
 .admin-searchbar {
@@ -288,6 +301,30 @@
   font-size: 0.74rem;
 }
 
+.admin-date-filter-button {
+  min-height: 3.5rem;
+  justify-content: flex-start;
+  min-width: 15rem;
+  padding: 0 1.15rem;
+  white-space: nowrap;
+}
+
+.admin-date-filter-button .material-symbols-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.date-picker-wrapper {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
 .admin-filter-icon {
   width: 3rem;
   padding: 0;
@@ -332,6 +369,31 @@
 .contest-time-cell {
   display: grid;
   gap: 0.35rem;
+}
+
+.admin-member-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.admin-member-avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #7ea8ff 0%, #4b7de0 100%);
+  color: #09111d;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-code-cell {
+  color: #7ea8ff;
+  font-family: "Space Mono", monospace;
+  font-size: 0.76rem;
 }
 
 .contest-link {
@@ -418,6 +480,11 @@
   transition: color 0.2s ease, background 0.2s ease;
 }
 
+.contest-actions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .contest-actions button:hover {
   color: #dde5f5;
   background: rgba(255, 255, 255, 0.04);
@@ -429,6 +496,82 @@
 
 .contest-actions button.danger:hover {
   color: #ff7b72;
+}
+
+.admin-permission-editor {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.admin-member-select {
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  background: #0d0e10;
+  color: #d4dbea;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.admin-save-button {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #9ca4b3;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.admin-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-save-button.is-dirty:not(:disabled) {
+  background: linear-gradient(180deg, #5393ff 0%, #136ee6 100%);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.admin-inline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  background: rgba(126, 168, 255, 0.08);
+  border: 1px solid rgba(126, 168, 255, 0.12);
+}
+
+.admin-inline-banner strong,
+.admin-inline-feedback {
+  display: block;
+  margin: 0;
+  color: #dfe7fb;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+}
+
+.admin-inline-banner span {
+  display: block;
+  margin-top: 0.35rem;
+  color: #8d96a5;
+  font-size: 0.78rem;
+}
+
+.admin-inline-banner--compact {
+  margin-bottom: 1rem;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
 }
 
 .admin-table-footer {
@@ -552,7 +695,8 @@
   }
 
   .admin-page-header,
-  .admin-panel-toolbar {
+  .admin-panel-toolbar,
+  .admin-panel-toolbar-main {
     flex-direction: column;
   }
 
@@ -589,8 +733,20 @@
     min-height: 3rem;
   }
 
+  .admin-member-select,
+  .admin-save-button {
+    min-height: 3rem;
+  }
+
   .admin-filter-icon {
     min-height: 3rem;
+  }
+
+  .admin-inline-banner,
+  .admin-permission-editor {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -663,7 +819,8 @@ body.light-mode .admin-panel {
 
 body.light-mode .admin-searchbar,
 body.light-mode .admin-filter-button,
-body.light-mode .admin-filter-icon {
+body.light-mode .admin-filter-icon,
+body.light-mode .admin-member-select {
   background: #f7f9fc;
   border-color: #e5e9f0;
   color: var(--on-background);
@@ -684,6 +841,40 @@ body.light-mode .admin-table-footer {
 body.light-mode .admin-contest-table th {
   background: #f3f6fa;
   color: #7d8aa0;
+}
+
+body.light-mode .admin-member-avatar {
+  background: linear-gradient(180deg, #3e82f6 0%, #245fc6 100%);
+  color: #ffffff;
+}
+
+body.light-mode .admin-code-cell {
+  color: #245fc6;
+}
+
+body.light-mode .admin-save-button {
+  background: #f7f9fc;
+  border-color: #e5e9f0;
+  color: #7d8aa0;
+}
+
+body.light-mode .admin-save-button.is-dirty:not(:disabled) {
+  background: linear-gradient(180deg, #2f7df4 0%, #1f6be4 100%);
+  color: #ffffff;
+}
+
+body.light-mode .admin-inline-banner {
+  background: #f5f8fe;
+  border-color: #dbe6fb;
+}
+
+body.light-mode .admin-inline-banner strong,
+body.light-mode .admin-inline-feedback {
+  color: var(--on-background);
+}
+
+body.light-mode .admin-inline-banner span {
+  color: var(--on-surface-variant);
 }
 
 body.light-mode .contest-actions button:hover,

@@ -2,10 +2,8 @@ import { NavLink, useNavigate } from "react-router-dom"
 
 const navItems = [
   { label: "Overview", icon: "dashboard", to: "/admin/dashboard" },
-  { label: "Active Contests", icon: "rocket_launch", to: "/admin/dashboard/active" },
   { label: "Drafts", icon: "description", to: "/drafts" },
-  { label: "Archive", icon: "history", to: "/admin/dashboard/archive" },
-  { label: "Analytics", icon: "analytics", to: "/admin/dashboard/analytics" },
+  
 ];
 
 const footerItems = [

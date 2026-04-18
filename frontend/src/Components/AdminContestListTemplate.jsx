@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; 
+import { Link, useNavigate } from "react-router-dom";
 import SidebarAdminDashboard from "./SidebarAdminDashboard";
 import ErrorPage from "../Pages/ErrorPage";
 import LoadingPage from "../Pages/LoadingPage";
 import "../Styles/admin_dashboard.css";
 import ThemeToggle from "./ThemeToggle";
+import { API_BASE_URL } from "../Utils/api";
+
+const PAGE_SIZE = 10;
 
 const topMetrics = [
   { label: "Global Users", value: "128,402", accent: "blue" },
@@ -85,7 +91,20 @@ const getContestStatus = (startTime, endTime, visibility) => {
   return "Live";
 };
 
+const CustomDateInput = forwardRef(({ value, onClick }, ref) => (
+  <button 
+    className="admin-filter-button admin-date-filter-button"
+    onClick={onClick} 
+    ref={ref} 
+    type="button"
+  >
+    <span className="material-symbols-outlined">calendar_month</span>
+    <span>{value || "Filter by Date Range"}</span>
+  </button>
+));
+
 function AdminContestListTemplate({
+  activeTab = "dashboard",
   title,
   description,
   fetchUrl,
@@ -96,17 +115,27 @@ function AdminContestListTemplate({
   emptyMessage,
   entryLabel = "entries",
 }) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [contests, setContests] = useState([]);
+  const [actionMessage, setActionMessage] = useState("");
+  const [deletingContestId, setDeletingContestId] = useState("");
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
 
   const fetchContests = async () => {
     try {
       setLoading(true);
       setError("");
       const response = await axios.get(fetchUrl, { withCredentials: true });
-      console.log(response)
       setContests(Array.isArray(response.data) ? response.data : []);
+      setCurrentPage(1);
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -123,13 +152,89 @@ function AdminContestListTemplate({
     fetchContests();
   }, [fetchUrl]);
 
+  const handleDeleteContest = async (contestId, contestTitle) => {
+    const confirmed = window.confirm(`Delete "${contestTitle}"? This action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingContestId(contestId);
+      setActionMessage("");
+      await axios.delete(`${API_BASE_URL}/contests/${contestId}/delete/`, {
+        withCredentials: true,
+      });
+      setContests((currentContests) => currentContests.filter((contest) => (contest.contest_id || contest.id) !== contestId));
+      setActionMessage("Contest deleted successfully.");
+    } catch (err) {
+      setActionMessage(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Unable to delete this contest."
+      );
+    } finally {
+      setDeletingContestId("");
+    }
+  };
+
+  const normalizedContests = contests.map((contest) => {
+    const registrantsValue =
+      contest.registrants ??
+      contest.registrations ??
+      contest.participants ??
+      contest.total_registrants ??
+      0;
+    
+    return {
+      id: contest.contest_id || contest.id || "N/A",
+      title: contest.title || "Untitled Contest",
+      start: formatAdminDate(contest.start_time),
+      end: formatAdminDate(contest.end_time),
+      rawStartTime: new Date(contest.start_time).getTime(),
+      registrants: typeof registrantsValue === "number"
+        ? registrantsValue.toLocaleString("en-IN")
+        : String(registrantsValue),
+      status: getContestStatus(contest.start_time, contest.end_time, contest.visibility),
+    };
+  });
+
+  const filteredContests = normalizedContests.filter((contest) => {
+    const matchesSearch =
+      contest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(contest.id).toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "All" || contest.status === statusFilter;
+
+    let matchesDate = true;
+    if (startDate) {
+      matchesDate = matchesDate && contest.rawStartTime >= startDate.getTime();
+    }
+    if (endDate) {
+      matchesDate = matchesDate && contest.rawStartTime <= (endDate.getTime() + 86400000);
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, startDate, endDate]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredContests.length / PAGE_SIZE));
+  const paginatedContests = filteredContests.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   if (loading) {
-    return (
-      <LoadingPage
-        title={loadingTitle}
-        subtitle={loadingSubtitle}
-      />
-    );
+    return <LoadingPage title={loadingTitle} subtitle={loadingSubtitle} />;
   }
 
   if (error) {
@@ -145,38 +250,16 @@ function AdminContestListTemplate({
     );
   }
 
-  const normalizedContests = contests.map((contest) => {
-    const registrantsValue =
-      contest.registrants ??
-      contest.registrations ??
-      contest.participants ??
-      contest.total_registrants ??
-      0;
-    
-    return {
-      id: contest.contest_id || contest.id || "N/A",
-      title: contest.title || "Untitled Contest",
-      start: formatAdminDate(contest.start_time),
-      end: formatAdminDate(contest.end_time),
-      registrants: typeof registrantsValue === "number"
-        ? registrantsValue.toLocaleString("en-IN")
-        : String(registrantsValue),
-      status: getContestStatus(contest.start_time, contest.end_time, contest.visibility),
-    };
-  });
-
   return (
     <div className="admin-dashboard-page">
       <SidebarAdminDashboard />
 
       <main className="admin-dashboard-main">
         <header className="admin-topbar">
-          <div className="admin-topbar-tabs">
-            <a className="admin-topbar-link active" href="#dashboard">Dashboard</a>
-            <a className="admin-topbar-link" href="#contests">Contests</a>
-            <a className="admin-topbar-link" href="#problems">Problems</a>
-            <a className="admin-topbar-link" href="#users">Users</a>
-            <a className="admin-topbar-link" href="#system">System</a>
+        <div className="admin-topbar-tabs">
+            <Link className={`admin-topbar-link ${activeTab === "dashboard" ? "active" : ""}`} to="/admin/dashboard">Dashboard</Link>
+            <Link className="admin-topbar-link" to="/contests">Contests</Link>
+            <Link className={`admin-topbar-link ${activeTab === "permissions" ? "active" : ""}`} to="/admin/permissions">Permissions</Link>
           </div>
 
           <div className="admin-topbar-actions">
@@ -219,23 +302,40 @@ function AdminContestListTemplate({
                   id="contest-search"
                   type="text"
                   placeholder="Search Contests By Title Or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </label>
 
               <div className="admin-toolbar-filters">
-                <button className="admin-filter-button" type="button">
-                  <span>Status: All</span>
-                  <span className="material-symbols-outlined">expand_more</span>
-                </button>
-                <button className="admin-filter-button" type="button">
-                  <span className="material-symbols-outlined">calendar_month</span>
-                  <span>Date Range</span>
-                </button>
-                <button className="admin-filter-icon" type="button" aria-label="Advanced filters">
-                  <span className="material-symbols-outlined">filter_alt</span>
-                </button>
+                <select 
+                  className="admin-filter-button" 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{ appearance: "auto", cursor: "pointer" }}
+                >
+                  <option value="All">Status: All</option>
+                  <option value="Live">Live</option>
+                  <option value="Completed">Completed</option>
+                </select>
+
+                <DatePicker
+                  selectsRange={true}
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(update) => setDateRange(update)}
+                  isClearable={true}
+                  customInput={<CustomDateInput />}
+                  wrapperClassName="date-picker-wrapper"
+                />
               </div>
             </div>
+
+            {actionMessage ? (
+              <div className="admin-inline-banner admin-inline-banner--compact">
+                <p className="admin-inline-feedback">{actionMessage}</p>
+              </div>
+            ) : null}
 
             <div className="admin-table-wrap">
               <table className="admin-contest-table">
@@ -249,8 +349,8 @@ function AdminContestListTemplate({
                   </tr>
                 </thead>
                 <tbody>
-                  {normalizedContests.length > 0 ? (
-                    normalizedContests.map((contest) => (
+                  {paginatedContests.length > 0 ? (
+                    paginatedContests.map((contest) => (
                       <tr key={contest.id}>
                         <td>
                           <div className="contest-primary-cell">
@@ -278,16 +378,30 @@ function AdminContestListTemplate({
                         </td>
                         <td>
                           <div className="contest-actions">
-                            <button type="button" aria-label={`Analytics for ${contest.title}`}>
-                              <span className="material-symbols-outlined">monitoring</span>
+                            <button
+                              type="button"
+                              aria-label={`Edit details for ${contest.title}`}
+                              onClick={() => navigate(`/create?contest=${contest.id}`)}
+                              title="Edit contest details"
+                            >
+                              <span className="material-symbols-outlined">tune</span>
                             </button>
-                            <button type="button" aria-label={`Edit ${contest.title}`}>
+                            <button
+                              type="button"
+                              aria-label={`Edit problems for ${contest.title}`}
+                              onClick={() => navigate(`/contest/${contest.id}/problems/edit`)}
+                              title="Edit contest problems"
+                            >
                               <span className="material-symbols-outlined">edit</span>
                             </button>
-                            <button type="button" aria-label={`Clone ${contest.title}`}>
-                              <span className="material-symbols-outlined">content_copy</span>
-                            </button>
-                            <button type="button" aria-label={`Delete ${contest.title}`} className="danger">
+                            <button
+                              type="button"
+                              aria-label={`Delete ${contest.title}`}
+                              className="danger"
+                              onClick={() => handleDeleteContest(contest.id, contest.title)}
+                              disabled={deletingContestId === contest.id}
+                              title={deletingContestId === contest.id ? "Deleting contest" : "Delete contest"}
+                            >
                               <span className="material-symbols-outlined">delete</span>
                             </button>
                           </div>
@@ -297,7 +411,7 @@ function AdminContestListTemplate({
                   ) : (
                     <tr>
                       <td colSpan="5" className="admin-empty-state">
-                        {emptyMessage}
+                        {emptyMessage || "No contests found matching your filters."}
                       </td>
                     </tr>
                   )}
@@ -307,18 +421,36 @@ function AdminContestListTemplate({
 
             <div className="admin-table-footer">
               <p>
-                {normalizedContests.length > 0
-                  ? `Showing 1-${normalizedContests.length} of ${normalizedContests.length} ${entryLabel}`
+                {filteredContests.length > 0
+                  ? `Showing ${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(currentPage * PAGE_SIZE, filteredContests.length)} of ${filteredContests.length} ${entryLabel}`
                   : "Showing 0 entries"}
               </p>
               <div className="admin-pagination">
-                <button type="button" aria-label="Previous page">
+                <button
+                  type="button"
+                  aria-label="Previous page"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                >
                   <span className="material-symbols-outlined">chevron_left</span>
                 </button>
-                <button type="button" className="active" aria-current="page">1</button>
-                <button type="button">2</button>
-                <button type="button">3</button>
-                <button type="button" aria-label="Next page">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    className={page === currentPage ? "active" : ""}
+                    aria-current={page === currentPage ? "page" : undefined}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  aria-label="Next page"
+                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  disabled={currentPage === totalPages}
+                >
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>

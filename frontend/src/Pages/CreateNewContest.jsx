@@ -32,6 +32,8 @@ const ContestFormPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftId = searchParams.get("draft");
+  const contestId = searchParams.get("contest");
+  const isContestEditMode = Boolean(contestId);
   const { isDarkMode } = useTheme();
   const emptyProblem = {
     title: "",
@@ -62,6 +64,7 @@ const ContestFormPage = () => {
   const [submitMode, setSubmitMode] = useState("schedule")
   const [pageError, setPageError] = useState("")
   const [loadedDraftTitle, setLoadedDraftTitle] = useState("")
+  const [loadedContestTitle, setLoadedContestTitle] = useState("")
 
   useEffect(()=> {
     const loadEditorState = async () => {
@@ -100,6 +103,40 @@ const ContestFormPage = () => {
           return
         }
 
+        if (contestId) {
+          const response = await axios.get(`${API_BASE_URL}/contests/${contestId}/edit/`, {
+            withCredentials: true,
+          })
+          const existingContest = response.data?.contest
+          if (!existingContest) {
+            throw new Error("Contest not found.")
+          }
+
+          const startTime = existingContest.start_time
+            ? new Date(existingContest.start_time).toISOString().slice(0, 16)
+            : ""
+          const endTime = existingContest.end_time
+            ? new Date(existingContest.end_time).toISOString().slice(0, 16)
+            : ""
+          let duration = ""
+          if (startTime && endTime) {
+            const start = new Date(existingContest.start_time)
+            const end = new Date(existingContest.end_time)
+            const diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
+            duration = Number.isFinite(diffMinutes) && diffMinutes > 0 ? String(diffMinutes) : ""
+          }
+
+          setContest({
+            title: existingContest.title || "",
+            description: existingContest.description || "",
+            start_time: startTime,
+            duration,
+            visibility: existingContest.visibility || "public",
+          })
+          setLoadedContestTitle(existingContest.title || "Contest")
+          return
+        }
+
         const savedContest = localStorage.getItem("contestDraft")
         const savedProblems = localStorage.getItem("problemsDraft")
 
@@ -122,7 +159,7 @@ const ContestFormPage = () => {
     }
 
     loadEditorState()
-  },[draftId])
+  },[contestId, draftId])
 
   const handleContestChange = (e) => {
     const { name, value } = e.target
@@ -230,7 +267,7 @@ const ContestFormPage = () => {
       return
     }
 
-    if (problems.length === 0) {
+    if (!isContestEditMode && problems.length === 0) {
       alert("Add at least one problem before creating the contest.")
       return
     }
@@ -248,16 +285,23 @@ const ContestFormPage = () => {
      setSubmitMode("schedule")
      setSubmitLoading(true)
      setPageError("")
-     const response = await axios.post(`${API_BASE_URL}/contests/create/`, payload, {
-       withCredentials: true
-     });
-     const createdContestId = response.data?.contest?.contest_id
-     localStorage.removeItem("contestDraft")
-     localStorage.removeItem("problemsDraft")
-     if (createdContestId) {
-       navigate(`/contest/${createdContestId}/problems/edit`)
+     if (isContestEditMode) {
+       await axios.put(`${API_BASE_URL}/contests/${contestId}/edit/`, payload.contest, {
+         withCredentials: true
+       });
+       navigate(`/contest/${contestId}/`)
      } else {
-       navigate('/contests')
+       const response = await axios.post(`${API_BASE_URL}/contests/create/`, payload, {
+         withCredentials: true
+       });
+       const createdContestId = response.data?.contest?.contest_id
+       localStorage.removeItem("contestDraft")
+       localStorage.removeItem("problemsDraft")
+       if (createdContestId) {
+         navigate(`/contest/${createdContestId}/problems/edit`)
+       } else {
+         navigate('/contests')
+       }
      }
     }
 
@@ -317,10 +361,14 @@ const ContestFormPage = () => {
         title={submitLoading ? "Scheduling contest" : "Loading contest editor"}
         subtitle={
           submitLoading
-            ? submitMode === "draft"
+            ? isContestEditMode
+              ? "Updating contest metadata and saving the latest schedule."
+              : submitMode === "draft"
               ? "Saving the current contest metadata as a reusable draft."
               : "Packaging contest metadata, validating the problem set, and sending it to the arena."
-            : "Restoring your draft, contest settings, and saved problem configuration."
+            : isContestEditMode
+              ? "Loading the current contest metadata into the editor."
+              : "Restoring your draft, contest settings, and saved problem configuration."
         }
       />
     )
@@ -344,12 +392,13 @@ const ContestFormPage = () => {
       <div className="modal">
         <div className="modal-header">
           <div>
-            <h2 className="title">CREATE NEW CONTEST</h2>
+            <h2 className="title">{isContestEditMode ? "EDIT CONTEST DETAILS" : "CREATE NEW CONTEST"}</h2>
             {draftId ? <p className="subtitle">Editing draft: {loadedDraftTitle || draftId}</p> : null}
+            {isContestEditMode ? <p className="subtitle">Editing contest: {loadedContestTitle || contestId}</p> : null}
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <ThemeToggle />
-            <button className="close-btn" onClick={() => navigate('/contests')}>×</button>
+            <button className="close-btn" onClick={() => navigate(isContestEditMode ? `/contest/${contestId}/` : '/contests')}>×</button>
           </div>
         </div>
 
@@ -419,6 +468,7 @@ const ContestFormPage = () => {
             </div>
           </div>
 
+          {!isContestEditMode ? (
           <div className="section">
             <div className="section-header-row">
                <div>
@@ -500,13 +550,16 @@ const ContestFormPage = () => {
               </div>
             )}
           </div>
+          ) : null}
         </div>
 
         <div className="modal-footer">
-          <button className="button button-secondary" onClick={()=>navigate('/contests')}>Cancel Session</button>
+          <button className="button button-secondary" onClick={()=>navigate(isContestEditMode ? `/contest/${contestId}/` : '/contests')}>Cancel Session</button>
           <div className="footer-actions">
-            <button className="button button-draft" onClick={handleSaveDraft}>Save as Draft</button>
-            <button className="button button-primary" onClick={handleSubmit}>SCHEDULE CONTEST</button>
+            {!isContestEditMode ? <button className="button button-draft" onClick={handleSaveDraft}>Save as Draft</button> : null}
+            <button className="button button-primary" onClick={handleSubmit}>
+              {isContestEditMode ? "SAVE CONTEST DETAILS" : "SCHEDULE CONTEST"}
+            </button>
           </div>
         </div>
       </div>

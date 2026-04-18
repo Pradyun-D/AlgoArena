@@ -21,6 +21,7 @@ from dj_rest_auth.registration.views import RegisterView, VerifyEmailView, Resen
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-api/', include('adminpanel.urls')),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('allauth.urls')),
     path('api/auth/', include('dj_rest_auth.urls')),  # login, logout, password reset/change, user/

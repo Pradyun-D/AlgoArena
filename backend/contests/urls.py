@@ -2,11 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+
     path('', views.all_contests, name='all_contests'),
     path('past/', views.past_contests, name='past_contests'),
     path('active/', views.active_contests, name='active_contests'),
-    path('admin/dashboard/', views.admin_dashboard_contests, name='admin_dashboard_contests'),
-    path('admin/dashboard/active/', views.admin_dashboard_active_contests, name='admin_dashboard_active_contests'),
 
     path('drafts/', views.list_drafts, name='list_drafts'),
     path('drafts/create/', views.create_draft, name='create_draft'),
@@ -14,6 +13,7 @@ urlpatterns = [
     path('drafts/<uuid:contest_id>/publish/', views.publish_draft, name='publish_draft'),
 
     path('create/', views.create_contest, name='create_contest'),
+    path('<uuid:contest_id>/edit/', views.contest_metadata_detail, name='contest_metadata_detail'),
     path('<uuid:contest_id>/delete/', views.delete_contest, name='delete_contest'),
 
     path('<uuid:contest_id>/details/', views.get_contest_info, name='get_contest_info'),
