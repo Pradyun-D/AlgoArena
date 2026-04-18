@@ -69,10 +69,16 @@ const normalizeDifficulty = (difficulty) => {
 };
 
 const getSubmissionTone = (submission) => {
-  const status = String(submission?.status || "").toLowerCase();
-  if (status === "completed") return "is-complete";
-  if (status === "error" || status === "failed") return "is-error";
-  return "is-pending";
+  const verdict = submission?.verdict;
+
+  if (verdict === "Accepted") {
+    return "is-complete"; // Green
+  }
+
+  if (verdict === "Wrong Answer") {
+    return "is-error"; // Red
+  }
+  return "is-warning"; // Orange
 };
 
 const formatDateTime = (value) => {
@@ -85,12 +91,12 @@ const formatDateTime = (value) => {
 // ── animation variants ───────────────────────────────────────
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
-  show:   { opacity: 1, y: 0  },
+  show: { opacity: 1, y: 0 },
 };
 
 const submissionStagger = {
   hidden: {},
-  show:   { transition: { staggerChildren: 0.06 } },
+  show: { transition: { staggerChildren: 0.06 } },
 };
 
 // ── component ────────────────────────────────────────────────
@@ -114,7 +120,7 @@ function ProblemSolvingPage() {
 
   const problem = solveData?.problem || null;
   const contest = solveData?.contest || null;
-  const visibleTestcases = useMemo(() => Array.isArray(solveData?.testcases) ? solveData.testcases : [], [solveData]);
+  const visibleTestcases = useMemo(() => Array.isArray(solveData?.visible_testcases) ? solveData.visible_testcases : [], [solveData]);
   const authUser = getStoredAuthUser();
   const canManageProblems = Boolean(authUser && ["problem_setter", "admin"].includes(authUser?.role));
 
@@ -132,24 +138,27 @@ function ProblemSolvingPage() {
     const fetchSolveData = async () => {
       try {
         setLoading(true); setError(""); setErrorStatus(null);
-        const [solveResponse, langResponse, subResponse] = await Promise.allSettled([
-          axios.get(`${API_BASE_URL}/contests/${contestId}/problems/${problemId}/solve`, { withCredentials: true }),
-          axios.get(`${API_BASE_URL}/contests/languages/`, { withCredentials: true }),
-          axios.get(`${API_BASE_URL}/contests/${contestId}/problems/${problemId}/submissions/`, { withCredentials: true }),
-        ]);
-        if (solveResponse.status === "fulfilled") setSolveData(solveResponse.value.data?.data || null);
-        else { setError(solveResponse.reason?.response?.data?.error || solveResponse.reason?.message || "Unable to load problem."); setErrorStatus(solveResponse.reason?.response?.status ?? null); }
-        if (langResponse.status === "fulfilled") {
-          const langs = Array.isArray(langResponse.value.data) ? langResponse.value.data : [];
-          setLanguages(langs);
-          if (langs.length > 0) {
-            setSelectedLanguageId(String(langs[0].language_id));
-            setSourceCode(getLanguagePreset(langs[0].name).starterCode);
+        const response = await axios.get(`${API_BASE_URL}/contests/${contestId}/problems/${problemId}/solve`, { withCredentials: true });
+        
+        const data = response.data?.data;
+        if (data) {
+          setSolveData(data);
+          
+          if (Array.isArray(data.languages)) {
+            setLanguages(data.languages);
+            if (data.languages.length > 0) {
+              setSelectedLanguageId(String(data.languages[0].language_id));
+              setSourceCode(getLanguagePreset(data.languages[0].name).starterCode);
+            }
+          }
+          
+          if (Array.isArray(data.submissions)) {
+            setSubmissions(data.submissions);
           }
         }
-        if (subResponse.status === "fulfilled") setSubmissions(Array.isArray(subResponse.value.data) ? subResponse.value.data : []);
       } catch (err) {
-        setError(err.message || "An unexpected error occurred.");
+        setError(err.response?.data?.error || err.message || "Unable to load problem.");
+        setErrorStatus(err.response?.status ?? null);
       } finally { setLoading(false); }
     };
     if (contestId && problemId) fetchSolveData();
@@ -203,7 +212,7 @@ function ProblemSolvingPage() {
       if (newSubmission) setSubmissions((current) => [newSubmission, ...current]);
       setConsoleLines((current) => [
         `[${new Date().toLocaleTimeString("en-IN")}] Submission queued for ${selectedLanguage.name}.`,
-        "Judge execution is still mocked, so the row is added without running tests.",
+        "Submission sent to the judge. Status will update shortly.",
         ...current,
       ]);
       setBannerMessage("Submission added to the list.");
@@ -352,13 +361,12 @@ function ProblemSolvingPage() {
                 <div className="solve-editor-toolbar__left">
                   <label className="solve-language-picker">
                     <span>Language</span>
-                    <select value={selectedLanguageId} onChange={handleLanguageChange}>
+                    <select style={{ minWidth: "300px" }} value={selectedLanguageId} onChange={handleLanguageChange}>
                       {languages.map((language) => (
                         <option key={language.language_id} value={language.language_id}>{language.name}</option>
                       ))}
                     </select>
                   </label>
-                  <span className="solve-editor-hint">Monaco editor enabled</span>
                 </div>
 
                 <div className="solve-editor-toolbar__actions">
@@ -400,8 +408,16 @@ function ProblemSolvingPage() {
                   onChange={(value) => setSourceCode(value || "")}
                   beforeMount={(monaco) => { monacoRef.current = monaco; }}
                   onMount={handleEditorMount}
-                  options={{ automaticLayout: true, fontSize: 14, minimap: { enabled: false }, padding: { top: 16 }, scrollBeyondLastLine: false, smoothScrolling: true, wordWrap: "on" }}
-                  loading={<div className="solve-editor-loading">Loading Monaco editor...</div>}
+                  options={{
+                    automaticLayout: true,
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    padding: { top: 16 },
+                    scrollBeyondLastLine: false,
+                    smoothScrolling: true,
+                    wordWrap: "on",
+                  }}
+                  loading={<div className="solve-editor-loading">Loading editor...</div>}
                 />
               </div>
             </section>
@@ -448,31 +464,40 @@ function ProblemSolvingPage() {
                 animate="show"
               >
                 {submissions.length === 0 ? (
-                  <div className="solve-empty-state">No submissions yet. The first submit will create a dummy queue entry here.</div>
+                  <div className="solve-empty-state" style={{ margin: "1rem" }}>
+                    No submissions yet. The first submit will create a dummy queue entry here.
+                  </div>
                 ) : (
-                  submissions.map((submission) => (
-                    <motion.article
-                      className="solve-submission-card"
-                      key={submission.submission_id}
-                      variants={fadeUp}
-                      transition={{ duration: 0.32 }}
-                      layout
-                    >
-                      <div className="solve-submission-card__main">
-                        <div>
-                          <span className={`solve-submission-status ${getSubmissionTone(submission)}`}>
-                            {formatDisplayText(submission.status || "Pending")}
-                          </span>
-                          <h3>{formatDisplayText(submission.language_name || "Unknown language")}</h3>
-                        </div>
-                        <p>Verdict: {formatDisplayText(submission.verdict || "Pending")} | User: {submission.user_id || "Guest"}</p>
-                      </div>
-                      <div className="solve-submission-card__meta">
-                        <span>{formatDateTime(submission.submitted_at)}</span>
-                        <span>ID {String(submission.submission_id).slice(0, 8)}</span>
-                      </div>
-                    </motion.article>
-                  ))
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="cf-submissions-table">
+                      <thead>
+                        <tr>
+                          <th>When</th>
+                          <th>Language</th>
+                          <th>Verdict</th>
+                          <th>Time</th>
+                          <th>Memory</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {submissions.map((submission) => (
+                          <tr key={submission.submission_id}>
+                            <td>
+                              <div className="cf-submissions-when">
+                                {formatDateTime(submission.submitted_at)}
+                              </div>
+                            </td>
+                            <td>{formatDisplayText(submission.language_name || "Unknown")}</td>
+                            <td className={`cf-submissions-verdict ${getSubmissionTone(submission)}`}>
+                              {formatDisplayText(submission.verdict || submission.status || "Pending")}
+                            </td>
+                            <td>{submission.execution_time_ms || 0} ms</td>
+                            <td>{submission.memory_used_kb || 0} KB</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </motion.div>
             )}

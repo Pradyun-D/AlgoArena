@@ -673,3 +673,107 @@ body.light-mode .solve-markdown pre {
   background: rgba(244, 247, 251, 0.95);
   border-color: rgba(204, 213, 225, 0.95);
 }
+
+/* Codeforces Style Submissions Table */
+.cf-submissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #eef2ff;
+  white-space: nowrap;
+}
+
+body.light-mode .cf-submissions-table {
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  color: #111;
+}
+
+.cf-submissions-table th {
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.light-mode .cf-submissions-table th {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.cf-submissions-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+body.light-mode .cf-submissions-table td {
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.cf-submissions-table tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+body.light-mode .cf-submissions-table tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+.cf-submissions-id {
+  color: #84adff;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+body.light-mode .cf-submissions-id {
+  color: #1a4fcf;
+}
+
+.cf-submissions-when {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+body.light-mode .cf-submissions-when {
+  color: #666;
+}
+
+.cf-submissions-verdict {
+  font-weight: bold;
+}
+
+.solve-page-shell .cf-submissions-verdict.is-complete {
+  color: #6bfe9c;
+}
+
+.solve-page-shell .cf-submissions-verdict.is-error {
+  color: #ff7765;
+}
+
+.solve-page-shell .cf-submissions-verdict.is-pending {
+  color: #84adff;
+}
+
+body.light-mode .solve-page-shell .cf-submissions-verdict.is-complete {
+  color: #00a000;
+}
+
+body.light-mode .solve-page-shell .cf-submissions-verdict.is-error {
+  color: #d00000;
+}
+
+body.light-mode .solve-page-shell .cf-submissions-verdict.is-pending {
+  color: #666;
+}
+
+.solve-page-shell .cf-submissions-verdict.is-warning {
+  color: #ffaa00;
+}
+
+body.light-mode .solve-page-shell .cf-submissions-verdict.is-warning {
+  color: #dd8800;
+}

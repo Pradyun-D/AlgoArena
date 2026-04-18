@@ -1,6 +1,6 @@
 import requests
 
-API_URL = "http://192.168.1.3:2358/submissions" #needs to be changed in each run 
+API_URL = "http://192.168.1.3:2358/submissions"  # update IP if VM address changes
 
 def run_test(test_name, source_code, language_id, stdin=""):
     print(f"\n[{test_name}]")

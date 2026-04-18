@@ -95,33 +95,6 @@ def _build_sidebar_context(request):
 
     return sidebar
 
-
-def _ensure_default_languages(cursor):
-    default_languages = ["C++20", "Python 3.11", "Java 17"]
-
-    for language_name in default_languages:
-        cursor.execute(
-            "INSERT IGNORE INTO languages (name) VALUES (%s)",
-            (language_name,),
-        )
-
-    cursor.execute(
-        """
-        SELECT language_id, name
-        FROM languages
-        ORDER BY language_id ASC
-        """
-    )
-
-    return [
-        {
-            "language_id": row["language_id"],
-            "name": row["name"],
-        }
-        for row in cursor.fetchall()
-    ]
-
-
 def _serialize_submission_row(row):
     return {
         "submission_id": str(row["submission_id"]),
@@ -1039,7 +1012,17 @@ def get_problem_solving_data(request, contest_id, problem_id):
         )
         hidden_testcases = cursor.fetchone() or {"hidden_count": 0}
 
-        languages = _ensure_default_languages(cursor)
+        cursor.execute(
+            """
+            SELECT language_id, name
+            FROM languages
+            ORDER BY name ASC
+            """
+        )
+        languages = [
+            {"language_id": row["language_id"], "name": row["name"]}
+            for row in cursor.fetchall()
+        ]
 
         cursor.execute(
             """
@@ -1252,7 +1235,17 @@ def create_problem_submission(request, contest_id, problem_id):
         if not cursor.fetchone():
             return Response({"error": "Problem is not attached to this contest."}, status=404)
 
-        languages = _ensure_default_languages(cursor)
+        cursor.execute(
+            """
+            SELECT language_id, name
+            FROM languages
+            ORDER BY name ASC
+            """
+        )
+        languages = [
+            {"language_id": row["language_id"], "name": row["name"]}
+            for row in cursor.fetchall()
+        ]
         selected_language_id = None
 
         if requested_language_id is not None:
@@ -1543,7 +1536,7 @@ def submit_solution(request, contest_id, problem_id):
     if not source_code or not language_id:
         return Response({"error": "source_code and language_id are required in the payload."}, status=400)
 
-    user_id = request.user.id
+    user_id = _get_request_user_external_id(request)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -1571,10 +1564,28 @@ def submit_solution(request, contest_id, problem_id):
         
         # Trigger judge 
         judge_submission(submission_id)
+
+        # Fetch the created submission to return to the frontend
+        dict_cursor = conn.cursor(dictionary=True)
+        dict_cursor.execute(
+            """
+            SELECT s.submission_id, s.user_id, s.problem_id, s.contest_id, s.language_id,
+                   l.name AS language_name, s.source_code, s.status, s.verdict,
+                   s.max_execution_time_ms, s.max_memory_used_kb, s.submitted_at
+            FROM Submissions s
+            LEFT JOIN languages l ON l.language_id = s.language_id
+            WHERE s.submission_id = %s
+            LIMIT 1
+            """,
+            (submission_id,),
+        )
+        submission_row = dict_cursor.fetchone()
+        dict_cursor.close()
         
         return Response({
             "message": "Submission recorded and sent to judge successfully.", 
-            "submission_id": submission_id
+            "submission_id": submission_id,
+            "data": _serialize_submission_row(submission_row) if submission_row else None
         }, status=201)
 
     except Exception as e:

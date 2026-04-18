@@ -9,8 +9,13 @@ def judge_submission(submission_id):
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # fetch submission
-        cursor.execute("SELECT * FROM Submissions WHERE submission_id = %s", (submission_id,))
+        # fetch submission (join languages so we have the name for ID resolution)
+        cursor.execute("""
+            SELECT s.*, l.name AS language_name
+            FROM Submissions s
+            LEFT JOIN languages l ON l.language_id = s.language_id
+            WHERE s.submission_id = %s
+        """, (submission_id,))
         submission = cursor.fetchone()
 
         if not submission:
@@ -41,6 +46,10 @@ def judge_submission(submission_id):
                     language_id=submission["language_id"],
                     stdin=test_case.get("input", "")
                 )
+
+                # VM returned None — connection failure
+                if result is None:
+                    raise RuntimeError("No response from judge VM (connection failed)")
 
                 status_id = result.get('status', {}).get('id')
                 
