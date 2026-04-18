@@ -1,37 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import SidebarAdminDashboard from "../../Components/SidebarAdminDashboard";
 import ThemeToggle from "../../Components/ThemeToggle";
+import { getAdminSettings, saveAdminSettings } from "../../Utils/admin_settings";
 import "../../Styles/admin_dashboard.css";
-
-const SETTINGS_KEY = "algoarena-admin-settings";
-
-const defaultSettings = {
-  deleteConfirm: true,
-  compactTables: false,
-  landingPage: "dashboard",
-};
 
 function AdminSettingsPage() {
   const navigate = useNavigate();
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState(() => getAdminSettings());
   const [saved, setSaved] = useState("");
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(SETTINGS_KEY);
-      if (stored) {
-        setSettings({ ...defaultSettings, ...JSON.parse(stored) });
-      }
-    } catch {
-      setSettings(defaultSettings);
-    }
-  }, []);
 
   const updateSetting = (field, value) => {
     const nextSettings = { ...settings, [field]: value };
     setSettings(nextSettings);
-    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextSettings));
+    saveAdminSettings(nextSettings);
     setSaved("Settings saved.");
   };
 

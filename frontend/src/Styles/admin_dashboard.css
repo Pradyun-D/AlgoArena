@@ -478,6 +478,11 @@
   background: rgba(69, 121, 227, 0.14);
 }
 
+.status-banned {
+  color: #ff7d7d;
+  background: rgba(196, 49, 49, 0.16);
+}
+
 .contest-actions {
   display: flex;
   align-items: center;
@@ -658,6 +663,14 @@
   color: #09111d;
   font-size: 1.8rem;
   font-weight: 800;
+  overflow: hidden;
+}
+
+.admin-profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .admin-profile-summary h2 {
@@ -676,6 +689,19 @@
   justify-content: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.admin-compact-tables .admin-contest-table th {
+  padding: 0.75rem 0.85rem;
+}
+
+.admin-compact-tables .admin-contest-table td {
+  padding: 0.75rem 0.85rem;
+}
+
+.admin-compact-tables .contest-time-cell,
+.admin-compact-tables .contest-primary-cell {
+  gap: 0.2rem;
 }
 
 .admin-form-grid {
@@ -1082,6 +1108,11 @@ body.light-mode .admin-pagination button.active {
 body.light-mode .admin-mini-stat.green strong,
 body.light-mode .status-live {
   color: #1f9d62;
+}
+
+body.light-mode .status-banned {
+  color: #c62f2f;
+  background: rgba(198, 47, 47, 0.12);
 }
 
 body.light-mode .admin-insight-card.event {

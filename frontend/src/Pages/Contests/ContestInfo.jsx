@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from "motion/react";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import "../../Styles/contest_info.css";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
-import { getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { getStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
+import { fetchSessionUser } from "../../Utils/session_auth";
 import { formatDisplayText } from "../../Utils/format_display_text";
 
 // ── helpers (unchanged) ──────────────────────────────────────
@@ -97,13 +98,35 @@ function ContestPage() {
   }, [contestId, location.key]);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
-      .then((response) => response.data?.user || null)
-      .then((user) => { if (user) { setStoredAuthUser(user); } setAuthUser(user); })
-      .catch(() => { setAuthUser(getStoredAuthUser()); });
+    let isMounted = true;
+    const syncSessionUser = async () => {
+      try {
+        const user = await fetchSessionUser();
+        if (isMounted) {
+          setAuthUser(user);
+        }
+      } catch {
+        if (isMounted) {
+          setAuthUser(getStoredAuthUser());
+        }
+      }
+    };
+    syncSessionUser();
     const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncSessionUser();
+      }
+    };
     window.addEventListener("storage", syncAuthUser);
-    return () => window.removeEventListener("storage", syncAuthUser);
+    window.addEventListener("pageshow", syncSessionUser);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("storage", syncAuthUser);
+      window.removeEventListener("pageshow", syncSessionUser);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {

@@ -18,7 +18,6 @@ const roleOptions = [
 
 const statusOptions = [
   { value: "active", label: "Active" },
-  { value: "suspended", label: "Suspended" },
   { value: "banned", label: "Banned" },
 ];
 
@@ -30,18 +29,23 @@ const roleClassMap = {
 
 const statusClassMap = {
   active: "status-live",
-  suspended: "status-draft",
-  banned: "status-completed",
+  banned: "status-banned",
 };
 
 const normalizeRole = (value) => {
   const normalized = String(value || "").toLowerCase();
-  return normalized || "user";
+  if (normalized === "participant") {
+    return "user";
+  }
+  return ["user", "problem_setter", "admin"].includes(normalized) ? normalized : "user";
 };
 
 const normalizeStatus = (value) => {
   const normalized = String(value || "").toLowerCase();
-  return ["active", "suspended", "banned"].includes(normalized) ? normalized : "";
+  if (normalized === "active" || normalized === "banned") {
+    return normalized;
+  }
+  return normalized === "suspended" ? "banned" : "";
 };
 
 const formatDisplayDate = (value) => {
@@ -328,7 +332,6 @@ function AdminMemberManagementTemplate({
                   >
                     <option value="all">Status: All</option>
                     <option value="active">Active</option>
-                    <option value="suspended">Suspended</option>
                     <option value="banned">Banned</option>
                   </select>
                 </div>

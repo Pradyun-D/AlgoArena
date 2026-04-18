@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import axios from "axios";
 import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
 import ErrorPage from "../Pages/Auth_and_Profile/ErrorPage";
-import { clearStoredAuthUser, setStoredAuthUser } from "../Utils/auth_storage";
-import { API_BASE_URL } from "../Utils/api";
+import { fetchSessionUser } from "../Utils/session_auth";
 
 function AdminRoute({ children }) {
     const [state, setState] = useState({
@@ -16,15 +14,15 @@ function AdminRoute({ children }) {
     useEffect(() => {
         let isMounted = true;
 
-        axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
-            .then((response) => {
+        fetchSessionUser()
+            .then((user) => {
                 if (!isMounted) {
                     return;
                 }
 
-                const user = response.data?.user;
-                if (user) {
-                    setStoredAuthUser(user);
+                if (user?.status && user.status !== "active") {
+                    setState({ loading: false, allowed: false, error: "" });
+                    return;
                 }
 
                 setState({
@@ -35,12 +33,6 @@ function AdminRoute({ children }) {
             })
             .catch((error) => {
                 if (!isMounted) {
-                    return;
-                }
-
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    clearStoredAuthUser();
-                    setState({ loading: false, allowed: false, error: "" });
                     return;
                 }
 
@@ -78,7 +70,7 @@ function AdminRoute({ children }) {
     }
 
     if (!state.allowed) {
-        return <Navigate to="/contests" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return children;

@@ -7,6 +7,8 @@ import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
 import "../Styles/admin_dashboard.css";
 import ThemeToggle from "./ThemeToggle";
 import { API_BASE_URL } from "../Utils/api";
+import { getAdminSettings } from "../Utils/admin_settings";
+import { parseContestTime } from "../Utils/is_live_contest";
 
 const PAGE_SIZE = 10;
 
@@ -71,8 +73,8 @@ const getContestStatus = (startTime, endTime, visibility) => {
   }
 
   const now = Date.now();
-  const start = new Date(startTime).getTime();
-  const end = new Date(endTime).getTime();
+  const start = parseContestTime(startTime);
+  const end = parseContestTime(endTime);
 
   if (Number.isNaN(start) || Number.isNaN(end)) {
     return "Draft";
@@ -82,7 +84,7 @@ const getContestStatus = (startTime, endTime, visibility) => {
     return "Draft";
   }
 
-  if (now > end) {
+  if (now >= end) {
     return "Completed";
   }
 
@@ -112,6 +114,7 @@ function AdminContestListTemplate({
   const [currentPage, setCurrentPage] = useState(1);
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
+  const [adminSettings, setAdminSettings] = useState(() => getAdminSettings());
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -120,9 +123,11 @@ function AdminContestListTemplate({
     setEndDateInput("");
   };
 
-  const fetchContests = useCallback(async () => {
+  const fetchContests = useCallback(async ({ showLoader = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       setError("");
       const response = await axios.get(fetchUrl, { withCredentials: true });
       setContests(Array.isArray(response.data) ? response.data : []);
@@ -143,10 +148,38 @@ function AdminContestListTemplate({
     fetchContests();
   }, [fetchContests]);
 
+  useEffect(() => {
+    const syncSettings = () => setAdminSettings(getAdminSettings());
+    window.addEventListener("storage", syncSettings);
+    window.addEventListener("focus", syncSettings);
+    return () => {
+      window.removeEventListener("storage", syncSettings);
+      window.removeEventListener("focus", syncSettings);
+    };
+  }, []);
+
+  useEffect(() => {
+    const refreshVisibleDashboard = () => {
+      if (document.visibilityState === "visible") {
+        fetchContests({ showLoader: false });
+      }
+    };
+
+    window.addEventListener("focus", refreshVisibleDashboard);
+    document.addEventListener("visibilitychange", refreshVisibleDashboard);
+
+    return () => {
+      window.removeEventListener("focus", refreshVisibleDashboard);
+      document.removeEventListener("visibilitychange", refreshVisibleDashboard);
+    };
+  }, [fetchContests]);
+
 
   const handleDeleteContest = async (contestId, contestTitle) => {
-  const confirmed = window.confirm(`Delete "${contestTitle}"?\n\nThis action cannot be undone.`);
-  if (!confirmed) return;
+  if (adminSettings.deleteConfirm) {
+    const confirmed = window.confirm(`Delete "${contestTitle}"?\n\nThis action cannot be undone.`);
+    if (!confirmed) return;
+  }
 
   try {
     setDeletingContestId(contestId);
@@ -189,7 +222,7 @@ function AdminContestListTemplate({
       title: contest.title || "Untitled Contest",
       start: formatAdminDate(contest.start_time),
       end: formatAdminDate(contest.end_time),
-      rawStartTime: new Date(contest.start_time).getTime(),
+      rawStartTime: parseContestTime(contest.start_time),
       registrants:
         typeof registrantsValue === "number"
           ? registrantsValue.toLocaleString("en-IN")
@@ -261,7 +294,7 @@ function AdminContestListTemplate({
   }
 
   return (
-    <div className="admin-dashboard-page">
+    <div className={`admin-dashboard-page ${adminSettings.compactTables ? "admin-compact-tables" : ""}`}>
       <SidebarAdminDashboard />
 
       <main className="admin-dashboard-main">

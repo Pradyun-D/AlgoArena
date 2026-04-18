@@ -3,11 +3,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import { API_BASE_URL } from "../../Utils/api";
-import { getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { getStoredAuthUser } from "../../Utils/auth_storage";
 import "../../Styles/auth_pages.css";
 import ThemeToggle from "../../Components/ThemeToggle";
 import { useTheme } from "../../Theme/ThemeProvider";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
+import { fetchSessionUser } from "../../Utils/session_auth";
 
 function ContestRegistrationPage() {
     const navigate = useNavigate();
@@ -23,15 +24,33 @@ function ContestRegistrationPage() {
 
     useEffect(() => {
         let isMounted = true;
-        axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
-            .then((response) => {
-                if (!isMounted) return;
-                const user = response.data?.user || null;
-                if (user) setStoredAuthUser(user);
-                setAuthUser(user);
-            })
-            .catch(() => { if (isMounted) setAuthUser(getStoredAuthUser()); });
-        return () => { isMounted = false; };
+        const syncSessionUser = async () => {
+            try {
+                const user = await fetchSessionUser();
+                if (isMounted) {
+                    setAuthUser(user);
+                }
+            } catch {
+                if (isMounted) {
+                    setAuthUser(getStoredAuthUser());
+                }
+            }
+        };
+        syncSessionUser();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                syncSessionUser();
+            }
+        };
+
+        window.addEventListener("pageshow", syncSessionUser);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => {
+            isMounted = false;
+            window.removeEventListener("pageshow", syncSessionUser);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, []);
 
     useEffect(() => {

@@ -55,7 +55,7 @@ user_queries = [
             email VARCHAR(255) UNIQUE,
             password_hash VARCHAR(255),
             role_id INT,
-            status ENUM('active', 'suspended', 'banned') DEFAULT 'active',
+            status ENUM('active', 'banned') DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP NULL, 
@@ -293,4 +293,3 @@ if __name__ == "__main__":
     connection.commit()
     cursor.close()
     connection.close()
-

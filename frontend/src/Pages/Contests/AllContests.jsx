@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "motion/react";
 import ContestCard from "../../Components/ContestCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../../Components/Sidebar";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
-import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { clearStoredAuthUser, getStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import ArenaNavbar from "../../Components/ArenaNavbar";
+import { isLiveContest, parseContestTime } from "../../Utils/is_live_contest";
+import { fetchSessionUser } from "../../Utils/session_auth";
 
 // ── variants ────────────────────────────────────────────────
 const fadeUp = {
@@ -42,6 +44,7 @@ function AnimatedMetric({ value, formatter }) {
 }
 
 function ContestsPage() {
+    const navigate = useNavigate();
     const [availableContests, setAvailableContests] = useState([]);
     const [pastContests, setPastContests] = useState([]);
     const [user, setUser] = useState({});
@@ -76,13 +79,18 @@ function ContestsPage() {
 
             const now = Date.now();
             const available = allContests.filter(c => {
-                const end = new Date(c.end_time).getTime();
+                const end = parseContestTime(c.end_time);
                 return !isNaN(end) && end > now;
+            }).sort((a, b) => {
+                const aLive = isLiveContest(a);
+                const bLive = isLiveContest(b);
+                if (aLive !== bLive) return aLive ? -1 : 1;
+                return parseContestTime(a.start_time) - parseContestTime(b.start_time);
             });
             const past = allContests.filter(c => {
-                const end = new Date(c.end_time).getTime();
+                const end = parseContestTime(c.end_time);
                 return !isNaN(end) && end <= now;
-            });
+            }).sort((a, b) => parseContestTime(b.end_time) - parseContestTime(a.end_time));
 
              setAvailableContests(available);
              setPastContests(past);
@@ -107,19 +115,45 @@ function ContestsPage() {
     };
 
     useEffect(() => {
+        let isMounted = true;
         loadContests();
 
-        axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
-            .then((res) => res.data?.user || null)
-            .then((data) => {
-                if (data) { setStoredAuthUser(data); setAuthUser(data); }
+        const syncSessionUser = async () => {
+            try {
+                const data = await fetchSessionUser();
+                if (!isMounted) return;
+                setAuthUser(data);
                 setUser(data || {});
-            })
-            .catch(() => setUser({}));
+            } catch {
+                if (!isMounted) return;
+                const fallbackUser = getStoredAuthUser();
+                setAuthUser(fallbackUser);
+                setUser(fallbackUser || {});
+            }
+        };
 
-        const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+        syncSessionUser();
+
+        const syncAuthUser = () => {
+            const storedUser = getStoredAuthUser();
+            setAuthUser(storedUser);
+            setUser(storedUser || {});
+        };
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                syncSessionUser();
+            }
+        };
+
         window.addEventListener("storage", syncAuthUser);
-        return () => window.removeEventListener("storage", syncAuthUser);
+        window.addEventListener("pageshow", syncSessionUser);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => {
+            isMounted = false;
+            window.removeEventListener("storage", syncAuthUser);
+            window.removeEventListener("pageshow", syncSessionUser);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, []);
 
     const handleLogout = async () => {
@@ -127,11 +161,21 @@ function ContestsPage() {
             await axios.post(`${API_BASE_URL}/accounts/api/logout/`, {}, { withCredentials: true });
         } catch { /* ignore */ } finally {
             clearStoredAuthUser(); setAuthUser(null); setUser({});
+            navigate("/", { replace: true });
         }
     };
 
     const sidebarUser = authUser
-        ? { ...user, is_logged_in: true, username: authUser.username || user.username, created_at: authUser.created_at, avatar_url: authUser.profile?.avatar_url || "" }
+        ? {
+            ...user,
+            ...authUser,
+            profile: {
+                ...(user.profile || {}),
+                ...(authUser.profile || {}),
+            },
+            is_logged_in: true,
+            avatar_url: authUser.profile?.avatar_url || user.avatar_url || user.profile?.avatar_url || "",
+        }
         : { ...user, is_logged_in: false };
 
     const canCreateContest = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
@@ -153,7 +197,7 @@ function ContestsPage() {
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 <div className="md:col-span-9 space-y-12">
 
-                    {/* ── Page header ── */}
+               
                     <motion.section
                         className="space-y-2"
                         initial={{ opacity: 0, y: 20 }}
@@ -190,7 +234,7 @@ function ContestsPage() {
                         ) : null}
                     </motion.section>
 
-                    {/* ── Available contests ── */}
+              
                     <motion.section
                         className="space-y-4"
                         initial={{ opacity: 0, y: 16 }}
@@ -271,7 +315,7 @@ function ContestsPage() {
                     </motion.section>
                 </div>
 
-                {/* ── Sidebar ── */}
+         
                 <motion.aside
                     className="md:col-span-3 sidebar-shell space-y-6"
                     initial={{ opacity: 0, x: 24 }}

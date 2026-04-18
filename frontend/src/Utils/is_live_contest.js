@@ -1,4 +1,4 @@
-const parseContestTime = (value) => {
+export const parseContestTime = (value) => {
     if (!value) {
         return Number.NaN;
     }

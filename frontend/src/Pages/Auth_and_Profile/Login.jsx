@@ -63,7 +63,7 @@ function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
-        <Link className="auth-brand" to="/contests">ALGOARENA</Link>
+        <Link className="auth-brand" to="/">ALGOARENA</Link>
         <div className="auth-topbar-actions">
           <ThemeToggle />
           <Link className="auth-topbar-link" to="/register">Create Account</Link>
@@ -145,15 +145,18 @@ function LoginPage() {
               {/* Error slides down */}
               <AnimatePresence>
                 {error && (
-                  <motion.p
+                  <motion.div
                     className="auth-error"
                     initial={{ opacity: 0, y: -8, height: 0 }}
                     animate={{ opacity: 1, y: 0, height: "auto" }}
                     exit={{ opacity: 0, y: -8, height: 0 }}
                     transition={{ duration: 0.28, ease: "easeOut" }}
                   >
-                    {error}
-                  </motion.p>
+                    <span className="auth-error-message">{error}</span>
+                    <Link className="auth-error-action" to="/">
+                      Return to landing page
+                    </Link>
+                  </motion.div>
                 )}
               </AnimatePresence>
 

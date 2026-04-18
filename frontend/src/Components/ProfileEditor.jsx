@@ -18,6 +18,7 @@ function ProfileEditor({ variant = "auth" }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [userUuid, setUserUuid] = useState("");
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const [form, setForm] = useState({
     username: "",
     full_name: "",
@@ -61,6 +62,7 @@ function ProfileEditor({ variant = "auth" }) {
         role: user.role || "",
         status: user.status || "",
       });
+      setAvatarFailed(false);
       setStoredAuthUser(user);
     } catch (err) {
       setError(err.response?.data?.error || err.message || "Unable to load profile.");
@@ -76,6 +78,9 @@ function ProfileEditor({ variant = "auth" }) {
   const updateField = (event) => {
     const { name, value } = event.target;
     setMessage("");
+    if (name === "avatar_url") {
+      setAvatarFailed(false);
+    }
     setForm((current) => ({ ...current, [name]: value }));
   };
 
@@ -129,8 +134,8 @@ function ProfileEditor({ variant = "auth" }) {
         kicker={isAdminVariant ? "Admin Profile" : "Profile Control"}
         title={isAdminVariant ? "Profile could not be loaded." : "Profile settings could not be loaded."}
         copy={error}
-        primaryAction={{ label: "Retry", onClick: loadProfile }}
-        secondaryAction={{ label: isAdminVariant ? "Dashboard" : "Contests", to: isAdminVariant ? "/admin/dashboard" : "/contests" }}
+        primaryAction={isAdminVariant ? { label: "Retry", onClick: loadProfile } : { label: "Return Home", to: "/" }}
+        secondaryAction={isAdminVariant ? { label: "Dashboard", to: "/admin/dashboard" } : null}
       />
     );
   }
@@ -172,7 +177,15 @@ function ProfileEditor({ variant = "auth" }) {
             <section className="admin-panel admin-profile-layout">
               <article className="admin-profile-summary">
                 <div className="admin-profile-avatar-large">
-                  {(form.username || form.full_name || "?")[0]?.toUpperCase()}
+                  {form.avatar_url && !avatarFailed ? (
+                    <img
+                      src={form.avatar_url}
+                      alt={`${form.full_name || form.username || "Admin"} avatar`}
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : (
+                    (form.username || form.full_name || "?")[0]?.toUpperCase()
+                  )}
                 </div>
                 <h2>{form.full_name || form.username || "Admin User"}</h2>
                 <p>{form.email}</p>
@@ -229,7 +242,7 @@ function ProfileEditor({ variant = "auth" }) {
   return (
     <div className="auth-page auth-page-register">
       <header className="auth-topbar">
-        <Link className="auth-brand" to="/contests">Algo Arena</Link>
+        <Link className="auth-brand" to="/">Algo Arena</Link>
         <div className="auth-topbar-actions">
           <ThemeToggle />
           <Link className="auth-topbar-link" to="/contests">Back To Contests</Link>

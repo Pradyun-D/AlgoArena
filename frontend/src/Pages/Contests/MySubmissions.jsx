@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
-import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
+import { clearStoredAuthUser, getStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import { formatDisplayText } from "../../Utils/format_display_text";
 import ArenaNavbar from "../../Components/ArenaNavbar";
+import { fetchSessionUser } from "../../Utils/session_auth";
 
 const formatDateTime = (value) => {
     if (!value) {
@@ -48,6 +49,7 @@ const tableStagger = {
 };
 
 function MySubmissionsPage() {
+    const navigate = useNavigate();
     const [submissions, setSubmissions] = useState([]);
     const [, setUser] = useState({});
     const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
@@ -80,23 +82,46 @@ function MySubmissionsPage() {
     };
 
     useEffect(() => {
+        let isMounted = true;
         loadSubmissions();
 
-        axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true })
-            .then((res) => res.data?.user || null)
-            .then((data) => {
-                if (data) {
-                    setStoredAuthUser(data);
-                    setAuthUser(data);
-                }
+        const syncSessionUser = async () => {
+            try {
+                const data = await fetchSessionUser();
+                if (!isMounted) return;
+                setAuthUser(data);
                 setUser(data || {});
-            })
-            .catch(() => setUser({}));
+            } catch {
+                if (!isMounted) return;
+                const fallbackUser = getStoredAuthUser();
+                setAuthUser(fallbackUser);
+                setUser(fallbackUser || {});
+            }
+        };
 
-        const syncAuthUser = () => setAuthUser(getStoredAuthUser());
+        syncSessionUser();
+
+        const syncAuthUser = () => {
+            const storedUser = getStoredAuthUser();
+            setAuthUser(storedUser);
+            setUser(storedUser || {});
+        };
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                syncSessionUser();
+            }
+        };
+
         window.addEventListener("storage", syncAuthUser);
+        window.addEventListener("pageshow", syncSessionUser);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
 
-        return () => window.removeEventListener("storage", syncAuthUser);
+        return () => {
+            isMounted = false;
+            window.removeEventListener("storage", syncAuthUser);
+            window.removeEventListener("pageshow", syncSessionUser);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
     }, []);
 
     const handleLogout = async () => {
@@ -108,6 +133,7 @@ function MySubmissionsPage() {
             clearStoredAuthUser();
             setAuthUser(null);
             setUser({});
+            navigate("/", { replace: true });
         }
     };
 

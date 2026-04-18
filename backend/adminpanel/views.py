@@ -32,7 +32,10 @@ def admin_users_list(request):
                 u.uuid AS external_id,
                 u.username,
                 u.email,
-                r.role_name AS role,
+                CASE
+                    WHEN r.role_name = 'participant' THEN 'user'
+                    ELSE COALESCE(r.role_name, 'user')
+                END AS role,
                 u.status,
                 u.created_at AS date_joined,
                 p.full_name,
@@ -122,7 +125,7 @@ def admin_problem_setters_list(request):
 @permission_classes([IsAdmin])
 def admin_update_user_permissions(request, user_uuid):
     allowed_roles = {"user", "problem_setter", "admin"}
-    allowed_statuses = {"active", "suspended", "banned"}
+    allowed_statuses = {"active", "banned"}
 
     next_role = request.data.get("role")
     next_status = request.data.get("status")
@@ -138,7 +141,7 @@ def admin_update_user_permissions(request, user_uuid):
     if next_status is not None:
         next_status = str(next_status).strip().lower()
         if next_status not in allowed_statuses:
-            return Response({"error": "Invalid status."}, status=400)
+            return Response({"error": "Invalid status. Use active or banned."}, status=400)
 
     conn = None
     cursor = None
@@ -231,6 +234,9 @@ def admin_update_user_permissions(request, user_uuid):
         )
         updated_user = cursor.fetchone()
         sync_django_user_from_external_row(updated_user)
+        updated_role = updated_user.get("role_name") or "user"
+        if updated_role == "participant":
+            updated_role = "user"
 
         return Response(
             {
@@ -239,7 +245,7 @@ def admin_update_user_permissions(request, user_uuid):
                     "external_id": str(updated_user["uuid"]),
                     "username": updated_user["username"],
                     "email": updated_user["email"],
-                    "role": updated_user.get("role_name") or "user",
+                    "role": updated_role,
                     "status": updated_user["status"],
                     "full_name": updated_user.get("full_name"),
                     "college": updated_user.get("college"),

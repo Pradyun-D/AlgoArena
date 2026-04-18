@@ -262,6 +262,35 @@
   color: #ffc7c4;
   background: rgba(159, 5, 25, 0.22);
   border-color: var(--error);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.auth-error-message {
+  display: block;
+}
+
+.auth-error-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgba(255, 199, 196, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff0ef;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.auth-error-action:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .auth-success {

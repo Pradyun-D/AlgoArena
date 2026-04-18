@@ -29,6 +29,10 @@ def serialize_user_row(row):
     if not row:
         return None
 
+    role_name = row.get("role_name") or "user"
+    if role_name == "participant":
+        role_name = "user"
+
     return {
         "user_id": row["user_id"],
         "uuid": row["uuid"],
@@ -36,7 +40,7 @@ def serialize_user_row(row):
         "email": row["email"],
         "status": row["status"],
         "created_at": row.get("created_at"),
-        "role": row.get("role_name") or "user",
+        "role": role_name,
         "profile": {
             "full_name": row.get("full_name") or "",
             "bio": row.get("bio") or "",
@@ -171,7 +175,8 @@ def sync_django_user_from_external_row(row):
 
     django_user.username = row.get("username") or django_user.username or email
     django_user.email = email
-    django_user.role = row.get("role_name") or "user"
+    role_name = row.get("role_name") or "user"
+    django_user.role = "user" if role_name == "participant" else role_name
     django_user.external_user_id = external_user_id
     django_user.external_uuid = external_uuid
     django_user.account_status = row.get("status") or "active"

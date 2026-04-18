@@ -5,6 +5,9 @@ def _has_role(user, allowed_roles):
     if not getattr(user, "is_authenticated", False):
         return False
 
+    if getattr(user, "account_status", "active") != "active":
+        return False
+
     role = getattr(user, "role", None)
     if role in allowed_roles:
         return True
@@ -39,4 +42,7 @@ class IsAdmin(BasePermission):
 
 class IsAuthenticated(BasePermission):
     def has_permission(self,request,view):
-        return request.user.is_authenticated
+        return (
+            request.user.is_authenticated
+            and getattr(request.user, "account_status", "active") == "active"
+        )

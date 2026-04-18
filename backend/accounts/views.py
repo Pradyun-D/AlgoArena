@@ -1,10 +1,14 @@
 from django.shortcuts import render
+from django.conf import settings
 from django.contrib.auth import login as django_login, logout as django_logout
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password, make_password
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 from .auth_sync import build_auth_response, clear_auth_cookies, get_current_external_user, sync_django_user_from_external_row
 from .permissions import IsAuthenticated
 from db import get_connection
@@ -39,6 +43,10 @@ def _serialize_user_row(row):
 	if not row:
 		return None
 
+	role_name = row.get("role_name") or "user"
+	if role_name == "participant":
+		role_name = "user"
+
 	return {
 		"user_id": row["user_id"],
 		"uuid": row["uuid"],
@@ -46,7 +54,7 @@ def _serialize_user_row(row):
 		"email": row["email"],
 		"status": row["status"],
 		"created_at": row.get("created_at"),
-		"role": row.get("role_name") or "user",
+		"role": role_name,
 		"profile": {
 			"full_name": row.get("full_name") or "",
 			"bio": row.get("bio") or "",
@@ -292,7 +300,7 @@ def login_account(request):
 			return Response({"error": "Invalid credentials."}, status=401)
 
 		if user["status"] != "active":
-			return Response({"error": f"Account is {user['status']}."}, status=403)
+			return Response({"error": "Account is banned."}, status=403)
 
 		if not check_password(password, user["password_hash"]):
 			return Response({"error": "Invalid credentials."}, status=401)
@@ -310,20 +318,66 @@ def login_account(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def session_account(request):
+	if not getattr(request.user, "is_authenticated", False):
+		return Response({"user": None}, status=200)
+
 	conn = get_connection()
 	cursor = conn.cursor(dictionary=True)
 	try:
 		user = get_current_external_user(request, cursor=cursor)
 		if not user:
 			return Response({"error": "Authenticated user is not linked to a platform account."}, status=404)
+		if user.get("status") != "active":
+			django_logout(request)
+			response = Response({"error": "Account is banned."}, status=403)
+			return clear_auth_cookies(response)
 		user_payload = _serialize_user_row(user)
 		user_payload["registered_rounds"] = _build_registered_rounds(cursor, user["user_id"])
 		return Response({"user": user_payload}, status=200)
 	finally:
 		cursor.close()
 		conn.close()
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def refresh_session(request):
+	auth_settings = settings.REST_AUTH
+	refresh_cookie_name = auth_settings.get("JWT_AUTH_REFRESH_COOKIE")
+	refresh_token = request.COOKIES.get(refresh_cookie_name)
+
+	if not refresh_token:
+		response = Response({"error": "Refresh token is missing."}, status=401)
+		return clear_auth_cookies(response)
+
+	try:
+		refresh = RefreshToken(refresh_token)
+		user_id = refresh.get("user_id")
+		if not user_id:
+			raise TokenError("Token missing user id.")
+
+		User = get_user_model()
+		user = User.objects.filter(id=user_id).first()
+		if not user or not user.is_active or getattr(user, "account_status", "active") != "active":
+			response = Response({"error": "User is no longer active."}, status=401)
+			return clear_auth_cookies(response)
+
+		response = Response({"message": "Session refreshed."}, status=200)
+		response.set_cookie(
+			auth_settings["JWT_AUTH_COOKIE"],
+			str(refresh.access_token),
+			httponly=auth_settings.get("JWT_AUTH_HTTPONLY", True),
+			secure=auth_settings.get("JWT_AUTH_SECURE", False),
+			samesite=auth_settings.get("JWT_AUTH_SAMESITE", "Lax"),
+			max_age=int(refresh.access_token.lifetime.total_seconds()),
+			path="/",
+		)
+		return response
+	except TokenError:
+		response = Response({"error": "Refresh token is invalid or expired."}, status=401)
+		return clear_auth_cookies(response)
 
 
 @api_view(["POST"])

@@ -10,7 +10,6 @@ class CustomUser(AbstractUser):
     )
     STATUS_CHOICES = (
         ('active', 'Active'),
-        ('suspended', 'Suspended'),
         ('banned', 'Banned'),
     )
 
