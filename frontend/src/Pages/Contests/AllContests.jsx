@@ -219,9 +219,9 @@ function ContestsPage() {
                                 transition={{ delay: 0.18, duration: 0.38 }}
                             >
                                 {[
-                                    { to: "/create", icon: "add_circle", label: "Create Contest", bg: "linear-gradient(135deg,#84adff 0%,#4f8eff 48%,#69f0a7 100%)", color: "#03111c", shadow: "0 18px 36px rgba(32,112,255,0.22)", border: "1px solid rgba(132,173,255,0.28)" },
-                                    { to: "/drafts", icon: "draft", label: "Access Drafts", bg: "linear-gradient(135deg,#1f2937 0%,#293548 48%,#374151 100%)", color: "#e8f0ff", shadow: "0 18px 36px rgba(15,23,42,0.22)", border: "1px solid rgba(148,163,184,0.24)" },
-                                    ...(canAccessAdminDashboard ? [{ to: "/admin/dashboard", icon: "admin_panel_settings", label: "Access Admin Dashboard", bg: "linear-gradient(135deg,#12253c 0%,#193657 48%,#28507b 100%)", color: "#d9ecff", shadow: "0 18px 36px rgba(10,21,37,0.28)", border: "1px solid rgba(132,173,255,0.2)" }] : []),
+                                    { to: "/create", icon: "add_circle", label: "Create Contest", bg: "linear-gradient(135deg,#7ea9e8 0%,#628fd8 48%,#7ebf9a 100%)", color: "#08131f", shadow: "0 12px 26px rgba(32,112,255,0.16)", border: "1px solid rgba(132,173,255,0.2)" },
+                                    { to: "/drafts", icon: "draft", label: "Access Drafts", bg: "linear-gradient(135deg,#243040 0%,#2a3747 48%,#364152 100%)", color: "#e8f0ff", shadow: "0 12px 26px rgba(15,23,42,0.16)", border: "1px solid rgba(148,163,184,0.18)" },
+                                    ...(canAccessAdminDashboard ? [{ to: "/admin", icon: "admin_panel_settings", label: "Access Admin Dashboard", bg: "linear-gradient(135deg,#17304a 0%,#1e4260 48%,#2e5877 100%)", color: "#d9ecff", shadow: "0 12px 26px rgba(10,21,37,0.18)", border: "1px solid rgba(132,173,255,0.16)" }] : []),
                                 ].map((btn) => (
                                     <motion.div key={btn.to} whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
                                         <Link to={btn.to} className="inline-block font-headline font-black uppercase tracking-widest rounded-sm" style={{ padding: "0.95rem 1.35rem", color: btn.color, background: btn.bg, boxShadow: btn.shadow, border: btn.border }}>

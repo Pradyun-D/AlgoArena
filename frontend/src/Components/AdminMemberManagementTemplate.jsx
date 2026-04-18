@@ -245,14 +245,14 @@ function AdminMemberManagementTemplate({
 
   if (error) {
     return (
-      <ErrorPage
-        kicker="Admin"
-        title="Member Management Unavailable"
-        copy={error}
-        primaryAction={{ label: "Retry", onClick: fetchMembers }}
-        secondaryAction={{ label: "Dashboard", to: "/admin/dashboard" }}
-      />
-    );
+        <ErrorPage
+          kicker="Admin"
+          title="Member Management Unavailable"
+          copy={error}
+          primaryAction={{ label: "Retry", onClick: fetchMembers }}
+          secondaryAction={{ label: "Dashboard", to: "/admin/dashboard" }}
+        />
+      );
   }
 
   return (

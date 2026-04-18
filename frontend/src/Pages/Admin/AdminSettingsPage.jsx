@@ -88,7 +88,6 @@ function AdminSettingsPage() {
               >
                 <option value="dashboard">Dashboard</option>
                 <option value="permissions">Permissions</option>
-                <option value="drafts">Drafts</option>
               </select>
             </article>
           </section>

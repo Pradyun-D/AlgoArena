@@ -191,6 +191,19 @@ def platform_metrics(request):
 		cursor.execute("SELECT COUNT(*) AS total_submissions FROM `Submissions`")
 		total_submissions = cursor.fetchone().get("total_submissions") or 0
 
+		cursor.execute(
+			"""
+			SELECT
+				COUNT(*) AS total_contests,
+				SUM(CASE WHEN start_time <= UTC_TIMESTAMP() AND end_time > UTC_TIMESTAMP() THEN 1 ELSE 0 END) AS active_contests,
+				SUM(CASE WHEN end_time <= UTC_TIMESTAMP() THEN 1 ELSE 0 END) AS completed_contests,
+				SUM(CASE WHEN start_time > UTC_TIMESTAMP() THEN 1 ELSE 0 END) AS upcoming_contests
+			FROM contests
+			WHERE visibility <> 'private'
+			"""
+		)
+		contest_counts = cursor.fetchone() or {}
+
 		cursor.execute("SELECT 1")
 		cursor.fetchone()
 		latency_ms = max(1, int((time.perf_counter() - start) * 1000))
@@ -199,6 +212,10 @@ def platform_metrics(request):
 			{
 				"total_users": total_users,
 				"total_submissions": total_submissions,
+				"total_contests": contest_counts.get("total_contests") or 0,
+				"active_contests": contest_counts.get("active_contests") or 0,
+				"completed_contests": contest_counts.get("completed_contests") or 0,
+				"upcoming_contests": contest_counts.get("upcoming_contests") or 0,
 				"server_latency_ms": latency_ms,
 			},
 			status=200,

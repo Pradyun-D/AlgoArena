@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import SidebarAdminDashboard from "./SidebarAdminDashboard";
 import LoadingPage from "../Pages/Auth_and_Profile/LoadingPage";
 import ErrorPage from "../Pages/Auth_and_Profile/ErrorPage";
 import { API_BASE_URL } from "../Utils/api";
 import { setStoredAuthUser } from "../Utils/auth_storage";
+import { fetchSessionUser } from "../Utils/session_auth";
 import "../Styles/auth_pages.css";
 import "../Styles/admin_dashboard.css";
 
 function ProfileEditor({ variant = "auth" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const isAdminVariant = variant === "admin";
+  const requestedReturnTo = location.state?.returnTo;
+  const authReturnPath = requestedReturnTo && requestedReturnTo !== "/profile/edit"
+    ? requestedReturnTo
+    : "/contests";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -34,14 +40,13 @@ function ProfileEditor({ variant = "auth" }) {
     try {
       setLoading(true);
       setError("");
-      const sessionResponse = await axios.get(`${API_BASE_URL}/accounts/api/session/`, { withCredentials: true });
-      const currentUser = sessionResponse.data?.user;
+      const currentUser = await fetchSessionUser();
 
       if (!currentUser?.uuid) {
         if (isAdminVariant) {
           throw new Error("Unable to load the current admin profile.");
         }
-        navigate("/login");
+        navigate("/login", { replace: true, state: { returnTo: authReturnPath } });
         return;
       }
 
@@ -109,8 +114,16 @@ function ProfileEditor({ variant = "auth" }) {
       if (response.data?.user) {
         setStoredAuthUser(response.data.user);
       }
-      setMessage("Profile updated successfully.");
+      if (isAdminVariant) {
+        setMessage("Profile updated successfully.");
+      } else {
+        navigate(authReturnPath, { replace: true });
+      }
     } catch (err) {
+      if (!isAdminVariant && [401, 403].includes(err.response?.status)) {
+        navigate("/login", { replace: true, state: { returnTo: authReturnPath } });
+        return;
+      }
       setMessage(err.response?.data?.error || "Unable to save profile.");
     } finally {
       setSaving(false);
@@ -242,10 +255,10 @@ function ProfileEditor({ variant = "auth" }) {
   return (
     <div className="auth-page auth-page-register">
       <header className="auth-topbar">
-        <Link className="auth-brand" to="/">Algo Arena</Link>
+        <Link className="auth-brand" to="/">ALGOARENA</Link>
         <div className="auth-topbar-actions">
           <ThemeToggle />
-          <Link className="auth-topbar-link" to="/contests">Back To Contests</Link>
+          <Link className="auth-topbar-link" to={authReturnPath}>Back</Link>
         </div>
       </header>
 
@@ -322,9 +335,13 @@ function ProfileEditor({ variant = "auth" }) {
               {message ? <p className="auth-success auth-field-full">{message}</p> : null}
 
               <div className="auth-field-full auth-actions-row">
-                <Link className="auth-secondary-link" to="/contests">
-                  Skip For Now
-                </Link>
+                <button
+                  type="button"
+                  className="auth-secondary-link"
+                  onClick={() => navigate(authReturnPath, { replace: true })}
+                >
+                  Skip for now
+                </button>
                 <button className="auth-submit auth-submit-inline" type="submit" disabled={saving}>
                   {saving ? "Saving..." : "Save Profile"}
                 </button>

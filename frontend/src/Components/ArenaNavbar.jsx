@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 
 const baseNavLinkClass = "text-gray-500 hover:text-gray-300 transition-colors font-headline tracking-tight font-bold uppercase text-sm";
@@ -13,6 +13,7 @@ function ArenaNavbar({
   showAuthActions = true,
   className = "",
 }) {
+  const location = useLocation();
   return (
     <nav className={`nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none ${className}`.trim()}>
       <div className="flex items-center gap-8">
@@ -39,7 +40,7 @@ function ArenaNavbar({
           authUser ? (
             <>
               {showProfileLink ? (
-                <Link className={baseNavLinkClass} to="/profile/edit">
+                <Link className={baseNavLinkClass} to="/profile/edit" state={{ returnTo: location.pathname }}>
                   Profile
                 </Link>
               ) : null}

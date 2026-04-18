@@ -8,21 +8,15 @@ const navItems = [
   { label: "Profile", icon: "account_circle", to: "/admin/profile" },
 ];
 
-const footerItems = [
-  { label: "Support", icon: "help" },
-  { label: "Logs", icon: "terminal" },
-];
-
 function SidebarAdminDashboard() {
   const navigate = useNavigate();
   return (
     <aside className="admin-sidebar">
       <div>
         <div className="admin-sidebar-brand">
-          <h2>ALGO ARENA ADMIN</h2>
+          <h2>ALGOARENA ADMIN</h2>
           <div>
             <p>Control Panel</p>
-        
           </div>
         </div>
 
@@ -44,15 +38,6 @@ function SidebarAdminDashboard() {
         <button type="button" className="admin-create-button" onClick={() => navigate("/create")}>
           Create New Contest
         </button>
-
-        <div className="admin-sidebar-support">
-          {footerItems.map((item) => (
-            <a key={item.label} href={`#${item.label.toLowerCase()}`}>
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span>{item.label}</span>
-            </a>
-          ))}
-        </div>
       </div>
     </aside>
   );

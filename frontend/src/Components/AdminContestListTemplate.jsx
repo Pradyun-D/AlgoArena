@@ -12,35 +12,6 @@ import { parseContestTime } from "../Utils/is_live_contest";
 
 const PAGE_SIZE = 10;
 
-const topMetrics = [
-  { label: "Global Users", value: "128,402", accent: "blue" },
-  { label: "Active Now", value: "4,912", accent: "green" },
-];
-
-const insightCards = [
-  {
-    eyebrow: "Growth Index",
-    value: "+12.4%",
-    caption: "vs previous month",
-    accent: "trend",
-    icon: "trending_up",
-  },
-  {
-    eyebrow: "Validation Rate",
-    value: "99.8%",
-    caption: "Automated system score",
-    accent: "check",
-    icon: "verified",
-  },
-  {
-    eyebrow: "Next Major Event",
-    value: "World Finals 2024",
-    caption: "Starting in 4d 12h 08m",
-    accent: "event",
-    icon: "campaign",
-  },
-];
-
 const statusClassMap = {
   Live: "status-live",
   Draft: "status-draft",
@@ -220,6 +191,7 @@ function AdminContestListTemplate({
     return {
       id: contest.contest_id || contest.id || "N/A",
       title: contest.title || "Untitled Contest",
+      visibility: contest.visibility || "public",
       start: formatAdminDate(contest.start_time),
       end: formatAdminDate(contest.end_time),
       rawStartTime: parseContestTime(contest.start_time),
@@ -234,6 +206,50 @@ function AdminContestListTemplate({
       ),
     };
   });
+
+  const dashboardMetrics = [
+    {
+      label: "Active Contests",
+      value: normalizedContests.filter((contest) => contest.status === "Live").length.toLocaleString("en-IN"),
+      accent: "green",
+    },
+    {
+      label: "Total Contests",
+      value: normalizedContests.length.toLocaleString("en-IN"),
+      accent: "blue",
+    },
+    {
+      label: "Completed Contests",
+      value: normalizedContests.filter((contest) => contest.status === "Completed").length.toLocaleString("en-IN"),
+      accent: "amber",
+    },
+  ];
+
+  const insightCards = [
+    {
+      eyebrow: "Draft Queue",
+      value: normalizedContests.filter((contest) => contest.status === "Draft").length.toLocaleString("en-IN"),
+      caption: "Rounds still pending publication",
+      accent: "event",
+      icon: "pending_actions",
+    },
+    {
+      eyebrow: "Public Contests",
+      value: normalizedContests.filter((contest) => contest.visibility !== "private").length.toLocaleString("en-IN"),
+      caption: "Visible across the arena",
+      accent: "trend",
+      icon: "public",
+    },
+    {
+      eyebrow: "Registrations",
+      value: normalizedContests
+        .reduce((sum, contest) => sum + Number(String(contest.registrants).replace(/,/g, "")), 0)
+        .toLocaleString("en-IN"),
+      caption: "Combined signups across loaded contests",
+      accent: "check",
+      icon: "groups",
+    },
+  ];
 
   const filteredContests = normalizedContests.filter((contest) => {
     const matchesSearch =
@@ -350,8 +366,8 @@ function AdminContestListTemplate({
               <p className="admin-page-description">{description}</p>
             </div>
 
-            <div className="admin-header-metrics">
-              {topMetrics.map((metric) => (
+            <div className="admin-header-metrics admin-header-metrics--triple">
+              {dashboardMetrics.map((metric) => (
                 <article
                   key={metric.label}
                   className={`admin-mini-stat ${metric.accent}`}

@@ -48,8 +48,7 @@
   letter-spacing: 0.09em;
 }
 
-.admin-sidebar-nav,
-.admin-sidebar-support {
+.admin-sidebar-nav {
   display: grid;
   gap: 0.45rem;
 }
@@ -58,8 +57,7 @@
   margin-top: 2.25rem;
 }
 
-.admin-sidebar-nav a,
-.admin-sidebar-support a {
+.admin-sidebar-nav a {
   display: flex;
   align-items: center;
   gap: 0.85rem;
@@ -70,14 +68,12 @@
 }
 
 .admin-sidebar-nav a:hover,
-.admin-sidebar-support a:hover,
 .admin-sidebar-nav a.active {
   color: #dfe9ff;
   background: rgba(255, 255, 255, 0.04);
 }
 
-.admin-sidebar-nav .material-symbols-outlined,
-.admin-sidebar-support .material-symbols-outlined {
+.admin-sidebar-nav .material-symbols-outlined {
   font-size: 1.15rem;
 }
 
@@ -202,6 +198,10 @@
   grid-template-columns: repeat(2, minmax(160px, 1fr));
 }
 
+.admin-header-metrics--triple {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
 .admin-mini-stat {
   min-width: 150px;
   padding: 1rem 1.1rem;
@@ -232,6 +232,10 @@
 
 .admin-mini-stat.green strong {
   color: #63f3a3;
+}
+
+.admin-mini-stat.amber strong {
+  color: #f0bf7d;
 }
 
 .admin-panel {
@@ -947,13 +951,11 @@ body.light-mode .admin-insight-card span {
   color: var(--on-surface-variant);
 }
 
-body.light-mode .admin-sidebar-nav a,
-body.light-mode .admin-sidebar-support a {
+body.light-mode .admin-sidebar-nav a {
   color: var(--on-surface-variant);
 }
 
 body.light-mode .admin-sidebar-nav a:hover,
-body.light-mode .admin-sidebar-support a:hover,
 body.light-mode .admin-sidebar-nav a.active {
   color: var(--on-background);
   background: #ffffff;
@@ -1108,6 +1110,10 @@ body.light-mode .admin-pagination button.active {
 body.light-mode .admin-mini-stat.green strong,
 body.light-mode .status-live {
   color: #1f9d62;
+}
+
+body.light-mode .admin-mini-stat.amber strong {
+  color: #b97a25;
 }
 
 body.light-mode .status-banned {

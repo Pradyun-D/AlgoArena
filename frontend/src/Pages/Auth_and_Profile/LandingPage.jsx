@@ -3,19 +3,17 @@ import { Link } from "react-router-dom";
 import "../../Styles/landing_page.css";
 import ThemeToggle from "../../Components/ThemeToggle";
 import { motion } from "motion/react";
+import axios from "axios";
 import { getStoredAuthUser } from "../../Utils/auth_storage";
 import { fetchSessionUser } from "../../Utils/session_auth";
+import { API_BASE_URL } from "../../Utils/api";
+import SiteFooter from "../../Components/SiteFooter";
 
 // ── Reusable animation variants ──────────────────────────────────────────────
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   show:   { opacity: 1, y: 0  },
-};
-
-const fadeIn = {
-  hidden: { opacity: 0 },
-  show:   { opacity: 1 },
 };
 
 const staggerContainer = (staggerChildren = 0.12, delayChildren = 0) => ({
@@ -25,29 +23,17 @@ const staggerContainer = (staggerChildren = 0.12, delayChildren = 0) => ({
 
 // ── Feature data ─────────────────────────────────────────────────────────────
 
-const featureItems = [
-  {
-    label: "Fast Judging",
-    value: "< 120ms",
-    description: "Low-latency verdicts for the rounds that matter.",
-  },
-  {
-    label: "Live Arena",
-    value: "24/7",
-    description: "Contests, practice runs, and ranked sessions in one flow.",
-  },
-  {
-    label: "Secure Runs",
-    value: "Isolated",
-    description: "Sandboxed execution with clean resource boundaries.",
-  },
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 function LandingPage() {
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
   const [sessionReady, setSessionReady] = useState(false);
+  const [platformMetrics, setPlatformMetrics] = useState({
+    active_contests: 0,
+    completed_contests: 0,
+    total_submissions: 0,
+    upcoming_contests: 0,
+  });
+
+  const formatMetric = (value) => new Intl.NumberFormat("en-IN").format(Number(value) || 0);
 
   useEffect(() => {
     let isMounted = true;
@@ -74,6 +60,52 @@ function LandingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`)
+      .then((response) => {
+        if (!isMounted) return;
+        setPlatformMetrics({
+          active_contests: Number(response.data?.active_contests) || 0,
+          completed_contests: Number(response.data?.completed_contests) || 0,
+          total_submissions: Number(response.data?.total_submissions) || 0,
+          upcoming_contests: Number(response.data?.upcoming_contests) || 0,
+        });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setPlatformMetrics({
+          active_contests: 0,
+          completed_contests: 0,
+          total_submissions: 0,
+          upcoming_contests: 0,
+        });
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const featureItems = [
+    {
+      label: "Active Contests",
+      value: formatMetric(platformMetrics.active_contests),
+      description: "Rounds currently open for solving across the public arena.",
+    },
+    {
+      label: "Completed Contests",
+      value: formatMetric(platformMetrics.completed_contests),
+      description: "Archived rounds available for review and post-contest analysis.",
+    },
+    {
+      label: "Total Submissions",
+      value: formatMetric(platformMetrics.total_submissions),
+      description: "Code runs already judged through the platform pipeline.",
+    },
+  ];
+
   const signedInName = authUser?.full_name || authUser?.username || authUser?.email || "operator";
 
   return (
@@ -96,11 +128,11 @@ function LandingPage() {
         transition={{ duration: 0.55, ease: "easeOut" }}
       >
         <Link to="/" className="landing-brand">
-          Algo Arena
+          ALGOARENA
         </Link>
 
         <nav className="landing-nav" aria-label="Primary">
-          <a href="#features">Features</a>
+          <a href="#statistics">Statistics</a>
         </nav>
 
         <div className="landing-actions">
@@ -143,7 +175,7 @@ function LandingPage() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <span className="hero-status-dot" />
-              <span>{authUser ? "Session Active" : "Deep Space Arena Online"}</span>
+              <span>{authUser ? "Session Active" : "Practice Arena Online"}</span>
             </motion.div>
 
             <motion.p
@@ -151,7 +183,7 @@ function LandingPage() {
               variants={fadeUp}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              Competitive coding, reframed as a launch sequence.
+              Compete. Improve. Repeat.
             </motion.p>
 
             <motion.h1
@@ -163,13 +195,13 @@ function LandingPage() {
                 <>
                   Welcome back, {signedInName}
                   <br />
-                  your next contest is waiting.
+                  pick up right where you left off.
                 </>
               ) : (
                 <>
-                  Enter a coding arena
+                  Write better code
                   <br />
-                  built like a starfield.
+                  under real pressure.
                 </>
               )}
             </motion.h1>
@@ -180,8 +212,8 @@ function LandingPage() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               {authUser
-                ? "Your session is already active. Jump straight back into contests, submissions, and leaderboards."
-                : "Run contests, climb live leaderboards, and push submissions through a cleaner, faster interface with a cinematic space backdrop."}
+                ? "Your account is already active. Jump back into contests, review submissions, or head to the leaderboard."
+                : "Live contests, clean problem pages, and submission history — all in one arena built for consistent practice and competition."}
             </motion.p>
 
             <motion.div
@@ -234,8 +266,8 @@ function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.75, ease: [0.34, 1.26, 0.64, 1] }}
             >
-              <span className="signal-label">Contest Pulse</span>
-              <span className="signal-value">LIVE FEED</span>
+              <span className="signal-label">Live Contests</span>
+              <span className="signal-value">{formatMetric(platformMetrics.active_contests)}</span>
             </motion.div>
 
             {/* Signal card — slides in from the left */}
@@ -245,8 +277,8 @@ function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.9, ease: [0.34, 1.26, 0.64, 1] }}
             >
-              <span className="signal-label">Sandbox</span>
-              <span className="signal-value">STABLE ORBIT</span>
+              <span className="signal-label">Upcoming Rounds</span>
+              <span className="signal-value">{formatMetric(platformMetrics.upcoming_contests)}</span>
             </motion.div>
           </motion.div>
         </section>
@@ -260,7 +292,7 @@ function LandingPage() {
           >
             <span className="landing-session-banner__label">Signed in</span>
             <p>
-              You are already logged in as <strong>{signedInName}</strong>. Head straight to the contests page to continue.
+              You are already logged in as <strong>{signedInName}</strong>. Continue from contests whenever you are ready.
             </p>
           </motion.section>
         ) : null}
@@ -268,7 +300,7 @@ function LandingPage() {
         {/* ── Feature strip — stagger in on scroll ── */}
         <motion.section
           className="feature-strip"
-          id="features"
+          id="statistics"
           variants={staggerContainer(0.1, 0)}
           initial="hidden"
           whileInView="show"
@@ -289,6 +321,8 @@ function LandingPage() {
           ))}
         </motion.section>
       </main>
+
+      <SiteFooter className="landing-footer" />
     </div>
   );
 }

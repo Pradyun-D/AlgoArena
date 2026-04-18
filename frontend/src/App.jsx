@@ -20,6 +20,7 @@ import ProfileSettingsPage from "./Pages/Auth_and_Profile/ProfileSettings";
 import ProblemSetterRoute from "./Components/ProblemSetterRoute";
 import AdminRoute from "./Components/AdminRoute";
 import { ThemeProvider } from "./Theme/ThemeProvider";
+import AdminLandingRedirect from "./Components/AdminLandingRedirect";
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/profile/edit" element={<ProfileSettingsPage />} />
+          <Route
+            path="/admin"
+            element={(
+              <AdminRoute>
+                <AdminLandingRedirect />
+              </AdminRoute>
+            )}
+          />
           <Route
             path="/admin/dashboard"
             element={(

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
-import { setStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import "../../Styles/auth_pages.css";
 import ThemeToggle from "../../Components/ThemeToggle";
@@ -70,9 +69,8 @@ function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/accounts/api/register/`, form);
-      setStoredAuthUser(response.data.user);
-      navigate("/contests");
+      await axios.post(`${API_BASE_URL}/accounts/api/register/`, form);
+      navigate("/login", { replace: true, state: { returnTo: "/profile/edit" } });
     } catch (err) {
       setError(
         err.response?.data?.error ||

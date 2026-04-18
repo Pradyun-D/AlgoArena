@@ -6,6 +6,18 @@ export const defaultAdminSettings = {
   landingPage: "dashboard",
 };
 
+export const getAdminLandingPath = (landingPage = defaultAdminSettings.landingPage) => {
+  switch (landingPage) {
+    case "permissions":
+      return "/admin/permissions";
+    case "drafts":
+      return "/drafts";
+    case "dashboard":
+    default:
+      return "/admin/dashboard";
+  }
+};
+
 export const getAdminSettings = () => {
   try {
     const stored = window.localStorage.getItem(ADMIN_SETTINGS_KEY);

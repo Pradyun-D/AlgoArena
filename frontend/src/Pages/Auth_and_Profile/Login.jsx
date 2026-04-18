@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "motion/react";
 import { setStoredAuthUser } from "../../Utils/auth_storage";
@@ -22,6 +22,8 @@ const fieldReveal = {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo || "/contests";
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,7 +71,7 @@ function LoginPage() {
         withCredentials: true,
       });
       setStoredAuthUser(response.data.user);
-      navigate("/contests");
+      navigate(returnTo, { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.error ||

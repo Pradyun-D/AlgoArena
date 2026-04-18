@@ -375,23 +375,23 @@ img {
 }
 
 .contest-section-title--available {
-  color: #6bfe9c;
-  text-shadow: 0 0 18px rgba(107, 254, 156, 0.18);
+  color: #76d69a;
+  text-shadow: 0 0 12px rgba(118, 214, 154, 0.12);
 }
 
 body.light-mode .contest-section-title--available {
-  color: #168a4b;
-  text-shadow: 0 10px 24px rgba(22, 138, 75, 0.12);
+  color: #2f8e5b;
+  text-shadow: 0 8px 18px rgba(47, 142, 91, 0.08);
 }
 
 .contest-section-title--past {
-  color: #f5bd68;
-  text-shadow: 0 0 18px rgba(245, 189, 104, 0.16);
+  color: #d9b17a;
+  text-shadow: 0 0 12px rgba(217, 177, 122, 0.1);
 }
 
 body.light-mode .contest-section-title--past {
-  color: #a76510;
-  text-shadow: 0 10px 24px rgba(167, 101, 16, 0.12);
+  color: #966a2d;
+  text-shadow: 0 8px 18px rgba(150, 106, 45, 0.08);
 }
 
 .contest-section-icon {
@@ -409,14 +409,14 @@ body.light-mode .contest-section-title--past {
 
 .contest-section-title--available .contest-section-icon {
   color: var(--secondary);
-  background: rgba(107, 254, 156, 0.1);
-  box-shadow: 0 0 22px rgba(107, 254, 156, 0.16);
+  background: rgba(118, 214, 154, 0.08);
+  box-shadow: 0 0 14px rgba(118, 214, 154, 0.1);
 }
 
 .contest-section-title--past .contest-section-icon {
-  color: #f5bd68;
-  background: rgba(245, 189, 104, 0.12);
-  box-shadow: 0 0 22px rgba(245, 189, 104, 0.12);
+  color: #d9b17a;
+  background: rgba(217, 177, 122, 0.09);
+  box-shadow: 0 0 14px rgba(217, 177, 122, 0.08);
 }
 
 .contest-card {
@@ -425,100 +425,100 @@ body.light-mode .contest-section-title--past {
   border-radius: 28px;
   border: 1px solid rgba(132, 173, 255, 0.16);
   background:
-    radial-gradient(circle at top right, rgba(132, 173, 255, 0.14), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(107, 254, 156, 0.08), transparent 32%),
+    radial-gradient(circle at top right, rgba(132, 173, 255, 0.1), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(118, 214, 154, 0.05), transparent 32%),
     linear-gradient(180deg, rgba(26, 26, 26, 0.96), rgba(18, 18, 18, 0.98));
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
   transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
 body.light-mode .contest-card {
   border-color: rgba(47, 125, 244, 0.12);
   background:
-    radial-gradient(circle at top right, rgba(47, 125, 244, 0.12), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(28, 166, 95, 0.08), transparent 34%),
+    radial-gradient(circle at top right, rgba(47, 125, 244, 0.08), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(28, 166, 95, 0.05), transparent 34%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 253, 0.98));
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
 }
 
 .contest-card--live {
-  color: #6bfe9c;
-  border-color: rgba(107, 254, 156, 0.24);
+  color: #5db882;
+  border-color: rgba(118, 214, 154, 0.1);
   background:
-    radial-gradient(circle at top right, rgba(107, 254, 156, 0.18), transparent 36%),
-    radial-gradient(circle at bottom left, rgba(132, 173, 255, 0.09), transparent 32%),
-    linear-gradient(180deg, rgba(19, 29, 24, 0.97), rgba(13, 18, 16, 0.98));
-  box-shadow: 0 20px 48px rgba(38, 186, 95, 0.14), 0 18px 42px rgba(0, 0, 0, 0.24);
+    radial-gradient(circle at top right, rgba(118, 214, 154, 0.055), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(132, 173, 255, 0.03), transparent 32%),
+    linear-gradient(180deg, rgba(21, 28, 23, 0.97), rgba(14, 17, 15, 0.98));
+  box-shadow: 0 16px 34px rgba(38, 186, 95, 0.06), 0 16px 34px rgba(0, 0, 0, 0.2);
 }
 
 body.light-mode .contest-card--live {
-  color: #168a4b;
-  border-color: rgba(22, 138, 75, 0.18);
+  color: #3a7a52;
+  border-color: rgba(47, 142, 91, 0.09);
   background:
-    radial-gradient(circle at top right, rgba(35, 199, 104, 0.16), transparent 36%),
-    radial-gradient(circle at bottom left, rgba(47, 125, 244, 0.07), transparent 32%),
-    linear-gradient(180deg, rgba(252, 255, 253, 0.98), rgba(244, 251, 247, 0.98));
-  box-shadow: 0 18px 40px rgba(22, 138, 75, 0.09);
+    radial-gradient(circle at top right, rgba(47, 142, 91, 0.055), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(47, 125, 244, 0.025), transparent 32%),
+    linear-gradient(180deg, rgba(253, 255, 254, 0.99), rgba(247, 252, 249, 0.99));
+  box-shadow: 0 14px 28px rgba(47, 142, 91, 0.04);
 }
 
 .contest-card--draft {
-  color: #84adff;
-  border-color: rgba(132, 173, 255, 0.22);
+  color: #7490c4;
+  border-color: rgba(137, 167, 224, 0.11);
   background:
-    radial-gradient(circle at top right, rgba(132, 173, 255, 0.18), transparent 36%),
-    radial-gradient(circle at bottom left, rgba(116, 224, 255, 0.08), transparent 32%),
-    linear-gradient(180deg, rgba(18, 23, 34, 0.97), rgba(13, 16, 24, 0.98));
-  box-shadow: 0 20px 48px rgba(62, 118, 236, 0.13), 0 18px 42px rgba(0, 0, 0, 0.24);
+    radial-gradient(circle at top right, rgba(137, 167, 224, 0.065), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(116, 224, 255, 0.025), transparent 32%),
+    linear-gradient(180deg, rgba(18, 22, 32, 0.97), rgba(13, 15, 23, 0.98));
+  box-shadow: 0 16px 34px rgba(62, 118, 236, 0.06), 0 16px 34px rgba(0, 0, 0, 0.2);
 }
 
 body.light-mode .contest-card--draft {
-  color: #2f67d8;
-  border-color: rgba(47, 103, 216, 0.17);
+  color: #3d5fa0;
+  border-color: rgba(71, 111, 184, 0.09);
   background:
-    radial-gradient(circle at top right, rgba(47, 125, 244, 0.14), transparent 36%),
-    radial-gradient(circle at bottom left, rgba(24, 164, 211, 0.07), transparent 32%),
-    linear-gradient(180deg, rgba(253, 254, 255, 0.98), rgba(245, 248, 255, 0.98));
-  box-shadow: 0 18px 40px rgba(47, 103, 216, 0.08);
+    radial-gradient(circle at top right, rgba(71, 111, 184, 0.055), transparent 36%),
+    radial-gradient(circle at bottom left, rgba(24, 164, 211, 0.025), transparent 32%),
+    linear-gradient(180deg, rgba(254, 254, 255, 0.99), rgba(247, 249, 255, 0.99));
+  box-shadow: 0 14px 28px rgba(71, 111, 184, 0.04);
 }
 
 .contest-card--completed {
-  color: #f5bd68;
-  border-color: rgba(245, 189, 104, 0.18);
+  color: #b8924f;
+  border-color: rgba(217, 177, 122, 0.09);
   background:
-    radial-gradient(circle at top right, rgba(245, 189, 104, 0.12), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(132, 173, 255, 0.07), transparent 32%),
-    linear-gradient(180deg, rgba(23, 24, 27, 0.96), rgba(16, 17, 19, 0.98));
+    radial-gradient(circle at top right, rgba(217, 177, 122, 0.05), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(132, 173, 255, 0.025), transparent 32%),
+    linear-gradient(180deg, rgba(22, 22, 24, 0.97), rgba(15, 15, 17, 0.98));
 }
 
 body.light-mode .contest-card--completed {
-  color: #b27317;
-  border-color: rgba(178, 115, 23, 0.18);
+  color: #7a541e;
+  border-color: rgba(150, 106, 45, 0.09);
   background:
-    radial-gradient(circle at top right, rgba(245, 189, 104, 0.17), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(84, 102, 128, 0.08), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 250, 0.98));
+    radial-gradient(circle at top right, rgba(217, 177, 122, 0.065), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(84, 102, 128, 0.04), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 249, 247, 0.99));
 }
 
 .contest-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.32);
-  border-color: rgba(132, 173, 255, 0.28);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.26);
+  border-color: rgba(132, 173, 255, 0.22);
 }
 
 .contest-card--live:hover {
-  border-color: rgba(107, 254, 156, 0.36);
-  box-shadow: 0 24px 58px rgba(38, 186, 95, 0.18), 0 24px 54px rgba(0, 0, 0, 0.28);
+  border-color: rgba(118, 214, 154, 0.15);
+  box-shadow: 0 20px 42px rgba(38, 186, 95, 0.07), 0 20px 42px rgba(0, 0, 0, 0.24);
 }
 
 .contest-card--draft:hover {
-  border-color: rgba(132, 173, 255, 0.36);
-  box-shadow: 0 24px 58px rgba(62, 118, 236, 0.18), 0 24px 54px rgba(0, 0, 0, 0.28);
+  border-color: rgba(137, 167, 224, 0.16);
+  box-shadow: 0 20px 42px rgba(62, 118, 236, 0.07), 0 20px 42px rgba(0, 0, 0, 0.24);
 }
 
 .contest-card__glow {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, transparent 0%, rgba(132, 173, 255, 0.08) 45%, transparent 68%);
+  background: linear-gradient(120deg, transparent 0%, rgba(132, 173, 255, 0.05) 45%, transparent 68%);
   opacity: 0;
   transition: opacity 220ms ease;
   pointer-events: none;
@@ -594,33 +594,33 @@ body.light-mode .contest-card--completed {
 }
 
 .contest-card--completed .contest-card__badge {
-  color: #f5bd68;
-  border-color: rgba(245, 189, 104, 0.26);
-  background: rgba(245, 189, 104, 0.1);
+  color: #b8924f;
+  border-color: rgba(217, 177, 122, 0.13);
+  background: rgba(217, 177, 122, 0.05);
 }
 
 body.light-mode .contest-card--completed .contest-card__badge {
-  color: #8b5a14;
-  border-color: rgba(178, 115, 23, 0.2);
-  background: rgba(245, 189, 104, 0.16);
+  color: #7a5416;
+  border-color: rgba(178, 115, 23, 0.14);
+  background: rgba(245, 189, 104, 0.09);
 }
 
 .contest-card--live .contest-card__badge {
-  color: #6bfe9c;
-  border-color: rgba(107, 254, 156, 0.3);
-  background: rgba(107, 254, 156, 0.11);
+  color: #5db882;
+  border-color: rgba(118, 214, 154, 0.14);
+  background: rgba(118, 214, 154, 0.05);
 }
 
 body.light-mode .contest-card--live .contest-card__badge {
-  color: #126d3d;
-  border-color: rgba(22, 138, 75, 0.22);
-  background: rgba(35, 199, 104, 0.13);
+  color: #2a6b42;
+  border-color: rgba(22, 138, 75, 0.14);
+  background: rgba(35, 199, 104, 0.07);
 }
 
 .contest-card--draft .contest-card__badge {
-  color: #84adff;
-  border-color: rgba(132, 173, 255, 0.3);
-  background: rgba(132, 173, 255, 0.11);
+  color: #89a7e0;
+  border-color: rgba(137, 167, 224, 0.22);
+  background: rgba(137, 167, 224, 0.08);
 }
 
 body.light-mode .contest-card--draft .contest-card__badge {
@@ -653,25 +653,25 @@ body.light-mode .contest-card__chip {
 }
 
 .contest-card__chip--count {
-  background: linear-gradient(135deg, rgba(132, 173, 255, 0.14), rgba(107, 254, 156, 0.08));
+  background: linear-gradient(135deg, rgba(132, 173, 255, 0.1), rgba(118, 214, 154, 0.05));
 }
 
 .contest-card--completed .contest-card__chip {
-  border-color: rgba(245, 189, 104, 0.13);
-  background: rgba(245, 189, 104, 0.055);
+  border-color: rgba(217, 177, 122, 0.08);
+  background: rgba(217, 177, 122, 0.025);
 }
 
 .contest-card--completed .contest-card__chip--count {
-  background: linear-gradient(135deg, rgba(245, 189, 104, 0.12), rgba(132, 173, 255, 0.055));
+  background: linear-gradient(135deg, rgba(217, 177, 122, 0.055), rgba(132, 173, 255, 0.025));
 }
 
 .contest-card--live .contest-card__chip {
-  border-color: rgba(107, 254, 156, 0.16);
-  background: rgba(107, 254, 156, 0.06);
+  border-color: rgba(118, 214, 154, 0.08);
+  background: rgba(118, 214, 154, 0.025);
 }
 
 .contest-card--live .contest-card__chip--count {
-  background: linear-gradient(135deg, rgba(107, 254, 156, 0.16), rgba(132, 173, 255, 0.06));
+  background: linear-gradient(135deg, rgba(118, 214, 154, 0.06), rgba(132, 173, 255, 0.025));
 }
 
 .contest-card--live .contest-card__description,
@@ -685,12 +685,12 @@ body.light-mode .contest-card--live .contest-card__chip-label {
 }
 
 .contest-card--draft .contest-card__chip {
-  border-color: rgba(132, 173, 255, 0.16);
-  background: rgba(132, 173, 255, 0.06);
+  border-color: rgba(137, 167, 224, 0.08);
+  background: rgba(137, 167, 224, 0.025);
 }
 
 .contest-card--draft .contest-card__chip--count {
-  background: linear-gradient(135deg, rgba(132, 173, 255, 0.16), rgba(116, 224, 255, 0.055));
+  background: linear-gradient(135deg, rgba(137, 167, 224, 0.065), rgba(116, 224, 255, 0.02));
 }
 
 .contest-card--draft .contest-card__description,
