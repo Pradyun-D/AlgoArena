@@ -243,31 +243,40 @@ def _validate_publishable_draft(draft):
     return None
 
 
-
 def _get_contests_data():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
-                   CASE
-                       WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
-                       WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
-                       ELSE 'Live'
-                   END AS status,
-                   COALESCE((
-                       SELECT COUNT(*)
-                       FROM contest_participants cp
-                       WHERE cp.contest_id = contests.contest_id
-                   ), 0) AS participants_count
-            FROM contests WHERE end_time > UTC_TIMESTAMP()
-            ORDER BY start_time ASC, created_at DESC
+            SELECT 
+                contest_id,
+                title,
+                description,
+                start_time,
+                end_time,
+                visibility,
+                created_by,
+                created_at,
+                CASE
+                    WHEN visibility = 'private' THEN 'Draft'
+                    WHEN start_time > UTC_TIMESTAMP() THEN 'Draft'
+                    WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
+                    ELSE 'Live'
+                END AS status,
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM contest_participants cp 
+                    WHERE cp.contest_id = contests.contest_id
+                ), 0) AS participants_count
+            FROM contests
+            ORDER BY start_time DESC, created_at DESC
             """
         )
-        return cursor.fetchall()  
+        return cursor.fetchall()
     except Exception as e:
-            return Response({"error": str(e)}, status=500)  
+        print("Error fetching contests for admin:", e)
+        return []
     finally:
         cursor.close()
         conn.close()
@@ -279,59 +288,71 @@ def _get_past_contests_data():
     try:
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
-                   CASE
-                       WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
-                       WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
-                       ELSE 'Live'
-                   END AS status,
-                   COALESCE((
-                       SELECT COUNT(*)
-                       FROM contest_participants cp
-                       WHERE cp.contest_id = contests.contest_id
-                   ), 0) AS participants_count
-            FROM contests WHERE end_time <= UTC_TIMESTAMP()
+            SELECT 
+                contest_id,
+                title,
+                description,
+                start_time,
+                end_time,
+                visibility,
+                created_by,
+                created_at,
+                'Completed' AS status,
+                COALESCE((
+                    SELECT COUNT(*) 
+                    FROM contest_participants cp 
+                    WHERE cp.contest_id = contests.contest_id
+                ), 0) AS participants_count
+            FROM contests 
+            WHERE end_time <= UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
             """
         )
         return cursor.fetchall()
     except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        print("Error fetching past contests:", e)
+        return []
     finally:
         cursor.close()
         conn.close()
+
 
 def get_active_contests_data():
-    conn=get_connection()
-    cursor=conn.cursor(dictionary=True)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT UTC_TIMESTAMP() AS now_utc")
-        print("db now utc:", cursor.fetchone())
-
         cursor.execute("""
-          SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
-                 CASE
-                     WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
-                     WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
-                     ELSE 'Live'
-                 END AS status,
-                 COALESCE((
-                     SELECT COUNT(*)
-                     FROM contest_participants cp
-                     WHERE cp.contest_id = contests.contest_id
-                 ), 0) AS participants_count
-            FROM contests WHERE start_time<=UTC_TIMESTAMP() AND  end_time > UTC_TIMESTAMP()
+            SELECT 
+                contest_id,
+                title,
+                description,
+                start_time,
+                end_time,
+                visibility,
+                created_by,
+                created_at,
+                CASE
+                    WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
+                    WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
+                    ELSE 'Live'
+                END AS status,
+                COALESCE((
+                    SELECT COUNT(*)
+                    FROM contest_participants cp
+                    WHERE cp.contest_id = contests.contest_id
+                ), 0) AS participants_count
+            FROM contests 
+            WHERE start_time <= UTC_TIMESTAMP() 
+              AND end_time > UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
         """)
-      
-
-        rows=cursor.fetchall()
-        
-        return rows
+        return cursor.fetchall()
+    except Exception as e:
+        print("Error fetching active contests:", e)
+        return []
     finally:
         cursor.close()
         conn.close()
-
 
 # to get all contests
 
@@ -706,34 +727,49 @@ def contest_metadata_detail(request, contest_id):
 
 # to delete a contest (problemsetter/user)
 
-
 @api_view(["DELETE"])
 @permission_classes([IsProblemSetterOwner]) 
-def delete_contest(request,contest_id):
+def delete_contest(request, contest_id):
     contest_id = str(contest_id)
 
-    # checking if present in db 
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM contests WHERE contest_id=%s",(contest_id,))
-        result=cursor.fetchone()
-        if not result:
-            return Response({"error":"Contest not found","status":404})
-    
-    # deleting from db
-        cursor.execute("DELETE FROM contests WHERE contest_id=%s",(contest_id,))
+        
+        # Check permission
+        cursor.execute(
+            "SELECT contest_id, title, created_by FROM contests WHERE contest_id = %s", 
+            (contest_id,)
+        )
+        contest = cursor.fetchone()
+        
+        if not contest:
+            return Response({"error": "Contest not found"}, status=404)
+
+        if not _can_manage_contest(request, contest):
+            return Response({"error": "You do not have permission to delete this contest."}, status=403)
+
+        # Just delete the contest → CASCADE will handle the rest
+        cursor.execute("DELETE FROM contests WHERE contest_id = %s", (contest_id,))
         conn.commit()
-        return Response({"message":"Contest deleted successfully","status":200})
+
+        print(f"✅ Contest and all related data deleted: {contest_id} - {contest.get('title')}")
+
+        return Response({
+            "message": "Contest deleted successfully (including problems, participants, and submissions)",
+            "status": 200
+        }, status=200)
+
     except Exception as e:
-        return Response({"error": str(e),"status":500})
+        if 'conn' in locals() and conn and conn.is_connected():
+            conn.rollback()
+        print("❌ Delete error:", str(e))
+        return Response({"error": str(e)}, status=500)
     finally:
         if 'cursor' in locals() and cursor is not None:
             cursor.close()
         if 'conn' in locals() and conn.is_connected():
             conn.close()
-
-
 
 # getting all problems of a contest
 

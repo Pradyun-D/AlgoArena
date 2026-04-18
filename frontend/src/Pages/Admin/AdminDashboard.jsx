@@ -6,7 +6,7 @@ function AdminDashboard() {
     <AdminContestListTemplate
       title="Contest Management"
       description="Monitor and orchestrate ongoing algorithmic competitions across the global arena. Use this overview to track upcoming and recent contest activity across the system."
-      fetchUrl={`${API_BASE_URL}/admin-api/dashboard/`}
+      fetchUrl={`${API_BASE_URL}/contests/`}
       errorTitle="The admin dashboard could not be loaded."
       emptyMessage="No contests are available yet. Create a new contest to populate the admin table."
       entryLabel="entries"

@@ -32,23 +32,30 @@ function ContestsPage() {
             setLoading(true);
             setError("");
 
-            const [availableResponse, pastResponse, metricsResponse] = await Promise.allSettled([
-                axios.get(`${API_BASE_URL}/contests/`),
-                axios.get(`${API_BASE_URL}/contests/past/`),
-                axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`),
-            ]);
+           const [allResponse, metricsResponse] = await Promise.allSettled([
+            axios.get(`${API_BASE_URL}/contests/`),
+            axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`),
+              ]);
 
-            if (availableResponse.status === "fulfilled") {
-                setAvailableContests(Array.isArray(availableResponse.value.data) ? availableResponse.value.data : []);
-            } else {
-                throw availableResponse.reason;
+            let allContests = [];
+              if (allResponse.status === "fulfilled") {
+            allContests = Array.isArray(allResponse.value.data) ? allResponse.value.data : [];
             }
 
-            if (pastResponse.status === "fulfilled") {
-                setPastContests(Array.isArray(pastResponse.value.data) ? pastResponse.value.data : []);
-            } else {
-                throw pastResponse.reason;
-            }
+            const now = Date.now();
+
+            const available = allContests.filter(c => {
+            const end = new Date(c.end_time).getTime();
+            return !isNaN(end) && end > now;
+             });
+
+            const past = allContests.filter(c => {
+            const end = new Date(c.end_time).getTime();
+            return !isNaN(end) && end <= now;
+            });
+
+             setAvailableContests(available);
+             setPastContests(past);
 
             if (metricsResponse.status === "fulfilled") {
                 setPlatformMetrics({

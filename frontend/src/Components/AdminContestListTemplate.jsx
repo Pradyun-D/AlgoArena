@@ -113,6 +113,13 @@ function AdminContestListTemplate({
   const [startDateInput, setStartDateInput] = useState("");
   const [endDateInput, setEndDateInput] = useState("");
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("All");
+    setStartDateInput("");
+    setEndDateInput("");
+  };
+
   const fetchContests = useCallback(async () => {
     try {
       setLoading(true);
@@ -123,9 +130,9 @@ function AdminContestListTemplate({
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        errorFallback
+          err.response?.data?.error ||
+          err.message ||
+          errorFallback
       );
     } finally {
       setLoading(false);
@@ -136,30 +143,38 @@ function AdminContestListTemplate({
     fetchContests();
   }, [fetchContests]);
 
-  const handleDeleteContest = async (contestId, contestTitle) => {
-    const confirmed = window.confirm(`Delete "${contestTitle}"? This action cannot be undone.`);
-    if (!confirmed) {
-      return;
-    }
 
-    try {
-      setDeletingContestId(contestId);
-      setActionMessage("");
-      await axios.delete(`${API_BASE_URL}/contests/${contestId}/delete/`, {
-        withCredentials: true,
-      });
-      setContests((currentContests) => currentContests.filter((contest) => (contest.contest_id || contest.id) !== contestId));
-      setActionMessage("Contest deleted successfully.");
-    } catch (err) {
-      setActionMessage(
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Unable to delete this contest."
-      );
-    } finally {
-      setDeletingContestId("");
-    }
-  };
+  const handleDeleteContest = async (contestId, contestTitle) => {
+  const confirmed = window.confirm(`Delete "${contestTitle}"?\n\nThis action cannot be undone.`);
+  if (!confirmed) return;
+
+  try {
+    setDeletingContestId(contestId);
+    setActionMessage("");
+
+    const response = await axios.delete(
+      `${API_BASE_URL}/contests/${contestId}/delete/`,
+      { withCredentials: true }
+    );
+
+    // Remove from local state
+    setContests((current) =>
+      current.filter((c) => (c.contest_id || c.id) !== contestId)
+    );
+
+    setActionMessage("✅ Contest deleted permanently.");
+    
+  } catch (err) {
+    console.error("Delete failed:", err.response?.data || err.message);
+    setActionMessage(
+      err.response?.data?.error || 
+      err.response?.data?.message || 
+      "Failed to delete contest. Check console."
+    );
+  } finally {
+    setDeletingContestId("");
+  }
+};
 
   const normalizedContests = contests.map((contest) => {
     const registrantsValue =
@@ -168,17 +183,22 @@ function AdminContestListTemplate({
       contest.participants ??
       contest.total_registrants ??
       0;
-    
+
     return {
       id: contest.contest_id || contest.id || "N/A",
       title: contest.title || "Untitled Contest",
       start: formatAdminDate(contest.start_time),
       end: formatAdminDate(contest.end_time),
       rawStartTime: new Date(contest.start_time).getTime(),
-      registrants: typeof registrantsValue === "number"
-        ? registrantsValue.toLocaleString("en-IN")
-        : String(registrantsValue),
-      status: getContestStatus(contest.start_time, contest.end_time, contest.visibility),
+      registrants:
+        typeof registrantsValue === "number"
+          ? registrantsValue.toLocaleString("en-IN")
+          : String(registrantsValue),
+      status: getContestStatus(
+        contest.start_time,
+        contest.end_time,
+        contest.visibility
+      ),
     };
   });
 
@@ -191,13 +211,16 @@ function AdminContestListTemplate({
       statusFilter === "All" || contest.status === statusFilter;
 
     let matchesDate = true;
+
     if (startDateInput) {
-      matchesDate = matchesDate && contest.rawStartTime >= new Date(`${startDateInput}T00:00:00`).getTime();
-    }
-    if (endDateInput) {
-      matchesDate = matchesDate && contest.rawStartTime <= new Date(`${endDateInput}T23:59:59`).getTime();
+      const filterStart = new Date(`${startDateInput}T00:00:00`).getTime();
+      matchesDate = matchesDate && contest.rawStartTime >= filterStart;
     }
 
+    if (endDateInput) {
+      const filterEnd = new Date(`${endDateInput}T23:59:59`).getTime();
+      matchesDate = matchesDate && contest.rawStartTime <= filterEnd;
+    }
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -205,7 +228,10 @@ function AdminContestListTemplate({
     setCurrentPage(1);
   }, [searchQuery, statusFilter, startDateInput, endDateInput]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredContests.length / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredContests.length / PAGE_SIZE)
+  );
   const paginatedContests = filteredContests.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -241,17 +267,43 @@ function AdminContestListTemplate({
       <main className="admin-dashboard-main">
         <header className="admin-topbar">
           <div className="admin-topbar-tabs">
-            <Link className={`admin-topbar-link ${activeTab === "dashboard" ? "active" : ""}`} to="/admin/dashboard">Dashboard</Link>
-            <Link className="admin-topbar-link" to="/contests">Contests</Link>
-            <Link className={`admin-topbar-link ${activeTab === "permissions" ? "active" : ""}`} to="/admin/permissions">Permissions</Link>
+            <Link
+              className={`admin-topbar-link ${
+                activeTab === "dashboard" ? "active" : ""
+              }`}
+              to="/admin/dashboard"
+            >
+              Dashboard
+            </Link>
+            <Link className="admin-topbar-link" to="/contests">
+              Contests
+            </Link>
+            <Link
+              className={`admin-topbar-link ${
+                activeTab === "permissions" ? "active" : ""
+              }`}
+              to="/admin/permissions"
+            >
+              Permissions
+            </Link>
           </div>
 
           <div className="admin-topbar-actions">
             <ThemeToggle />
-            <button className="admin-icon-button" type="button" aria-label="Settings" onClick={() => navigate("/admin/settings")}>
+            <button
+              className="admin-icon-button"
+              type="button"
+              aria-label="Settings"
+              onClick={() => navigate("/admin/settings")}
+            >
               <span className="material-symbols-outlined">settings</span>
             </button>
-            <button className="admin-avatar-button" type="button" aria-label="Admin profile" onClick={() => navigate("/admin/profile")}>
+            <button
+              className="admin-avatar-button"
+              type="button"
+              aria-label="Admin profile"
+              onClick={() => navigate("/admin/profile")}
+            >
               <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>
@@ -267,7 +319,10 @@ function AdminContestListTemplate({
 
             <div className="admin-header-metrics">
               {topMetrics.map((metric) => (
-                <article key={metric.label} className={`admin-mini-stat ${metric.accent}`}>
+                <article
+                  key={metric.label}
+                  className={`admin-mini-stat ${metric.accent}`}
+                >
                   <span>{metric.label}</span>
                   <strong>{metric.value}</strong>
                 </article>
@@ -289,38 +344,64 @@ function AdminContestListTemplate({
               </label>
 
               <div className="admin-toolbar-filters">
-                <select 
-                  className="admin-filter-button" 
+                <select
+                  className="admin-filter-button"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  style={{ appearance: "auto", cursor: "pointer" }}
                 >
                   <option value="All">Status: All</option>
                   <option value="Live">Live</option>
                   <option value="Completed">Completed</option>
+                  <option value="Draft">Draft</option>
                 </select>
 
-                <label className="admin-filter-button admin-date-filter-button" htmlFor="admin-contest-start-date">
-                  <span className="material-symbols-outlined">calendar_month</span>
+                <label
+                  className="admin-filter-button admin-date-filter-button"
+                  htmlFor="admin-contest-start-date"
+                >
+                  <span className="material-symbols-outlined">
+                    calendar_month
+                  </span>
                   <input
                     id="admin-contest-start-date"
                     type="date"
                     value={startDateInput}
                     onChange={(e) => setStartDateInput(e.target.value)}
-                    aria-label="Filter contests starting from"
+                    aria-label="Filter by start date from"
                   />
                 </label>
 
-                <label className="admin-filter-button admin-date-filter-button" htmlFor="admin-contest-end-date">
+                <label
+                  className="admin-filter-button admin-date-filter-button"
+                  htmlFor="admin-contest-end-date"
+                >
                   <span className="material-symbols-outlined">event_busy</span>
                   <input
                     id="admin-contest-end-date"
                     type="date"
                     value={endDateInput}
                     onChange={(e) => setEndDateInput(e.target.value)}
-                    aria-label="Filter contests ending by"
+                    aria-label="Filter by start date until"
                   />
                 </label>
+
+                <button
+                  type="button"
+                  className="admin-filter-button admin-clear-filters"
+                  onClick={clearFilters}
+                  style={{
+                    display:
+                      searchQuery ||
+                      startDateInput ||
+                      endDateInput ||
+                      statusFilter !== "All"
+                        ? "flex"
+                        : "none",
+                  }}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                  Clear Filters
+                </button>
               </div>
             </div>
 
@@ -347,7 +428,10 @@ function AdminContestListTemplate({
                       <tr key={contest.id}>
                         <td>
                           <div className="contest-primary-cell">
-                            <a href={`/contest/${contest.id}/`} className="contest-link">
+                            <a
+                              href={`/contest/${contest.id}/`}
+                              className="contest-link"
+                            >
                               {contest.title}
                             </a>
                           </div>
@@ -355,17 +439,25 @@ function AdminContestListTemplate({
                         <td>
                           <div className="contest-time-cell">
                             <div>
-                              <span className="material-symbols-outlined">schedule</span>
+                              <span className="material-symbols-outlined">
+                                schedule
+                              </span>
                               <span>{contest.start}</span>
                             </div>
                             <span>Ends: {contest.end}</span>
                           </div>
                         </td>
                         <td>
-                          <span className="contest-registrants">{contest.registrants}</span>
+                          <span className="contest-registrants">
+                            {contest.registrants}
+                          </span>
                         </td>
                         <td>
-                          <span className={`contest-status-pill ${statusClassMap[contest.status] || ""}`}>
+                          <span
+                            className={`contest-status-pill ${
+                              statusClassMap[contest.status] || ""
+                            }`}
+                          >
                             {contest.status}
                           </span>
                         </td>
@@ -374,28 +466,44 @@ function AdminContestListTemplate({
                             <button
                               type="button"
                               aria-label={`Edit details for ${contest.title}`}
-                              onClick={() => navigate(`/create?contest=${contest.id}`)}
+                              onClick={() =>
+                                navigate(`/create?contest=${contest.id}`)
+                              }
                               title="Edit contest details"
                             >
-                              <span className="material-symbols-outlined">tune</span>
+                              <span className="material-symbols-outlined">
+                                tune
+                              </span>
                             </button>
                             <button
                               type="button"
                               aria-label={`Edit problems for ${contest.title}`}
-                              onClick={() => navigate(`/contest/${contest.id}/problems/edit`)}
+                              onClick={() =>
+                                navigate(`/contest/${contest.id}/problems/edit`)
+                              }
                               title="Edit contest problems"
                             >
-                              <span className="material-symbols-outlined">edit</span>
+                              <span className="material-symbols-outlined">
+                                edit
+                              </span>
                             </button>
                             <button
                               type="button"
                               aria-label={`Delete ${contest.title}`}
                               className="danger"
-                              onClick={() => handleDeleteContest(contest.id, contest.title)}
+                              onClick={() =>
+                                handleDeleteContest(contest.id, contest.title)
+                              }
                               disabled={deletingContestId === contest.id}
-                              title={deletingContestId === contest.id ? "Deleting contest" : "Delete contest"}
+                              title={
+                                deletingContestId === contest.id
+                                  ? "Deleting contest"
+                                  : "Delete contest"
+                              }
                             >
-                              <span className="material-symbols-outlined">delete</span>
+                              <span className="material-symbols-outlined">
+                                delete
+                              </span>
                             </button>
                           </div>
                         </td>
@@ -404,7 +512,8 @@ function AdminContestListTemplate({
                   ) : (
                     <tr>
                       <td colSpan="5" className="admin-empty-state">
-                        {emptyMessage || "No contests found matching your filters."}
+                        {emptyMessage ||
+                          "No contests found matching your filters."}
                       </td>
                     </tr>
                   )}
@@ -415,19 +524,29 @@ function AdminContestListTemplate({
             <div className="admin-table-footer">
               <p>
                 {filteredContests.length > 0
-                  ? `Showing ${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(currentPage * PAGE_SIZE, filteredContests.length)} of ${filteredContests.length} ${entryLabel}`
+                  ? `Showing ${(currentPage - 1) * PAGE_SIZE + 1}-${Math.min(
+                      currentPage * PAGE_SIZE,
+                      filteredContests.length
+                    )} of ${filteredContests.length} ${entryLabel}`
                   : "Showing 0 entries"}
               </p>
               <div className="admin-pagination">
                 <button
                   type="button"
                   aria-label="Previous page"
-                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
                   disabled={currentPage === 1}
                 >
-                  <span className="material-symbols-outlined">chevron_left</span>
+                  <span className="material-symbols-outlined">
+                    chevron_left
+                  </span>
                 </button>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1
+                ).map((page) => (
                   <button
                     key={page}
                     type="button"
@@ -441,10 +560,14 @@ function AdminContestListTemplate({
                 <button
                   type="button"
                   aria-label="Next page"
-                  onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
-                  <span className="material-symbols-outlined">chevron_right</span>
+                  <span className="material-symbols-outlined">
+                    chevron_right
+                  </span>
                 </button>
               </div>
             </div>
@@ -452,7 +575,10 @@ function AdminContestListTemplate({
 
           <section className="admin-insights-grid">
             {insightCards.map((card) => (
-              <article key={card.eyebrow} className={`admin-insight-card ${card.accent}`}>
+              <article
+                key={card.eyebrow}
+                className={`admin-insight-card ${card.accent}`}
+              >
                 <div className="admin-insight-icon">
                   <span className="material-symbols-outlined">{card.icon}</span>
                 </div>
