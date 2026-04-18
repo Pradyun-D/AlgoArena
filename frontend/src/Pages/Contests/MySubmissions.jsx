@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "../../Utils/auth_storage";
@@ -36,9 +37,19 @@ const getVerdictClass = (verdict) => {
     return "status-draft"; // Yellow/gray
 };
 
+const fadeUp = {
+    hidden: { opacity: 0, y: 18 },
+    show: { opacity: 1, y: 0 },
+};
+
+const tableStagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.055, delayChildren: 0.28 } },
+};
+
 function MySubmissionsPage() {
     const [submissions, setSubmissions] = useState([]);
-    const [user, setUser] = useState({});
+    const [, setUser] = useState({});
     const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -128,16 +139,26 @@ function MySubmissionsPage() {
 
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto">
                 <div className="space-y-12">
-                    <section className="space-y-2">
+                    <motion.section
+                        className="space-y-2"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.45, ease: "easeOut" }}
+                    >
                         <h1 className="text-4xl font-black font-headline tracking-tighter text-on-background uppercase">
                             My <span className="text-primary">Submissions</span>
                         </h1>
                         <p className="text-on-surface-variant font-body text-sm max-w-2xl">
                             Browse your submission history. Review your code, check verdicts, and analyze your performance.
                         </p>
-                    </section>
+                    </motion.section>
 
-                    <section className="admin-panel">
+                    <motion.section
+                        className="admin-panel"
+                        initial={{ opacity: 0, y: 22, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.16, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    >
                         <div className="admin-table-wrap">
                             <table className="admin-contest-table">
                                 <thead>
@@ -152,10 +173,15 @@ function MySubmissionsPage() {
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <motion.tbody variants={tableStagger} initial="hidden" animate="show">
                                     {submissions.length > 0 ? (
                                         submissions.map((sub) => (
-                                            <tr key={sub.submission_id}>
+                                            <motion.tr
+                                                key={sub.submission_id}
+                                                variants={fadeUp}
+                                                transition={{ duration: 0.34, ease: "easeOut" }}
+                                                whileHover={{ backgroundColor: "rgba(132,173,255,0.045)" }}
+                                            >
                                                 <td>
                                                     <div className="contest-primary-cell">
                                                         <Link to={`/contest/${sub.contest_id}/problems/${sub.problem_id}`} className="contest-link">
@@ -180,27 +206,31 @@ function MySubmissionsPage() {
                                                 <td>{sub.memory_used_kb !== null ? `${sub.memory_used_kb} KB` : 'N/A'}</td>
                                                 <td>
                                                     <div className="contest-actions">
-                                                        <Link to={`/submissions/${sub.submission_id}`} className="admin-icon-button" aria-label="View Submission Code">
-                                                            <span className="material-symbols-outlined">visibility</span>
-                                                        </Link>
-                                                        <Link to={`/contest/${sub.contest_id}/problems/${sub.problem_id}`} className="admin-icon-button" aria-label="Go to Problem">
-                                                            <span className="material-symbols-outlined">open_in_new</span>
-                                                        </Link>
+                                                        <motion.div whileHover={{ scale: 1.14 }} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 400, damping: 18 }}>
+                                                            <Link to={`/submissions/${sub.submission_id}`} className="admin-icon-button" aria-label="View Submission Code">
+                                                                <span className="material-symbols-outlined">visibility</span>
+                                                            </Link>
+                                                        </motion.div>
+                                                        <motion.div whileHover={{ scale: 1.14 }} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 400, damping: 18 }}>
+                                                            <Link to={`/contest/${sub.contest_id}/problems/${sub.problem_id}`} className="admin-icon-button" aria-label="Go to Problem">
+                                                                <span className="material-symbols-outlined">open_in_new</span>
+                                                            </Link>
+                                                        </motion.div>
                                                     </div>
                                                 </td>
-                                            </tr>
+                                            </motion.tr>
                                         ))
                                     ) : (
-                                        <tr>
+                                        <motion.tr variants={fadeUp}>
                                             <td colSpan="6" className="admin-empty-state">
                                                 You have not made any submissions yet.
                                             </td>
-                                        </tr>
+                                        </motion.tr>
                                     )}
-                                </tbody>
+                                </motion.tbody>
                             </table>
                         </div>
-                    </section>
+                    </motion.section>
                 </div>
             </main>
         </div>

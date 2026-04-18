@@ -26,8 +26,10 @@ function ContestCard({ contest, contestBaseUrl }) {
     const participantCount = Number(contest?.participants_count ?? contest?.participants ?? 0);
 
     const accentClass = isLive
-        ? "border-secondary text-secondary"
-        : "border-primary text-primary";
+        ? "contest-card--live"
+        : isCompleted
+            ? "contest-card--completed"
+            : "contest-card--draft";
 
     const actionClass = isLive
         ? "syntax-gradient text-on-primary-fixed shadow-[0_18px_30px_rgba(57,101,255,0.28)]"

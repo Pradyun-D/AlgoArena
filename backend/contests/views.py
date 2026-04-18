@@ -8,7 +8,7 @@ from accounts.permissions import IsProblemSetter, IsProblemSetterOwner, IsAuthen
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response    
-from .contest_serializer import ContestSerializer, EditorialSerializer, ProblemManageSerializer
+from .contest_serializer import ContestSerializer, EditorialSerializer, ProblemManageSerializer,ContestInfoSerializer
 from db import get_connection
 from .judge.submit import judge_submission
 
@@ -270,7 +270,7 @@ def _get_contests_data():
                     WHERE cp.contest_id = contests.contest_id
                 ), 0) AS participants_count
             FROM contests
-            ORDER BY start_time DESC, created_at DESC
+            ORDER BY start_time ASC, created_at ASC
             """
         )
         return cursor.fetchall()
@@ -735,8 +735,7 @@ def delete_contest(request, contest_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        
-        # Check permission
+     
         cursor.execute(
             "SELECT contest_id, title, created_by FROM contests WHERE contest_id = %s", 
             (contest_id,)
@@ -753,7 +752,7 @@ def delete_contest(request, contest_id):
         cursor.execute("DELETE FROM contests WHERE contest_id = %s", (contest_id,))
         conn.commit()
 
-        print(f"✅ Contest and all related data deleted: {contest_id} - {contest.get('title')}")
+     
 
         return Response({
             "message": "Contest deleted successfully (including problems, participants, and submissions)",
@@ -763,7 +762,7 @@ def delete_contest(request, contest_id):
     except Exception as e:
         if 'conn' in locals() and conn and conn.is_connected():
             conn.rollback()
-        print("❌ Delete error:", str(e))
+     
         return Response({"error": str(e)}, status=500)
     finally:
         if 'cursor' in locals() and cursor is not None:

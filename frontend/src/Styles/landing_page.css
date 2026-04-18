@@ -49,6 +49,21 @@
   animation: starPulse 5s ease-in-out infinite;
 }
 
+body.light-mode .signal-card {
+  border-color: rgba(204, 213, 225, 0.95);
+  background: rgba(255, 255, 255, 0.75);
+  color: #1a2236;                       
+  box-shadow: 0 20px 34px rgba(20, 32, 51, 0.08);
+}
+
+body.light-mode .signal-label {
+  color: #4a6080;
+}
+
+body.light-mode .signal-value {
+  color: #111827;
+}
+
 .star-a {
   top: 14%;
   left: 18%;

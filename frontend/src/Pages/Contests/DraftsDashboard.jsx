@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { motion } from "motion/react";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import { API_BASE_URL } from "../../Utils/api";
@@ -8,23 +9,15 @@ import { formatDisplayText } from "../../Utils/format_display_text";
 import "../../Styles/admin_dashboard.css";
 
 const formatDraftDate = (value) => {
-  if (!value) {
-    return "Not set";
-  }
-
+  if (!value) return "Not set";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-IN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+};
 
-  return date.toLocaleString("en-IN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+const rowVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show:   { opacity: 1, y: 0  },
 };
 
 function DraftsDashboard() {
@@ -36,101 +29,62 @@ function DraftsDashboard() {
 
   const fetchDrafts = async () => {
     try {
-      setLoading(true);
-      setError("");
-      const response = await axios.get(`${API_BASE_URL}/contests/drafts/`, {
-        withCredentials: true,
-      });
+      setLoading(true); setError("");
+      const response = await axios.get(`${API_BASE_URL}/contests/drafts/`, { withCredentials: true });
       setDrafts(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
-      setError(
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Unable to load drafts right now."
-      );
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.error || err.response?.data?.message || "Unable to load drafts right now.");
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchDrafts();
-  }, []);
+  useEffect(() => { fetchDrafts(); }, []);
 
   const handlePublish = async (draftId) => {
-    const confirmed = window.confirm(
-      "Publish this draft as a contest now? This will only work if all required contest details are filled."
-    );
-    if (!confirmed) {
-      return;
-    }
-
+    if (!window.confirm("Publish this draft as a contest now? This will only work if all required contest details are filled.")) return;
     try {
-      setPublishingId(draftId);
-      setError("");
-      const response = await axios.post(
-        `${API_BASE_URL}/contests/drafts/${draftId}/publish/`,
-        {},
-        { withCredentials: true }
-      );
+      setPublishingId(draftId); setError("");
+      const response = await axios.post(`${API_BASE_URL}/contests/drafts/${draftId}/publish/`, {}, { withCredentials: true });
       const contestId = response.data?.contest?.contest_id;
       setDrafts((current) => current.filter((draft) => draft.contest_id !== draftId));
-      if (contestId) {
-        navigate(`/contest/${contestId}/`);
-      }
+      if (contestId) navigate(`/contest/${contestId}/`);
     } catch (err) {
-      setError(
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Unable to publish this draft."
-      );
-    } finally {
-      setPublishingId(null);
-    }
+      setError(err.response?.data?.error || err.response?.data?.message || "Unable to publish this draft.");
+    } finally { setPublishingId(null); }
   };
 
-  if (loading) {
-    return (
-      <LoadingPage
-        title="Loading drafts"
-        subtitle="Collecting saved contest drafts and preparing publish actions."
-      />
-    );
-  }
-
-  if (error && drafts.length === 0) {
-    return (
-      <ErrorPage
-        kicker="Draft Error"
-        code="500"
-        title="The drafts dashboard could not be loaded."
-        copy={error}
-        primaryAction={{ label: "Retry", onClick: fetchDrafts }}
-        secondaryAction={{ label: "View Contests", to: "/contests" }}
-      />
-    );
-  }
+  if (loading) return <LoadingPage title="Loading drafts" subtitle="Collecting saved contest drafts and preparing publish actions." />;
+  if (error && drafts.length === 0) return <ErrorPage kicker="Draft Error" code="500" title="The drafts dashboard could not be loaded." copy={error} primaryAction={{ label: "Retry", onClick: fetchDrafts }} secondaryAction={{ label: "View Contests", to: "/contests" }} />;
 
   return (
-    <div
-      className="admin-dashboard-page"
-      style={{ gridTemplateColumns: "minmax(0, 1fr)" }}
-    >
+    <div className="admin-dashboard-page" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       <main className="admin-dashboard-main" style={{ minWidth: 0 }}>
-        <header className="admin-topbar">
+
+        {/* Header */}
+        <motion.header
+          className="admin-topbar"
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.42, ease: "easeOut" }}
+        >
           <div className="admin-topbar-tabs">
             <Link className="admin-topbar-link" to="/contests">Contests</Link>
             <Link className="admin-topbar-link active" to="/drafts">Drafts</Link>
             <Link className="admin-topbar-link" to="/create">Create</Link>
           </div>
-
           <div className="admin-topbar-actions">
-            <Link className="admin-create-button" to="/create">New Draft</Link>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
+              <Link className="admin-create-button" to="/create">New Draft</Link>
+            </motion.div>
           </div>
-        </header>
+        </motion.header>
 
         <section className="admin-dashboard-content" style={{ maxWidth: "1400px", width: "100%", margin: "0 auto" }}>
-          <div className="admin-page-header">
+          <motion.div
+            className="admin-page-header"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.14, duration: 0.42 }}
+          >
             <div>
               <p className="admin-section-kicker">Draft Workspace</p>
               <h1>Saved Contest Drafts</h1>
@@ -138,11 +92,16 @@ function DraftsDashboard() {
                 Review incomplete contest plans, keep metadata safe, and publish a draft into a live contest when it is ready.
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {error ? <p className="auth-error">{error}</p> : null}
 
-          <section className="admin-panel">
+          <motion.section
+            className="admin-panel"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.45 }}
+          >
             <div className="admin-table-wrap">
               <table className="admin-contest-table">
                 <thead>
@@ -154,10 +113,19 @@ function DraftsDashboard() {
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <motion.tbody
+                  variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07, delayChildren: 0.28 } } }}
+                  initial="hidden"
+                  animate="show"
+                >
                   {drafts.length > 0 ? (
                     drafts.map((draft) => (
-                      <tr key={draft.contest_id}>
+                      <motion.tr
+                        key={draft.contest_id}
+                        variants={rowVariants}
+                        transition={{ duration: 0.35, ease: "easeOut" }}
+                        whileHover={{ backgroundColor: "rgba(132,173,255,0.04)" }}
+                      >
                         <td>
                           <div className="contest-primary-cell">
                             <strong>{formatDisplayText(draft.title || "Untitled Draft")}</strong>
@@ -180,36 +148,40 @@ function DraftsDashboard() {
                         <td>{formatDraftDate(draft.updated_at || draft.created_at)}</td>
                         <td>
                           <div className="contest-actions">
-                            <button
+                            <motion.button
                               type="button"
                               onClick={() => navigate(`/create?draft=${draft.contest_id}`)}
                               aria-label={`Edit ${draft.title || "draft"}`}
+                              whileHover={{ scale: 1.14 }}
+                              whileTap={{ scale: 0.9 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 18 }}
                             >
                               <span className="material-symbols-outlined">edit</span>
-                            </button>
-                            <button
+                            </motion.button>
+                            <motion.button
                               type="button"
                               onClick={() => handlePublish(draft.contest_id)}
                               disabled={publishingId === draft.contest_id}
                               aria-label={`Publish ${draft.title || "draft"}`}
+                              whileHover={{ scale: 1.14 }}
+                              whileTap={{ scale: 0.9 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 18 }}
                             >
                               <span className="material-symbols-outlined">rocket_launch</span>
-                            </button>
+                            </motion.button>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))
                   ) : (
-                    <tr>
-                      <td colSpan="5" className="admin-empty-state">
-                        No drafts saved yet.
-                      </td>
-                    </tr>
+                    <motion.tr variants={rowVariants}>
+                      <td colSpan="5" className="admin-empty-state">No drafts saved yet.</td>
+                    </motion.tr>
                   )}
-                </tbody>
+                </motion.tbody>
               </table>
             </div>
-          </section>
+          </motion.section>
         </section>
       </main>
     </div>

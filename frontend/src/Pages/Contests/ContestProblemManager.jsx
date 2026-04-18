@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { AnimatePresence, motion } from "motion/react";
 import { API_BASE_URL } from "../../Utils/api";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
@@ -22,6 +23,27 @@ const cloneProblem = (problem) => ({
     ? problem.testcases.map((testcase) => ({ ...testcase }))
     : [],
 });
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0 },
+};
+
+const slideIn = {
+  hidden: { opacity: 0, x: -18 },
+  show: { opacity: 1, x: 0 },
+};
+
+const stagger = (delay = 0) => ({
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: delay } },
+});
+
+const buttonMotion = {
+  whileHover: { scale: 1.03, y: -1 },
+  whileTap: { scale: 0.97 },
+  transition: { type: "spring", stiffness: 380, damping: 18 },
+};
 
 function ContestProblemManagerPage() {
   const { contestId } = useParams();
@@ -226,31 +248,55 @@ function ContestProblemManagerPage() {
 
   return (
     <div className="problem-editor-page">
-      <aside className="problem-editor-sidebar">
+      <motion.aside
+        className="problem-editor-sidebar"
+        initial={{ opacity: 0, x: -22 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
         <div>
-          <div className="problem-editor-brand">
+          <motion.div
+            className="problem-editor-brand"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.35 }}
+          >
             <h2>AlgoArena</h2>
             <div className="problem-editor-breadcrumbs">
               <Link to="/contests">Contests</Link>
               <span>/</span>
               <span className="is-active">Problem Editor</span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="problem-editor-panel-label">
+          <motion.div
+            className="problem-editor-panel-label"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.16, duration: 0.35 }}
+          >
             <span className="material-symbols-outlined">task</span>
             <div>
               <p>{contest?.title || "Contest"}</p>
               <span>PROBLEM MANAGEMENT CONSOLE</span>
             </div>
-          </div>
+          </motion.div>
 
-          <nav className="problem-editor-nav">
+          <motion.nav
+            className="problem-editor-nav"
+            variants={stagger(0.22)}
+            initial="hidden"
+            animate="show"
+          >
             {problems.map((problem, index) => (
-              <a
+              <motion.a
                 href={`#problem-${problem.problem_id}`}
                 key={problem.problem_id}
                 className={problem.problem_id === selectedProblemId ? "active" : ""}
+                variants={slideIn}
+                transition={{ duration: 0.32, ease: "easeOut" }}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={(event) => {
                   event.preventDefault();
                   selectProblem(problem);
@@ -258,18 +304,27 @@ function ContestProblemManagerPage() {
               >
                 <span className="material-symbols-outlined">code_blocks</span>
                 <span>{problem.title || `Problem ${index + 1}`}</span>
-              </a>
+              </motion.a>
             ))}
-          </nav>
+          </motion.nav>
         </div>
 
-        <button className="problem-editor-draft-button" onClick={() => navigate(`/contest/${contestId}/`)}>
+        <motion.button
+          className="problem-editor-draft-button"
+          onClick={() => navigate(`/contest/${contestId}/`)}
+          {...buttonMotion}
+        >
           Return To Contest
-        </button>
-      </aside>
+        </motion.button>
+      </motion.aside>
 
       <main className="problem-editor-main">
-        <header className="problem-editor-header">
+        <motion.header
+          className="problem-editor-header"
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12, duration: 0.42, ease: "easeOut" }}
+        >
           <div>
             <h1>Edit Contest Problems</h1>
             <p>
@@ -278,26 +333,51 @@ function ContestProblemManagerPage() {
             </p>
           </div>
           <div className="problem-editor-header-actions">
-            <button className="ghost-action" onClick={() => selectProblem(selectedProblem)}>
+            <motion.button className="ghost-action" onClick={() => selectProblem(selectedProblem)} {...buttonMotion}>
               Reset Draft
-            </button>
-            <button className="primary-action" onClick={handleSave} disabled={saving}>
+            </motion.button>
+            <motion.button
+              className="primary-action"
+              onClick={handleSave}
+              disabled={saving}
+              whileHover={saving ? undefined : { scale: 1.03, y: -1, boxShadow: "0 0 26px rgba(99, 241, 165, 0.28)" }}
+              whileTap={saving ? undefined : { scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 380, damping: 18 }}
+            >
               {saving ? "Saving..." : "Save Problem"}
-            </button>
+            </motion.button>
           </div>
-        </header>
+        </motion.header>
 
-        {error ? <p className="auth-error">{error}</p> : null}
-        {success ? <p className="auth-success">{success}</p> : null}
+        <AnimatePresence>
+          {error ? (
+            <motion.p className="auth-error" initial={{ opacity: 0, y: -8, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }}>
+              {error}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
+        <AnimatePresence>
+          {success ? (
+            <motion.p className="auth-success" initial={{ opacity: 0, y: -8, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }}>
+              {success}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
 
-        <section className="problem-editor-section-grid" id={`problem-${selectedProblem.problem_id}`}>
-          <div className="problem-editor-section-copy">
+        <motion.section
+          className="problem-editor-section-grid"
+          id={`problem-${selectedProblem.problem_id}`}
+          variants={stagger(0.16)}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div className="problem-editor-section-copy" variants={fadeUp}>
             <p className="section-kicker">Core Fields</p>
             <h2>Update the main problem metadata and scoring details.</h2>
             <span>These values affect how the problem is presented inside the contest.</span>
-          </div>
+          </motion.div>
 
-          <div className="problem-editor-card">
+          <motion.div className="problem-editor-card" variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
             <div className="field-grid two-up">
               <div className="field-group">
                 <label>Title</label>
@@ -336,17 +416,17 @@ function ContestProblemManagerPage() {
                 <input name="max_score" value={draftProblem.max_score} onChange={updateProblemField} />
               </div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section className="problem-editor-section-grid">
-          <div className="problem-editor-section-copy">
+        <motion.section className="problem-editor-section-grid" variants={stagger()} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.18 }}>
+          <motion.div className="problem-editor-section-copy" variants={fadeUp}>
             <p className="section-kicker">Statement</p>
             <h2>Refine the problem description and supporting markdown content.</h2>
             <span>Use this area for the main statement, notes, examples, and clarifications.</span>
-          </div>
+          </motion.div>
 
-          <div className="problem-editor-card statement-card">
+          <motion.div className="problem-editor-card statement-card" variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
             <textarea
               className="problem-statement-input"
               name="description"
@@ -354,17 +434,17 @@ function ContestProblemManagerPage() {
               onChange={updateProblemField}
               placeholder="Write the full problem statement here..."
             />
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section className="problem-editor-section-grid">
-          <div className="problem-editor-section-copy">
+        <motion.section className="problem-editor-section-grid" variants={stagger()} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.18 }}>
+          <motion.div className="problem-editor-section-copy" variants={fadeUp}>
             <p className="section-kicker">Tags</p>
             <h2>Keep the topic labels clean and searchable.</h2>
             <span>Add or remove tags that help classify the problem in the contest archive.</span>
-          </div>
+          </motion.div>
 
-          <div className="problem-editor-card">
+          <motion.div className="problem-editor-card" variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
             <div className="field-grid">
               <div className="field-group">
                 <label>Add Tag</label>
@@ -379,44 +459,53 @@ function ContestProblemManagerPage() {
                       }
                     }}
                   />
-                  <button className="ghost-action" onClick={addTag}>Add Tag</button>
+                  <motion.button className="ghost-action" onClick={addTag} {...buttonMotion}>Add Tag</motion.button>
                 </div>
               </div>
 
-              <div className="tag-list">
+              <motion.div className="tag-list" layout>
                 {draftProblem.tags.map((tag, index) => (
-                  <span key={`${tag}-${index}`} className="tag">
+                  <motion.span key={`${tag}-${index}`} className="tag" layout initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.88 }}>
                     {tag} <span className="tag-remove" onClick={() => removeTag(index)}>×</span>
-                  </span>
+                  </motion.span>
                 ))}
-              </div>
+              </motion.div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section className="problem-editor-section-grid">
-          <div className="problem-editor-section-copy">
+        <motion.section className="problem-editor-section-grid" variants={stagger()} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.14 }}>
+          <motion.div className="problem-editor-section-copy" variants={fadeUp}>
             <p className="section-kicker">Testcases</p>
             <h2>Attach visible samples and hidden judge cases.</h2>
             <span>Hidden cases stay private while public ones can be used as examples in the statement.</span>
-          </div>
+          </motion.div>
 
-          <div className="problem-editor-card">
+          <motion.div className="problem-editor-card" variants={fadeUp} whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
             <div className="problem-editor-header-actions" style={{ marginBottom: "1rem" }}>
-              <button className="primary-action" onClick={addTestcase}>Add Testcase</button>
+              <motion.button className="primary-action" onClick={addTestcase} {...buttonMotion}>Add Testcase</motion.button>
             </div>
 
-            <div className="field-grid">
+            <motion.div className="field-grid" layout>
               {draftProblem.testcases.length === 0 ? (
-                <div className="problem-editor-card" style={{ background: "#111214" }}>
+                <motion.div className="problem-editor-card" style={{ background: "#111214" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   No testcases added yet. Create one to start building the judge data.
-                </div>
+                </motion.div>
               ) : (
                 draftProblem.testcases.map((testcase, index) => (
-                  <div key={testcase.testcase_id || index} className="problem-editor-card" style={{ background: "#111214" }}>
+                  <motion.div
+                    key={testcase.testcase_id || index}
+                    className="problem-editor-card"
+                    style={{ background: "#111214" }}
+                    layout
+                    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                  >
                     <div className="problem-editor-header-actions" style={{ marginBottom: "1rem", justifyContent: "space-between" }}>
                       <strong>Testcase {index + 1}</strong>
-                      <button className="ghost-action" onClick={() => removeTestcase(index)}>Remove</button>
+                      <motion.button className="ghost-action" onClick={() => removeTestcase(index)} {...buttonMotion}>Remove</motion.button>
                     </div>
 
                     <div className="field-grid two-up">
@@ -450,12 +539,12 @@ function ContestProblemManagerPage() {
                         <option value="sample">sample</option>
                       </select>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
-            </div>
-          </div>
-        </section>
+            </motion.div>
+          </motion.div>
+        </motion.section>
       </main>
     </div>
   );

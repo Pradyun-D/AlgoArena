@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Editor from "@monaco-editor/react";
+import { motion } from "motion/react";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import { API_BASE_URL } from "../../Utils/api";
@@ -31,7 +32,7 @@ function SubmissionViewPage() {
         { label: "My Submissions", to: "/submissions", active: true },
     ];
 
-    const loadSubmission = async () => {
+    const loadSubmission = useCallback(async () => {
         try {
             setLoading(true);
             setError("");
@@ -49,13 +50,13 @@ function SubmissionViewPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [submissionId]);
 
     useEffect(() => {
         if (submissionId) {
             loadSubmission();
         }
-    }, [submissionId]);
+    }, [submissionId, loadSubmission]);
 
     if (loading) {
         return (
@@ -90,18 +91,37 @@ function SubmissionViewPage() {
                 showAuthActions={false}
                 className="bg-background/80 backdrop-blur-sm"
                 rightContent={(
-                    <button
+                    <motion.button
                         onClick={() => navigate(-1)}
                         className="px-4 py-2 bg-primary text-on-primary rounded-sm font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                        whileHover={{ scale: 1.04, y: -1 }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 18 }}
                     >
                         Go Back
-                    </button>
+                    </motion.button>
                 )}
             />
 
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                <div className="bg-surface-container-high rounded-lg w-full flex flex-col shadow-2xl border border-outline-variant/20">
-                    <div className="flex justify-between items-center p-4 border-b border-outline-variant/20">
+            <motion.main
+                className="pt-24 pb-12 px-6 max-w-7xl mx-auto"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+                <motion.div
+                    className="bg-surface-container-high rounded-lg w-full flex flex-col shadow-2xl border border-outline-variant/20"
+                    initial={{ opacity: 0, scale: 0.985 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.12, duration: 0.45, ease: "easeOut" }}
+                    whileHover={{ y: -2 }}
+                >
+                    <motion.div
+                        className="flex justify-between items-center p-4 border-b border-outline-variant/20"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.22, duration: 0.34 }}
+                    >
                         <div>
                             <h2 className="text-lg font-bold font-headline">
                                 Submission Details
@@ -110,11 +130,18 @@ function SubmissionViewPage() {
                                 {submission.problem_title} in {submission.contest_title}
                             </p>
                         </div>
-                        <Link to={`/contest/${submission.contest_id}/problems/${submission.problem_id}`} className="admin-icon-button" aria-label="Go to Problem">
-                            <span className="material-symbols-outlined">open_in_new</span>
-                        </Link>
-                    </div>
-                    <div className="p-2 bg-background">
+                        <motion.div whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 400, damping: 18 }}>
+                            <Link to={`/contest/${submission.contest_id}/problems/${submission.problem_id}`} className="admin-icon-button" aria-label="Go to Problem">
+                                <span className="material-symbols-outlined">open_in_new</span>
+                            </Link>
+                        </motion.div>
+                    </motion.div>
+                    <motion.div
+                        className="p-2 bg-background"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.32, duration: 0.42 }}
+                    >
                         <Editor
                             height="70vh"
                             language={getLanguagePreset(submission.language_name).monacoLanguage}
@@ -122,9 +149,9 @@ function SubmissionViewPage() {
                             theme={isDarkMode ? "vs-dark" : "vs"}
                             options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13, padding: { top: 16 } }}
                         />
-                    </div>
-                </div>
-            </main>
+                    </motion.div>
+                </motion.div>
+            </motion.main>
         </div>
     );
 }
