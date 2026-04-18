@@ -14,6 +14,11 @@ function ContestsPage() {
     const [pastContests, setPastContests] = useState([]);
     const [user, setUser] = useState({});
     const [authUser, setAuthUser] = useState(() => getStoredAuthUser());
+    const [platformMetrics, setPlatformMetrics] = useState({
+        total_users: 0,
+        total_submissions: 0,
+        server_latency_ms: 0,
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -27,13 +32,31 @@ function ContestsPage() {
             setLoading(true);
             setError("");
 
-            const [availableResponse, pastResponse] = await Promise.all([
+            const [availableResponse, pastResponse, metricsResponse] = await Promise.allSettled([
                 axios.get(`${API_BASE_URL}/contests/`),
                 axios.get(`${API_BASE_URL}/contests/past/`),
+                axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`),
             ]);
 
-            setAvailableContests(Array.isArray(availableResponse.data) ? availableResponse.data : []);
-            setPastContests(Array.isArray(pastResponse.data) ? pastResponse.data : []);
+            if (availableResponse.status === "fulfilled") {
+                setAvailableContests(Array.isArray(availableResponse.value.data) ? availableResponse.value.data : []);
+            } else {
+                throw availableResponse.reason;
+            }
+
+            if (pastResponse.status === "fulfilled") {
+                setPastContests(Array.isArray(pastResponse.value.data) ? pastResponse.value.data : []);
+            } else {
+                throw pastResponse.reason;
+            }
+
+            if (metricsResponse.status === "fulfilled") {
+                setPlatformMetrics({
+                    total_users: Number(metricsResponse.value.data?.total_users) || 0,
+                    total_submissions: Number(metricsResponse.value.data?.total_submissions) || 0,
+                    server_latency_ms: Number(metricsResponse.value.data?.server_latency_ms) || 0,
+                });
+            }
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -91,6 +114,7 @@ function ContestsPage() {
 
     const canCreateContest = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
     const canAccessAdminDashboard = Boolean(authUser && authUser.role === "admin");
+    const formatMetric = (value) => new Intl.NumberFormat("en-IN").format(Number(value) || 0);
     const navLinks = [
         { label: "Contests", to: "/contests", active: true },
         { label: "Leaderboard", to: leaderboardUrl, active: false },
@@ -274,16 +298,16 @@ function ContestsPage() {
                         </h4>
                         <div className="space-y-4">
                             <div className="flex justify-between items-center text-[11px]">
-                                <span className="text-on-surface-variant">Online Users</span>
-                                <span className="text-secondary">42,891</span>
+                                <span className="text-on-surface-variant">Total Users</span>
+                                <span className="text-secondary">{formatMetric(platformMetrics.total_users)}</span>
                             </div>
                             <div className="flex justify-between items-center text-[11px]">
-                                <span className="text-on-surface-variant">Submissions / Day</span>
-                                <span className="text-on-surface">1.2M</span>
+                                <span className="text-on-surface-variant">Total Submissions</span>
+                                <span className="text-on-surface">{formatMetric(platformMetrics.total_submissions)}</span>
                             </div>
                             <div className="flex justify-between items-center text-[11px]">
                                 <span className="text-on-surface-variant">Server Latency</span>
-                                <span className="text-primary">12ms</span>
+                                <span className="text-primary">{formatMetric(platformMetrics.server_latency_ms)}ms</span>
                             </div>
                         </div>
                     </div>

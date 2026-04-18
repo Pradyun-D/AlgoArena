@@ -44,6 +44,7 @@ def serialize_user_row(row):
             "college": row.get("college") or "",
             "total_problems_solved": row.get("total_problems_solved") or 0,
         },
+        "submissions_count": row.get("submissions_count") or 0,
     }
 
 
@@ -63,7 +64,12 @@ def _base_user_select(include_password=False):
             p.bio,
             p.avatar_url,
             p.college,
-            p.total_problems_solved
+            p.total_problems_solved,
+            (
+                SELECT COUNT(*)
+                FROM `Submissions` s
+                WHERE s.user_id = u.user_id
+            ) AS submissions_count
             {password_sql}
         FROM `user` u
         LEFT JOIN roles r ON r.role_id = u.role_id

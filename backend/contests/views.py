@@ -145,11 +145,17 @@ def _get_request_user_external_id(request):
     return getattr(request.user, "external_user_id", None)
 
 
-def _contest_has_started(contest):
-    start_time = contest.get("start_time") if contest else None
-    if start_time is None:
-        return True
-    return start_time <= datetime.utcnow()
+def _contest_is_live(contest):
+    if not contest:
+        return False
+
+    start_time = contest.get("start_time")
+    end_time = contest.get("end_time")
+    if start_time is None or end_time is None:
+        return False
+
+    now = datetime.utcnow()
+    return start_time <= now < end_time
 
 
 def _fetch_contest_with_registration(cursor, contest_id, user_id):
@@ -244,7 +250,17 @@ def _get_contests_data():
     try:
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
+                   CASE
+                       WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
+                       WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
+                       ELSE 'Live'
+                   END AS status,
+                   COALESCE((
+                       SELECT COUNT(*)
+                       FROM contest_participants cp
+                       WHERE cp.contest_id = contests.contest_id
+                   ), 0) AS participants_count
             FROM contests WHERE end_time > UTC_TIMESTAMP()
             ORDER BY start_time ASC, created_at DESC
             """
@@ -263,7 +279,17 @@ def _get_past_contests_data():
     try:
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+            SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
+                   CASE
+                       WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
+                       WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
+                       ELSE 'Live'
+                   END AS status,
+                   COALESCE((
+                       SELECT COUNT(*)
+                       FROM contest_participants cp
+                       WHERE cp.contest_id = contests.contest_id
+                   ), 0) AS participants_count
             FROM contests WHERE end_time <= UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
             """
@@ -283,7 +309,17 @@ def get_active_contests_data():
         print("db now utc:", cursor.fetchone())
 
         cursor.execute("""
-          SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at
+          SELECT contest_id, title, description, start_time, end_time, visibility, created_by, created_at,
+                 CASE
+                     WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
+                     WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
+                     ELSE 'Live'
+                 END AS status,
+                 COALESCE((
+                     SELECT COUNT(*)
+                     FROM contest_participants cp
+                     WHERE cp.contest_id = contests.contest_id
+                 ), 0) AS participants_count
             FROM contests WHERE start_time<=UTC_TIMESTAMP() AND  end_time > UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
         """)
@@ -714,7 +750,7 @@ def get_contest_info(request,contest_id):
         if not result_contest:
             return Response({"message":"Contest with this id doesn't exist","status":404}) 
 
-        if _contest_has_started(result_contest) and not result_contest.get("is_registered") and not _is_privileged_contest_user(request):
+        if _contest_is_live(result_contest) and not result_contest.get("is_registered") and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
         
         cursor.execute(
@@ -910,7 +946,7 @@ def get_problem_solving_data(request, contest_id, problem_id):
         if not contest:
             return Response({"error": "Contest not found."}, status=404)
 
-        if _contest_has_started(contest) and not contest.get("is_registered") and not _is_privileged_contest_user(request):
+        if _contest_is_live(contest) and not contest.get("is_registered") and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
 
         cursor.execute(
@@ -1166,7 +1202,7 @@ def create_problem_submission(request, contest_id, problem_id):
             (contest_id, str(external_user_id) if external_user_id is not None else None),
         )
         is_registered = bool(cursor.fetchone())
-        if _contest_has_started(contest) and not is_registered and not _is_privileged_contest_user(request):
+        if _contest_is_live(contest) and not is_registered and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
 
         cursor.execute(
@@ -1427,7 +1463,7 @@ def register_participant(request, contest_id):
         if not contest:
             return Response({"error": "Contest not found.", "status": 404}, status=404)
 
-        if _contest_has_started(contest) and not _is_privileged_contest_user(request):
+        if _contest_is_live(contest) and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
 
         cursor.execute(

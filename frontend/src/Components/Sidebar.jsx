@@ -7,8 +7,9 @@ function Sidebar({ user }) {
     const avatarUrl = user.avatar_url || defaultAvatar;
     const role = String(user.role || "").toLowerCase();
     const createdAt = user.created_at ? new Date(user.created_at) : null;
+    const currentTime = new Date();
     const isNewbie = createdAt && !Number.isNaN(createdAt.getTime())
-        ? (Date.now() - createdAt.getTime()) < 30 * 24 * 60 * 60 * 1000
+        ? (currentTime.getTime() - createdAt.getTime()) < 30 * 24 * 60 * 60 * 1000
         : false;
     const userTier = role === "admin"
         ? "Admin"
@@ -46,13 +47,13 @@ function Sidebar({ user }) {
             <div className="grid grid-cols-1 gap-4">
                 <div className="bg-surface-container p-3 rounded-sm">
                     <span className="block text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">
-                        Total Solved
+                        Total Submissions
                     </span>
                     <div className="flex items-end gap-2">
                         <span className="text-2xl font-black font-headline leading-none">
-                            {formatNumber(user.total_solved)}
+                            {formatNumber(user.submissions_count)}
                         </span>
-                        <span className="text-[10px] text-secondary font-bold">Problems Solved</span>
+                        <span className="text-[10px] text-secondary font-bold">Submissions Made</span>
                     </div>
                 </div>
 

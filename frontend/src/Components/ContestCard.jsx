@@ -1,60 +1,95 @@
 import { isLiveContest } from "../Utils/is_live_contest";
 import ReactMarkdown from "react-markdown";
-import { truncateWords } from "../Utils/contest_description";
 import { formatDisplayText } from "../Utils/format_display_text";
+
+const formatCardDate = (value) => {
+    if (!value) {
+        return "TBA";
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    return parsed.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+};
 
 function ContestCard({ contest, contestBaseUrl }) {
     const isLive = isLiveContest(contest);
-    const isCompleted = contest?.end_time
-        ? new Date(contest.end_time).getTime() < Date.now()
-        : false;
+    const isCompleted = String(contest?.status || "").toLowerCase() === "completed";
+    const participantCount = Number(contest?.participants_count ?? contest?.participants ?? 0);
 
     const accentClass = isLive
         ? "border-secondary text-secondary"
         : "border-primary text-primary";
-    const accentTextClass = isLive ? "text-secondary" : "text-primary";
 
     const actionClass = isLive
-        ? "syntax-gradient text-on-primary-fixed"
-        : "bg-surface-container-high border border-outline-variant/20 text-on-surface";
+        ? "syntax-gradient text-on-primary-fixed shadow-[0_18px_30px_rgba(57,101,255,0.28)]"
+        : "bg-surface-container-high border border-outline-variant/20 text-on-surface hover:bg-surface-container-highest";
 
     const badgeLabel = isLive
         ? "Live Now"
         : isCompleted
             ? "Completed"
             : formatDisplayText(contest.status || "Scheduled");
-    const previewDescription = truncateWords(
-        contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.",
-        100
-    );
+    const previewDescription = contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.";
+    const scheduleLabel = isLive
+        ? "Ends"
+        : "Starts";
+    const scheduleValue = isLive ? contest.end_time : contest.start_time;
 
     return (
-        <article className={`min-w-0 overflow-hidden bg-surface-container p-6 rounded-sm border-l-4 ${accentClass} transition-all hover:bg-surface-container-highest`}>
-            <div className="flex justify-between items-start gap-4 mb-6">
-                <div>
-               
-                    <h3 className="text-xl font-bold font-headline mt-1 uppercase">
-                        {formatDisplayText(contest.title || "Untitled Contest")}
-                    </h3>
+        <article className={`contest-card group min-w-0 ${accentClass}`}>
+            <div className="contest-card__glow" />
+            <div className="contest-card__accent" />
+
+            <div className="contest-card__content">
+                <div className="contest-card__header">
+                    <div className="contest-card__title-block">
+                        <p className="contest-card__eyebrow">Contest</p>
+                        <h3 className="contest-card__title">
+                            {formatDisplayText(contest.title || "Untitled Contest")}
+                        </h3>
+                    </div>
+
+                    <span className="contest-card__badge">
+                        {badgeLabel}
+                    </span>
                 </div>
 
-                <span className="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-sm text-[10px] font-bold uppercase tracking-tight">
-                    {badgeLabel}
-                </span>
-            </div>
+                <div className="contest-card__meta">
+                    <div className="contest-card__chip contest-card__chip--count">
+                        <span className="contest-card__chip-label">Registered participants</span>
+                        <span className="contest-card__chip-value">
+                            {participantCount.toLocaleString("en-IN")}
+                        </span>
+                    </div>
 
-            <div className="text-on-surface-variant text-sm leading-6 mb-6 min-h-12 prose prose-invert max-w-none break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-sm [&_img]:block [&_img]:my-3 [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">
-            <ReactMarkdown>
-                {previewDescription}
-            </ReactMarkdown>
-            </div>
+                    <div className="contest-card__chip contest-card__chip--schedule">
+                        <span className="contest-card__chip-label">{scheduleLabel}</span>
+                        <span className="contest-card__chip-value contest-card__chip-value--small">
+                            {formatCardDate(scheduleValue)}
+                        </span>
+                    </div>
+                </div>
 
-            <a
-                href={`${contestBaseUrl}${contest.contest_id}/`}
-                className={`block w-full py-3 ${actionClass} font-bold text-sm uppercase tracking-widest rounded-sm text-center transition-all`}
-            >
-                View Contest
-            </a>
+                <div className="contest-card__description prose prose-invert max-w-none break-words text-on-surface-variant">
+                    <ReactMarkdown>{previewDescription}</ReactMarkdown>
+                </div>
+
+                <a
+                    href={`${contestBaseUrl}${contest.contest_id}/`}
+                    className={`contest-card__action ${actionClass}`}
+                >
+                    View Contest
+                </a>
+            </div>
         </article>
     );
 }

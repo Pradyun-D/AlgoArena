@@ -9,6 +9,7 @@ from .auth_sync import build_auth_response, clear_auth_cookies, get_current_exte
 from .permissions import IsAuthenticated
 from db import get_connection
 import uuid
+import time
 
 
 def auth_page(request):
@@ -53,7 +54,51 @@ def _serialize_user_row(row):
 			"college": row.get("college") or "",
 			"total_problems_solved": row.get("total_problems_solved") or 0,
 		},
+		"submissions_count": row.get("submissions_count") or 0,
 	}
+
+
+def _build_registered_rounds(cursor, user_id):
+	cursor.execute(
+		"""
+		SELECT
+			c.contest_id,
+			c.title,
+			c.start_time,
+			c.end_time,
+			CASE
+				WHEN c.start_time > UTC_TIMESTAMP() THEN 'Upcoming'
+				WHEN c.end_time <= UTC_TIMESTAMP() THEN 'Completed'
+				ELSE 'Active'
+			END AS contest_status
+		FROM contest_participants cp
+		JOIN contests c ON c.contest_id = cp.contest_id
+		WHERE cp.user_id = %s
+		ORDER BY c.start_time DESC, c.created_at DESC
+		LIMIT 4
+		""",
+		(user_id,),
+	)
+
+	rounds = []
+	for row in cursor.fetchall():
+		status = str(row.get("contest_status") or "").strip()
+		if status == "Active":
+			subtitle = "Active Now"
+		elif status == "Upcoming" and row.get("start_time"):
+			subtitle = f"Starts at {row['start_time'].strftime('%d %b, %I:%M %p')}"
+		elif row.get("start_time"):
+			subtitle = f"Registered for {row['start_time'].strftime('%d %b, %I:%M %p')}"
+		else:
+			subtitle = "Registered"
+
+		rounds.append({
+			"title": row.get("title") or "Untitled Contest",
+			"subtitle": subtitle,
+			"is_live": status == "Active",
+		})
+
+	return rounds
 
 
 def _get_user_by_identifier(cursor, identifier):
@@ -72,7 +117,12 @@ def _get_user_by_identifier(cursor, identifier):
 			p.bio,
 			p.avatar_url,
 			p.college,
-			p.total_problems_solved
+			p.total_problems_solved,
+			(
+				SELECT COUNT(*)
+				FROM `Submissions` s
+				WHERE s.user_id = u.user_id
+			) AS submissions_count
 		FROM `user` u
 		LEFT JOIN roles r ON r.role_id = u.role_id
 		LEFT JOIN profile p ON p.user_id = u.user_id
@@ -99,7 +149,12 @@ def _get_user_by_uuid(cursor, user_uuid):
 			p.bio,
 			p.avatar_url,
 			p.college,
-			p.total_problems_solved
+			p.total_problems_solved,
+			(
+				SELECT COUNT(*)
+				FROM `Submissions` s
+				WHERE s.user_id = u.user_id
+			) AS submissions_count
 		FROM `user` u
 		LEFT JOIN roles r ON r.role_id = u.role_id
 		LEFT JOIN profile p ON p.user_id = u.user_id
@@ -109,6 +164,44 @@ def _get_user_by_uuid(cursor, user_uuid):
 		(user_uuid,),
 	)
 	return cursor.fetchone()
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def platform_metrics(request):
+	start = time.perf_counter()
+	conn = None
+	cursor = None
+
+	try:
+		conn = get_connection()
+		cursor = conn.cursor(dictionary=True)
+
+		cursor.execute("SELECT COUNT(*) AS total_users FROM `user` WHERE deleted_at IS NULL")
+		total_users = cursor.fetchone().get("total_users") or 0
+
+		cursor.execute("SELECT COUNT(*) AS total_submissions FROM `Submissions`")
+		total_submissions = cursor.fetchone().get("total_submissions") or 0
+
+		cursor.execute("SELECT 1")
+		cursor.fetchone()
+		latency_ms = max(1, int((time.perf_counter() - start) * 1000))
+
+		return Response(
+			{
+				"total_users": total_users,
+				"total_submissions": total_submissions,
+				"server_latency_ms": latency_ms,
+			},
+			status=200,
+		)
+	except Exception as e:
+		return Response({"error": str(e)}, status=500)
+	finally:
+		if cursor is not None:
+			cursor.close()
+		if conn is not None and conn.is_connected():
+			conn.close()
 
 
 @api_view(["POST"])
@@ -225,7 +318,9 @@ def session_account(request):
 		user = get_current_external_user(request, cursor=cursor)
 		if not user:
 			return Response({"error": "Authenticated user is not linked to a platform account."}, status=404)
-		return Response({"user": _serialize_user_row(user)}, status=200)
+		user_payload = _serialize_user_row(user)
+		user_payload["registered_rounds"] = _build_registered_rounds(cursor, user["user_id"])
+		return Response({"user": user_payload}, status=200)
 	finally:
 		cursor.close()
 		conn.close()

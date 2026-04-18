@@ -174,6 +174,36 @@ class LiveContestAccessTests(TestCase):
         self.assertIn("data", response.data)
 
     @patch("contests.views.get_connection")
+    def test_past_contest_details_are_visible_to_normal_user(self, get_connection_mock):
+        user = self.user_model.objects.create_user(
+            username="past_viewer",
+            email="pastviewer@algoarena.dev",
+            password="testpass123",
+            role="user",
+            external_user_id=408,
+        )
+        self.client.force_authenticate(user=user)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.return_value = {
+            "contest_id": "11111111-1111-1111-1111-111111111111",
+            "title": "Past Contest",
+            "description": "Finished round",
+            "start_time": datetime.utcnow() - timedelta(days=2, hours=2),
+            "end_time": datetime.utcnow() - timedelta(days=1),
+            "visibility": "Public",
+            "created_by": 1,
+            "created_at": datetime.utcnow() - timedelta(days=3),
+            "is_registered": 0,
+        }
+        cursor.fetchall.side_effect = [[], []]
+
+        response = self.client.get("/contests/11111111-1111-1111-1111-111111111111/details/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("data", response.data)
+
+    @patch("contests.views.get_connection")
     def test_admin_can_open_running_contest_details_without_registration(self, get_connection_mock):
         user = self.user_model.objects.create_user(
             username="admin_viewer",
