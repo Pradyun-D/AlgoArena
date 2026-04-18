@@ -299,6 +299,27 @@
   border-color: var(--secondary);
 }
 
+body.light-mode .auth-error {
+  color: #8b1021;
+  background: rgba(255, 216, 219, 0.92);
+  border-color: rgba(214, 69, 82, 0.92);
+}
+
+body.light-mode .auth-error-message {
+  color: #8b1021;
+}
+
+body.light-mode .auth-error-action {
+  border-color: rgba(139, 16, 33, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: #8b1021;
+}
+
+body.light-mode .auth-error-action:hover {
+  background: rgba(255, 255, 255, 0.96);
+  color: #66101d;
+}
+
 .auth-actions-row {
   display: flex;
   align-items: center;

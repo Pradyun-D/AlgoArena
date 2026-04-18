@@ -43,8 +43,14 @@ function ContestCard({ contest, contestBaseUrl }) {
     const previewDescription = contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.";
     const scheduleLabel = isLive
         ? "Ends"
-        : "Starts";
-    const scheduleValue = isLive ? contest.end_time : contest.start_time;
+        : isCompleted
+            ? "Ended"
+            : "Starts";
+    const scheduleValue = isLive
+        ? contest.end_time
+        : isCompleted
+            ? contest.end_time
+            : contest.start_time;
 
     return (
         <article className={`contest-card group min-w-0 ${accentClass}`}>

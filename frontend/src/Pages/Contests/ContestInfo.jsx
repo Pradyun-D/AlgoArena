@@ -154,6 +154,7 @@ function ContestPage() {
   const isUpcoming = contestStatus === "Upcoming";
   const isPrivilegedUser = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
   const canManageProblems = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
+  const createdByLabel = contestInfo.created_by_username || "Unknown";
 
   const getActionButton = () => {
     const btnProps = { whileHover: { scale: 1.02, y: -1 }, whileTap: { scale: 0.97 }, transition: { type: "spring", stiffness: 360, damping: 18 } };
@@ -188,8 +189,8 @@ function ContestPage() {
             {[
               { to: "/contests", icon: "←", label: "All Contests", className: "nav-item nav-item-back" },
               { href: "#overview", num: "01", label: "Overview", className: "nav-item active" },
-              { href: "#problems", num: "02", label: "Problems", className: "nav-item" },
-              { href: "#schedule", num: "03", label: "Schedule", className: "nav-item" },
+              { href: "#schedule", num: "02", label: "Schedule", className: "nav-item" },
+              { href: "#problems", num: "03", label: "Problems", className: "nav-item" },
             ].map((item, i) =>
               item.to ? (
                 <motion.div key={item.label} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07, duration: 0.35 }}>
@@ -336,7 +337,7 @@ function ContestPage() {
               {[
                 { label: "Problem Count", value: problems.length },
                 { label: "Visibility", value: formatDisplayText(contestInfo.visibility || "Public") },
-                { label: "Created By", value: contestInfo.created_by || "Unknown", mono: true },
+                { label: "Created By", value: createdByLabel, mono: true },
               ].map(({ label, value, mono }, i) => (
                 <motion.div
                   className="stat-row"

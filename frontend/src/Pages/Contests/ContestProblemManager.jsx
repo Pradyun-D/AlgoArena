@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { AnimatePresence, motion } from "motion/react";
 import { API_BASE_URL } from "../../Utils/api";
+import ThemeToggle from "../../Components/ThemeToggle";
+import { useTheme } from "../../Theme/ThemeProvider";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import "../../Styles/new_problem.css";
@@ -14,6 +16,20 @@ const createEmptyTestcase = () => ({
   input_data: "",
   output_data: "",
   is_hidden: true,
+});
+
+const createEmptyProblem = () => ({
+  problem_id: null,
+  title: "",
+  slug: "",
+  description: "",
+  difficulty: "easy",
+  time_limit_ms: "",
+  memory_limit_kb: "",
+  visibility: "contest_only",
+  max_score: "",
+  tags: [],
+  testcases: [],
 });
 
 const cloneProblem = (problem) => ({
@@ -48,10 +64,11 @@ const buttonMotion = {
 function ContestProblemManagerPage() {
   const { contestId } = useParams();
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [contest, setContest] = useState(null);
   const [problems, setProblems] = useState([]);
   const [selectedProblemId, setSelectedProblemId] = useState(null);
-  const [draftProblem, setDraftProblem] = useState(null);
+  const [draftProblem, setDraftProblem] = useState(createEmptyProblem());
   const [tagInput, setTagInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,6 +95,9 @@ function ContestProblemManagerPage() {
         if (loadedProblems.length > 0) {
           setSelectedProblemId(loadedProblems[0].problem_id);
           setDraftProblem(cloneProblem(loadedProblems[0]));
+        } else {
+          setSelectedProblemId(null);
+          setDraftProblem(createEmptyProblem());
         }
       } catch (err) {
         setError(
@@ -104,6 +124,14 @@ function ContestProblemManagerPage() {
     setSelectedProblemId(problem.problem_id);
     setDraftProblem(cloneProblem(problem));
     setTagInput("");
+    setSuccess("");
+  };
+
+  const startNewProblem = () => {
+    setSelectedProblemId(null);
+    setDraftProblem(createEmptyProblem());
+    setTagInput("");
+    setError("");
     setSuccess("");
   };
 
@@ -188,17 +216,33 @@ function ContestProblemManagerPage() {
         })),
       };
 
-      await axios.put(
-        `${API_BASE_URL}/contests/${contestId}/problems/${draftProblem.problem_id}/update`,
-        payload,
-        { withCredentials: true }
-      );
+      if (draftProblem.problem_id) {
+        await axios.put(
+          `${API_BASE_URL}/contests/${contestId}/problems/${draftProblem.problem_id}/update`,
+          payload,
+          { withCredentials: true }
+        );
 
-      setProblems((current) =>
-        current.map((problem) =>
-          problem.problem_id === draftProblem.problem_id ? cloneProblem(draftProblem) : problem
-        )
-      );
+        setProblems((current) =>
+          current.map((problem) =>
+            problem.problem_id === draftProblem.problem_id ? cloneProblem(draftProblem) : problem
+          )
+        );
+      } else {
+        const response = await axios.post(
+          `${API_BASE_URL}/contests/${contestId}/problems/create`,
+          payload,
+          { withCredentials: true }
+        );
+
+        const createdProblem = response.data?.problem
+          ? cloneProblem(response.data.problem)
+          : { ...cloneProblem(draftProblem), problem_id: crypto.randomUUID() };
+
+        setProblems((current) => [...current, createdProblem]);
+        setSelectedProblemId(createdProblem.problem_id);
+        setDraftProblem(cloneProblem(createdProblem));
+      }
       setSuccess("Problem changes saved successfully.");
     } catch (err) {
       setError(
@@ -233,21 +277,11 @@ function ContestProblemManagerPage() {
     );
   }
 
-  if (!draftProblem || !selectedProblem) {
-    return (
-      <ErrorPage
-        kicker="Missing Problems"
-        code="404"
-        title="This contest has no editable problems yet."
-        copy="Create problems for the contest first, then come back here to manage statements and testcase data."
-        primaryAction={{ label: "Back To Contest", to: `/contest/${contestId}/` }}
-        secondaryAction={{ label: "View Contests", to: "/contests" }}
-      />
-    );
-  }
+  const activeProblem = selectedProblem || draftProblem;
+  const isCreatingProblem = !selectedProblem;
 
   return (
-    <div className="problem-editor-page">
+    <div className={`problem-editor-page ${isDarkMode ? "dark-mode" : "light-mode"}`}>
       <motion.aside
         className="problem-editor-sidebar"
         initial={{ opacity: 0, x: -22 }}
@@ -282,40 +316,59 @@ function ContestProblemManagerPage() {
             </div>
           </motion.div>
 
+          <motion.button
+            className="problem-editor-draft-button"
+            onClick={startNewProblem}
+            {...buttonMotion}
+            style={{ marginTop: "1rem" }}
+          >
+            Add New Problem
+          </motion.button>
+
           <motion.nav
             className="problem-editor-nav"
             variants={stagger(0.22)}
             initial="hidden"
             animate="show"
           >
-            {problems.map((problem, index) => (
-              <motion.a
-                href={`#problem-${problem.problem_id}`}
-                key={problem.problem_id}
-                className={problem.problem_id === selectedProblemId ? "active" : ""}
-                variants={slideIn}
-                transition={{ duration: 0.32, ease: "easeOut" }}
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  selectProblem(problem);
-                }}
-              >
-                <span className="material-symbols-outlined">code_blocks</span>
-                <span>{problem.title || `Problem ${index + 1}`}</span>
-              </motion.a>
-            ))}
+            {problems.length > 0 ? (
+              problems.map((problem, index) => (
+                <motion.a
+                  href={`#problem-${problem.problem_id}`}
+                  key={problem.problem_id}
+                  className={problem.problem_id === selectedProblemId ? "active" : ""}
+                  variants={slideIn}
+                  transition={{ duration: 0.32, ease: "easeOut" }}
+                  whileHover={{ x: 4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    selectProblem(problem);
+                  }}
+                >
+                  <span className="material-symbols-outlined">code_blocks</span>
+                  <span>{problem.title || `Problem ${index + 1}`}</span>
+                </motion.a>
+              ))
+            ) : (
+              <motion.div className="problem-editor-empty-state" variants={slideIn}>
+                <p>No problems have been added yet.</p>
+                <span>Start the first one with the button above.</span>
+              </motion.div>
+            )}
           </motion.nav>
         </div>
 
-        <motion.button
-          className="problem-editor-draft-button"
-          onClick={() => navigate(`/contest/${contestId}/`)}
-          {...buttonMotion}
-        >
-          Return To Contest
-        </motion.button>
+        <div style={{ display: "grid", gap: "0.75rem" }}>
+          <motion.button
+            className="problem-editor-draft-button"
+            onClick={() => navigate(`/contest/${contestId}/`)}
+            {...buttonMotion}
+          >
+            Return To Contest
+          </motion.button>
+          <ThemeToggle />
+        </div>
       </motion.aside>
 
       <main className="problem-editor-main">
@@ -328,12 +381,21 @@ function ContestProblemManagerPage() {
           <div>
             <h1>Edit Contest Problems</h1>
             <p>
-              Update statements, timing limits, scoring, tags, and testcase sets for
-              <strong> {selectedProblem.title}</strong>.
+              {isCreatingProblem
+                ? "Create the first problem for this contest, then continue editing it below."
+                : "Update statements, timing limits, scoring, tags, and testcase sets for"}
+              {!isCreatingProblem ? <strong> {activeProblem?.title}</strong> : null}
             </p>
           </div>
           <div className="problem-editor-header-actions">
-            <motion.button className="ghost-action" onClick={() => selectProblem(selectedProblem)} {...buttonMotion}>
+            <motion.button className="ghost-action" onClick={startNewProblem} {...buttonMotion}>
+              New Problem
+            </motion.button>
+            <motion.button
+              className="ghost-action"
+              onClick={selectedProblem ? () => selectProblem(selectedProblem) : startNewProblem}
+              {...buttonMotion}
+            >
               Reset Draft
             </motion.button>
             <motion.button
@@ -344,7 +406,7 @@ function ContestProblemManagerPage() {
               whileTap={saving ? undefined : { scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 18 }}
             >
-              {saving ? "Saving..." : "Save Problem"}
+              {saving ? "Saving..." : isCreatingProblem ? "Create Problem" : "Save Problem"}
             </motion.button>
           </div>
         </motion.header>
@@ -366,7 +428,7 @@ function ContestProblemManagerPage() {
 
         <motion.section
           className="problem-editor-section-grid"
-          id={`problem-${selectedProblem.problem_id}`}
+          id={activeProblem?.problem_id ? `problem-${activeProblem.problem_id}` : "problem-new"}
           variants={stagger(0.16)}
           initial="hidden"
           animate="show"
@@ -488,7 +550,16 @@ function ContestProblemManagerPage() {
 
             <motion.div className="field-grid" layout>
               {draftProblem.testcases.length === 0 ? (
-                <motion.div className="problem-editor-card" style={{ background: "#111214" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <motion.div
+                  className="problem-editor-card"
+                  style={
+                    isDarkMode
+                      ? { background: "#111214" }
+                      : { background: "rgba(255, 255, 255, 0.98)", color: "#132033" }
+                  }
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
                   No testcases added yet. Create one to start building the judge data.
                 </motion.div>
               ) : (
@@ -496,7 +567,11 @@ function ContestProblemManagerPage() {
                   <motion.div
                     key={testcase.testcase_id || index}
                     className="problem-editor-card"
-                    style={{ background: "#111214" }}
+                    style={
+                      isDarkMode
+                        ? { background: "#111214" }
+                        : { background: "rgba(255, 255, 255, 0.98)", color: "#132033" }
+                    }
                     layout
                     initial={{ opacity: 0, y: 14, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
