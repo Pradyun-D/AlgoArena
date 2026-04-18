@@ -152,12 +152,18 @@ def _fetch_contest_with_registration(cursor, contest_id, user_id):
                 FROM contest_participants cp
                 WHERE cp.contest_id = c.contest_id
                   AND cp.user_id = %s
-            ) AS is_registered
+            ) AS is_registered,
+            COALESCE((
+                SELECT SUM(score)
+                FROM contest_problem_scores cps
+                WHERE cps.contest_id = c.contest_id
+                  AND cps.user_id = %s
+            ), 0) AS user_total_score
         FROM contests c
         WHERE c.contest_id = %s
         LIMIT 1
         """,
-        (str(user_id) if user_id is not None else None, contest_id),
+        (str(user_id) if user_id is not None else None, user_id, contest_id),
     )
     return cursor.fetchone()
 
@@ -401,7 +407,7 @@ def _persist_draft_problems_as_contest_problems(cursor, draft, problems):
     return saved_problems
 
 
-def _get_contests_data(include_private=False):
+def _get_contests_data(user_id=None, include_private=False):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -427,13 +433,19 @@ def _get_contests_data(include_private=False):
                     SELECT COUNT(*) 
                     FROM contest_participants cp 
                     WHERE cp.contest_id = contests.contest_id
-                    ), 0) AS participants_count
+                    ), 0) AS participants_count,
+                COALESCE((
+                    SELECT SUM(score) 
+                    FROM contest_problem_scores cps 
+                    WHERE cps.contest_id = contests.contest_id AND cps.user_id = %s
+                ), 0) AS user_total_score
             FROM contests
             """
             + visibility_clause
             + """
             ORDER BY start_time ASC, created_at ASC
-            """
+            """,
+            (user_id,)
         )
         return cursor.fetchall()
     except Exception as e:
@@ -444,7 +456,7 @@ def _get_contests_data(include_private=False):
         conn.close()
 
 
-def _get_past_contests_data():
+def _get_past_contests_data(user_id=None):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -464,11 +476,17 @@ def _get_past_contests_data():
                     SELECT COUNT(*) 
                     FROM contest_participants cp 
                     WHERE cp.contest_id = contests.contest_id
-                ), 0) AS participants_count
+                ), 0) AS participants_count,
+                COALESCE((
+                    SELECT SUM(score) 
+                    FROM contest_problem_scores cps 
+                    WHERE cps.contest_id = contests.contest_id AND cps.user_id = %s
+                ), 0) AS user_total_score
             FROM contests 
             WHERE end_time <= UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
-            """
+            """,
+            (user_id,)
         )
         return cursor.fetchall()
     except Exception as e:
@@ -479,7 +497,7 @@ def _get_past_contests_data():
         conn.close()
 
 
-def get_active_contests_data():
+def get_active_contests_data(user_id=None):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -502,12 +520,17 @@ def get_active_contests_data():
                     SELECT COUNT(*)
                     FROM contest_participants cp
                     WHERE cp.contest_id = contests.contest_id
-                ), 0) AS participants_count
+                ), 0) AS participants_count,
+                COALESCE((
+                    SELECT SUM(score) 
+                    FROM contest_problem_scores cps 
+                    WHERE cps.contest_id = contests.contest_id AND cps.user_id = %s
+                ), 0) AS user_total_score
             FROM contests 
             WHERE start_time <= UTC_TIMESTAMP() 
               AND end_time > UTC_TIMESTAMP()
             ORDER BY end_time DESC, created_at DESC
-        """)
+        """, (user_id,))
         return cursor.fetchall()
     except Exception as e:
         print("Error fetching active contests:", e)
@@ -521,13 +544,13 @@ def get_active_contests_data():
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def all_contests(request):
-    return Response(_get_contests_data(include_private=_can_view_private_contests(request)))
+    return Response(_get_contests_data(user_id=_get_request_user_external_id(request), include_private=_can_view_private_contests(request)))
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def past_contests(request):
-    return Response(_get_past_contests_data())
+    return Response(_get_past_contests_data(_get_request_user_external_id(request)))
 
 
 @api_view(["GET"])
@@ -961,17 +984,33 @@ def get_contest_info(request,contest_id):
         if _contest_is_live(result_contest) and not result_contest.get("is_registered") and not _is_privileged_contest_user(request):
             return Response({"error": "Contest is running.", "status": 403}, status=403)
         
-        cursor.execute(
-            """
-            SELECT p.problem_id, p.title, p.description, p.difficulty, p.time_limit_ms,
-                   p.memory_limit_kb, p.visibility, cp.max_score
-            FROM contest_problems cp
-            JOIN problems p ON p.problem_id = cp.problem_id
-            WHERE cp.contest_id = %s
-            ORDER BY p.created_at ASC
-            """,
-            (contest_id,),
-        )
+        if user_id:
+            cursor.execute(
+                """
+                SELECT p.problem_id, p.title, p.description, p.difficulty, p.time_limit_ms,
+                       p.memory_limit_kb, p.visibility, cp.max_score,
+                       COALESCE(cps.score, 0) AS user_score
+                FROM contest_problems cp
+                JOIN problems p ON p.problem_id = cp.problem_id
+                LEFT JOIN contest_problem_scores cps ON cps.contest_id = cp.contest_id AND cps.problem_id = cp.problem_id AND cps.user_id = %s
+                WHERE cp.contest_id = %s
+                ORDER BY p.created_at ASC
+                """,
+                (user_id, contest_id),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT p.problem_id, p.title, p.description, p.difficulty, p.time_limit_ms,
+                       p.memory_limit_kb, p.visibility, cp.max_score,
+                       0 AS user_score
+                FROM contest_problems cp
+                JOIN problems p ON p.problem_id = cp.problem_id
+                WHERE cp.contest_id = %s
+                ORDER BY p.created_at ASC
+                """,
+                (contest_id,),
+            )
         result_problem = cursor.fetchall()
 
         problem_ids = [str(problem["problem_id"]) for problem in result_problem]
@@ -1913,3 +1952,88 @@ def submit_solution(request, contest_id, problem_id):
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_contest_leaderboard(request, contest_id):
+    contest_id = str(contest_id)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT title FROM contests WHERE contest_id = %s", (contest_id,))
+        if not cursor.fetchone():
+            return Response({"error": "Contest not found", "status": 404}, status=404)
+        
+        cursor.execute(
+            """
+            SELECT p.problem_id, cp.max_score
+            FROM contest_problems cp
+            JOIN problems p ON p.problem_id = cp.problem_id
+            WHERE cp.contest_id = %s
+            ORDER BY p.created_at ASC
+            """,
+            (contest_id,)
+        )
+        problem_rows = cursor.fetchall()
+        
+        letter_map = {}
+        for index, p in enumerate(problem_rows):
+            letter = chr(65 + index)
+            letter_map[str(p["problem_id"])] = {
+                "letter": letter,
+                "max_score": p["max_score"]
+            }
+            
+        problems_list = [{"problem_id": pid, **meta} for pid, meta in letter_map.items()]
+        
+        cursor.execute(
+            """
+            SELECT cps.user_id, cps.problem_id, cps.score, cps.time_penalty_ms, cps.is_accepted,
+                   u.username
+            FROM contest_problem_scores cps
+            JOIN user u ON u.user_id = cps.user_id
+            WHERE cps.contest_id = %s
+            """,
+            (contest_id,)
+        )
+        scores_rows = cursor.fetchall()
+        
+        users_map = {}
+        for row in scores_rows:
+            uid = row["user_id"]
+            if uid not in users_map:
+                users_map[uid] = {
+                    "user_id": uid,
+                    "username": row["username"],
+                    "total_score": 0,
+                    "total_penalty": 0,
+                    "scores": {}
+                }
+            pid = str(row["problem_id"])
+            users_map[uid]["scores"][pid] = {
+                "score": row["score"],
+                "time_penalty_ms": row["time_penalty_ms"] or 0,
+                "is_accepted": bool(row["is_accepted"])
+            }
+            users_map[uid]["total_score"] += row["score"]
+            users_map[uid]["total_penalty"] += row["time_penalty_ms"] or 0
+            
+        leaderboard = list(users_map.values())
+        leaderboard.sort(key=lambda x: (-x["total_score"], x["total_penalty"]))
+        
+        for i, u in enumerate(leaderboard):
+            u["rank"] = i + 1
+            
+        return Response({
+            "status": 200,
+            "data": {
+                "problems": problems_list,
+                "leaderboard": leaderboard
+            }
+        })
+    except Exception as e:
+        return Response({"error": str(e), "status": 500}, status=500)
+    finally:
+        cursor.close()
+        conn.close()

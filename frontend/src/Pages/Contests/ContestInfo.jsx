@@ -61,12 +61,12 @@ const normalizeDifficulty = (difficulty) => {
 // ── animation variants ───────────────────────────────────────
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
-  show:   { opacity: 1, y: 0  },
+  show: { opacity: 1, y: 0 },
 };
 
 const stagger = (delay = 0) => ({
   hidden: {},
-  show:   { transition: { staggerChildren: 0.09, delayChildren: delay } },
+  show: { transition: { staggerChildren: 0.09, delayChildren: delay } },
 });
 
 // ── component ────────────────────────────────────────────────
@@ -189,8 +189,9 @@ function ContestPage() {
             {[
               { to: "/contests", icon: "←", label: "All Contests", className: "nav-item nav-item-back" },
               { href: "#overview", num: "01", label: "Overview", className: "nav-item active" },
-              { href: "#schedule", num: "02", label: "Schedule", className: "nav-item" },
-              { href: "#problems", num: "03", label: "Problems", className: "nav-item" },
+              { href: "#problems", num: "02", label: "Problems", className: "nav-item" },
+              { href: "#schedule", num: "03", label: "Schedule", className: "nav-item" },
+              { to: `/contest/${contestId}/leaderboard`, icon: "🏆", label: "Standings", className: "nav-item" },
             ].map((item, i) =>
               item.to ? (
                 <motion.div key={item.label} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.07, duration: 0.35 }}>
@@ -254,9 +255,9 @@ function ContestPage() {
             <div className="grid-2-col">
               {[
                 { title: "Starts", value: formatDateTime(contestInfo.start_time) },
-                { title: "Ends",   value: formatDateTime(contestInfo.end_time) },
+                { title: "Ends", value: formatDateTime(contestInfo.end_time) },
                 { title: "Duration", value: formatDuration(contestInfo.start_time, contestInfo.end_time) },
-                { title: "Created",  value: formatDateTime(contestInfo.created_at) },
+                { title: "Created", value: formatDateTime(contestInfo.created_at) },
               ].map(({ title, value }) => (
                 <motion.div className="pillar-box" key={title} variants={fadeUp} transition={{ duration: 0.38 }}>
                   <p className="pillar-title">{title}</p>
@@ -296,7 +297,10 @@ function ContestPage() {
                       <div>
                         <p className="problem-title">{formatDisplayText(problem.title || `Problem ${index + 1}`)}</p>
                         <p className="mono problem-meta">
-                          Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
+                          Max Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
+                        </p>
+                        <p className="mono problem-meta" style={{ marginTop: "0.4rem", color: "var(--color-primary, #6bfe9c)", fontWeight: 600 }}>
+                          Your Score: {problem.user_score ?? 0} / {problem.max_score ?? "N/A"}
                         </p>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -335,6 +339,7 @@ function ContestPage() {
 
             <div className="stats-panel">
               {[
+                { label: "Current Total Score", value: contestInfo.user_total_score ?? 0, mono: true },
                 { label: "Problem Count", value: problems.length },
                 { label: "Visibility", value: formatDisplayText(contestInfo.visibility || "Public") },
                 { label: "Created By", value: createdByLabel, mono: true },

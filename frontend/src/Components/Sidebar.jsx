@@ -59,19 +59,19 @@ function Sidebar({ user }) {
 
                 <div className="bg-surface-container p-3 rounded-sm">
                     <span className="block text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mb-1">
-                        Average Rank
+                        Contest Average (%)
                     </span>
                     <div className="flex items-end gap-2">
                         <span className="text-2xl font-black font-headline leading-none">
-                            {typeof user.avg_rank === "number"
-                                ? `#${formatNumber(user.avg_rank)}`
+                            {typeof user.average_performance_score === "number"
+                                ? `${formatNumber(user.average_performance_score)}%`
                                 : "N/A"}
                         </span>
-                        <span className="text-[10px] text-primary font-bold">
-                            {user.top_percentile
-                                ? `Top ${user.top_percentile}%`
-                                : "No contest history yet"}
-                        </span>
+                        {typeof user.average_performance_score !== "number" && (
+                            <span className="text-[10px] text-primary font-bold">
+                                No history yet
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

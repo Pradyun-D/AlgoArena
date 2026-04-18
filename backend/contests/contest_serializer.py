@@ -10,6 +10,7 @@ class ContestInfoSerializer(serializers.Serializer):
     created_by = serializers.IntegerField(required=False, allow_null=True)
     created_by_username = serializers.CharField(read_only=True, required=False, allow_null=True)
     is_registered = serializers.BooleanField(read_only=True, required=False, default=False)
+    user_total_score = serializers.IntegerField(required=False, default=0)
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(
         allow_blank=True,
@@ -48,6 +49,7 @@ class ProblemSerializer(serializers.Serializer):
         allow_empty=True,
     )
     max_score = serializers.IntegerField(min_value=1)
+    user_score = serializers.IntegerField(required=False, default=0)
 
     def validate(self, data):
         if not data["title"].strip():

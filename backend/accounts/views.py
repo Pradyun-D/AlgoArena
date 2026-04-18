@@ -109,6 +109,39 @@ def _build_registered_rounds(cursor, user_id):
 	return rounds
 
 
+def _calculate_average_performance(cursor, user_id):
+	cursor.execute(
+		"""
+		WITH ContestTotals AS (
+			SELECT contest_id, SUM(max_score) AS total_possible_score
+			FROM contest_problems
+			GROUP BY contest_id
+			HAVING SUM(max_score) > 0
+		),
+		UserScores AS (
+			SELECT contest_id, SUM(score) AS user_score
+			FROM contest_problem_scores
+			WHERE user_id = %s
+			GROUP BY contest_id
+		),
+		UserContestPercentages AS (
+			SELECT 
+				u.contest_id,
+				(u.user_score * 100.0 / ct.total_possible_score) AS score_percentage
+			FROM UserScores u
+			JOIN ContestTotals ct ON u.contest_id = ct.contest_id
+		)
+		SELECT ROUND(AVG(score_percentage), 2) AS average_performance_score
+		FROM UserContestPercentages
+		""",
+		(user_id,)
+	)
+	row = cursor.fetchone()
+	if row and row.get("average_performance_score") is not None:
+		return float(row["average_performance_score"])
+	return None
+
+
 def _get_user_by_identifier(cursor, identifier):
 	cursor.execute(
 		"""
@@ -352,6 +385,7 @@ def session_account(request):
 			return clear_auth_cookies(response)
 		user_payload = _serialize_user_row(user)
 		user_payload["registered_rounds"] = _build_registered_rounds(cursor, user["user_id"])
+		user_payload["average_performance_score"] = _calculate_average_performance(cursor, user["user_id"])
 		return Response({"user": user_payload}, status=200)
 	finally:
 		cursor.close()

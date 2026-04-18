@@ -10,6 +10,7 @@ import ContestRegistrationPage from "./Pages/Contests/ContestRegistration";
 import ContestFormPage from "./Pages/Contests/CreateNewContest";
 import DraftsDashboard from "./Pages/Contests/DraftsDashboard";
 import ContestPage from "./Pages/Contests/ContestInfo";
+import LeaderboardPage from "./Pages/Contests/Leaderboard";
 import ContestProblemManagerPage from "./Pages/Contests/ContestProblemManager";
 import ProblemSolvingPage from "./Pages/Contests/ProblemSolving";
 import ErrorPage from "./Pages/Auth_and_Profile/ErrorPage";
@@ -99,6 +100,7 @@ function App() {
           <Route path="/submissions" element={<MySubmissionsPage />} />
           <Route path="/submissions/:submissionId" element={<SubmissionViewPage />} />
           <Route path="/contest/:contestId/" element={<ContestPage />} />
+          <Route path="/contest/:contestId/leaderboard" element={<LeaderboardPage />} />
           <Route path="/contest/:contestId/register" element={<ContestRegistrationPage />} />
           <Route
             path="/contest/:contestId/problems/edit"

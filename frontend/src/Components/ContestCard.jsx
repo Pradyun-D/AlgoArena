@@ -85,6 +85,15 @@ function ContestCard({ contest, contestBaseUrl }) {
                             {formatCardDate(scheduleValue)}
                         </span>
                     </div>
+
+                    {contest.user_total_score !== undefined && contest.user_total_score > 0 && (
+                        <div className="contest-card__chip contest-card__chip--score">
+                            <span className="contest-card__chip-label">My Score</span>
+                            <span className="contest-card__chip-value contest-card__chip-value--small" style={{ color: "var(--color-primary, #6bfe9c)", fontWeight: 700 }}>
+                                {contest.user_total_score}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="contest-card__description prose prose-invert max-w-none break-words text-on-surface-variant">

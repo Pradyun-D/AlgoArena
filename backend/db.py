@@ -265,3 +265,53 @@ insert_language_queries = [
         (89, 'Multi-file program');
     """
 ]
+
+draft_query = [
+    """
+    CREATE TABLE IF NOT EXISTS drafts (
+        contest_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        start_time TIMESTAMP,
+        end_time TIMESTAMP,
+        visibility ENUM('public', 'private') DEFAULT 'public',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY(created_by) REFERENCES user(user_id)
+    );
+    """
+]
+
+score_query = [
+    """
+    CREATE TABLE IF NOT EXISTS contest_problem_scores (
+    contest_id CHAR(36) NOT NULL,
+    user_id INT NOT NULL,
+    problem_id CHAR(36) NOT NULL,
+    score INT NOT NULL DEFAULT 0,
+    time_penalty_ms INT NOT NULL DEFAULT 0,
+    is_accepted BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- The primary key ensures a user only has ONE score record per problem, per contest
+    PRIMARY KEY (contest_id, user_id, problem_id),
+    
+    -- Foreign Key Constraints to maintain data integrity
+    FOREIGN KEY (contest_id) REFERENCES contests(contest_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (problem_id) REFERENCES problems(problem_id) ON DELETE CASCADE
+    );
+    """
+]
+
+if __name__ == "__main__":
+    connection=get_connection()
+    cursor=connection.cursor()
+
+    for query in score_query:
+        cursor.execute(query)
+
+    connection.commit()
+    cursor.close()
+    connection.close()
