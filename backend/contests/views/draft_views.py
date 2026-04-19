@@ -221,7 +221,17 @@ def publish_draft(request, contest_id):
         if not draft:
             return Response({"error": "Draft not found."}, status=404)
 
-        draft = _attach_draft_problems(cursor, draft)
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS problem_count
+            FROM contest_problems
+            WHERE contest_id = %s
+            """,
+            (contest_id,),
+        )
+        problem_count_row = cursor.fetchone() or {}
+        draft["problem_count"] = int(problem_count_row.get("problem_count") or 0)
+
         publish_error = _validate_publishable_draft(draft)
         if publish_error:
             return Response({"error": publish_error}, status=400)

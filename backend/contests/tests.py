@@ -142,6 +142,62 @@ class DraftPersistenceTests(TestCase):
         self.assertEqual(response.data["error"], "Add at least one problem before publishing this draft.")
 
     @patch("contests.views.get_connection")
+    def test_publish_draft_succeeds_when_draft_has_saved_problems(self, get_connection_mock):
+        setter = self.user_model.objects.create_user(
+            username="draft_setter_three",
+            email="draftsetter3@algoarena.dev",
+            password="testpass123",
+            role="problem_setter",
+            external_user_id=303,
+        )
+        self.client.force_authenticate(user=setter)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.side_effect = [
+            {
+                "contest_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                "title": "Draft Gamma",
+                "description": "Draft description",
+                "start_time": datetime.utcnow(),
+                "end_time": datetime.utcnow() + timedelta(hours=2),
+                "visibility": "private",
+                "created_by": 303,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            },
+            {
+                "problem_count": 1,
+            },
+            {
+                "contest_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                "title": "Draft Gamma",
+                "description": "Draft description",
+                "start_time": datetime.utcnow(),
+                "end_time": datetime.utcnow() + timedelta(hours=2),
+                "visibility": "public",
+                "created_by": 303,
+                "created_at": datetime.utcnow(),
+            },
+        ]
+
+        response = self.client.post(
+            "/contests/drafts/cccccccc-cccc-cccc-cccc-cccccccccccc/publish/",
+            {},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["contest"]["visibility"], "public")
+        cursor.execute.assert_any_call(
+            """
+            UPDATE contests
+            SET visibility = 'public', updated_at = UTC_TIMESTAMP()
+            WHERE contest_id = %s
+            """,
+            ("cccccccc-cccc-cccc-cccc-cccccccccccc",),
+        )
+
+    @patch("contests.views.get_connection")
     def test_create_contest_problem_returns_created_problem(self, get_connection_mock):
         setter = self.user_model.objects.create_user(
             username="problem_creator",

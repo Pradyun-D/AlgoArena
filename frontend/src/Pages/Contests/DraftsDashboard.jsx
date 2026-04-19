@@ -69,7 +69,6 @@ function DraftsDashboard() {
           <div className="admin-topbar-tabs">
             <Link className="admin-topbar-link" to="/contests">Contests</Link>
             <Link className="admin-topbar-link active" to="/drafts">Drafts</Link>
-            <Link className="admin-topbar-link" to="/create">Create</Link>
           </div>
           <div className="admin-topbar-actions">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>

@@ -69,6 +69,22 @@ body.light-mode .problem-editor-sidebar {
   color: var(--problem-text);
 }
 
+body.light-mode .problem-editor-brand h2 {
+  color: #1d4ed8;
+}
+
+body.light-mode .problem-editor-breadcrumbs {
+  color: #5e6b7d;
+}
+
+body.light-mode .problem-editor-breadcrumbs a {
+  color: #1f2f46;
+}
+
+body.light-mode .problem-editor-breadcrumbs .is-active {
+  color: #0f172a;
+}
+
 .problem-editor-panel-label {
   display: flex;
   gap: 0.8rem;

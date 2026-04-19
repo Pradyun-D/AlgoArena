@@ -14,8 +14,9 @@ import { formatDisplayText } from "../../Utils/format_display_text";
 import ThemeToggle from "../../Components/ThemeToggle";
 import { useTheme } from "../../Theme/ThemeProvider";
 
-const LANGUAGE_PRESETS = {
-  "C++20": {
+const LANGUAGE_PRESETS = [
+  {
+    match: (name) => /c\+\+|clang/i.test(name),
     monacoLanguage: "cpp",
     starterCode: `#include <bits/stdc++.h>
 using namespace std;
@@ -28,17 +29,69 @@ int main() {
 }
 `,
   },
-  "Python 3.11": {
-    monacoLanguage: "python",
-    starterCode: `def solve():
-    pass
+  {
+    match: (name) => /^c#|csharp/i.test(name),
+    monacoLanguage: "csharp",
+    starterCode: `using System;
 
-
-if __name__ == "__main__":
-    solve()
+public class Program {
+    public static void Main(string[] args) {
+    }
+}
 `,
   },
-  "Java 17": {
+  {
+    match: (name) => /^c(\s|\(|$)/i.test(name),
+    monacoLanguage: "c",
+    starterCode: `#include <stdio.h>
+
+int main(void) {
+    return 0;
+}
+`,
+  },
+  {
+    match: (name) => /visual basic|vb\.net|vbnc/i.test(name),
+    monacoLanguage: "vb",
+    starterCode: `Module Program
+    Sub Main(args As String())
+    End Sub
+End Module
+`,
+  },
+  {
+    match: (name) => /\bbasic\b/i.test(name),
+    monacoLanguage: "basic",
+    starterCode: `PRINT "Hello, world!"
+`,
+  },
+  {
+    match: (name) => /assembly|nasm/i.test(name),
+    monacoLanguage: "asm",
+    starterCode: `section .text
+global _start
+
+_start:
+`,
+  },
+  {
+    match: (name) => /javascript/i.test(name),
+    monacoLanguage: "javascript",
+    starterCode: `function main() {
+  // write your solution here
+}
+`,
+  },
+  {
+    match: (name) => /typescript/i.test(name),
+    monacoLanguage: "typescript",
+    starterCode: `function main(): void {
+  // write your solution here
+}
+`,
+  },
+  {
+    match: (name) => /java(?!script)/i.test(name),
     monacoLanguage: "java",
     starterCode: `import java.io.*;
 import java.util.*;
@@ -49,7 +102,215 @@ public class Main {
 }
 `,
   },
-};
+  {
+    match: (name) => /python/i.test(name),
+    monacoLanguage: "python",
+    starterCode: `def solve():
+    pass
+
+
+if __name__ == "__main__":
+    solve()
+`,
+  },
+  {
+    match: (name) => /rust/i.test(name),
+    monacoLanguage: "rust",
+    starterCode: `fn main() {
+    // write your solution here
+}
+`,
+  },
+  {
+    match: (name) => /\bgo\b|golang/i.test(name),
+    monacoLanguage: "go",
+    starterCode: `package main
+
+func main() {
+}
+`,
+  },
+  {
+    match: (name) => /kotlin/i.test(name),
+    monacoLanguage: "kotlin",
+    starterCode: `fun main() {
+    // write your solution here
+}
+`,
+  },
+  {
+    match: (name) => /swift/i.test(name),
+    monacoLanguage: "swift",
+    starterCode: `import Foundation
+
+// write your solution here
+`,
+  },
+  {
+    match: (name) => /\bphp\b/i.test(name),
+    monacoLanguage: "php",
+    starterCode: `<?php
+// write your solution here
+`,
+  },
+  {
+    match: (name) => /\bruby\b/i.test(name),
+    monacoLanguage: "ruby",
+    starterCode: `def solve
+end
+
+solve
+`,
+  },
+  {
+    match: (name) => /\bscala\b/i.test(name),
+    monacoLanguage: "scala",
+    starterCode: `object Main extends App {
+}
+`,
+  },
+  {
+    match: (name) => /\bsql\b/i.test(name),
+    monacoLanguage: "sql",
+    starterCode: `SELECT 1;
+`,
+  },
+  {
+    match: (name) => /bash|shell/i.test(name),
+    monacoLanguage: "shell",
+    starterCode: `#!/usr/bin/env bash
+
+`,
+  },
+  {
+    match: (name) => /\blua\b/i.test(name),
+    monacoLanguage: "lua",
+    starterCode: `function main()
+end
+`,
+  },
+  {
+    match: (name) => /\bperl\b/i.test(name),
+    monacoLanguage: "perl",
+    starterCode: `#!/usr/bin/env perl
+use strict;
+use warnings;
+`,
+  },
+  {
+    match: (name) => /^r(\s|\(|$)/i.test(name),
+    monacoLanguage: "r",
+    starterCode: `main <- function() {
+}
+`,
+  },
+  {
+    match: (name) => /objective-?c/i.test(name),
+    monacoLanguage: "objective-c",
+    starterCode: `#import <Foundation/Foundation.h>
+
+int main(int argc, const char * argv[]) {
+    @autoreleasepool {
+    }
+    return 0;
+}
+`,
+  },
+  {
+    match: (name) => /\bpascal\b/i.test(name),
+    monacoLanguage: "pascal",
+    starterCode: `program Main;
+begin
+end.
+`,
+  },
+  {
+    match: (name) => /\bfortran\b/i.test(name),
+    monacoLanguage: "fortran",
+    starterCode: `program main
+end program main
+`,
+  },
+  {
+    match: (name) => /\bhaskell\b/i.test(name),
+    monacoLanguage: "haskell",
+    starterCode: `main :: IO ()
+main = do
+`,
+  },
+  {
+    match: (name) => /\blisp\b/i.test(name),
+    monacoLanguage: "lisp",
+    starterCode: `(defun main ()
+)
+`,
+  },
+  {
+    match: (name) => /\belixir\b/i.test(name),
+    monacoLanguage: "elixir",
+    starterCode: `defmodule Main do
+end
+`,
+  },
+  {
+    match: (name) => /\berlang\b/i.test(name),
+    monacoLanguage: "erlang",
+    starterCode: `-module(main).
+-export([main/0]).
+main() ->
+    ok.
+`,
+  },
+  {
+    match: (name) => /\bclojure\b/i.test(name),
+    monacoLanguage: "clojure",
+    starterCode: `(ns main)
+`,
+  },
+  {
+    match: (name) => /\bgroovy\b/i.test(name),
+    monacoLanguage: "groovy",
+    starterCode: `def main() {
+}
+`,
+  },
+  {
+    match: (name) => /\bf#|fsharp/i.test(name),
+    monacoLanguage: "fsharp",
+    starterCode: `module Main
+`,
+  },
+  {
+    match: (name) => /\bcobol\b/i.test(name),
+    monacoLanguage: "cobol",
+    starterCode: `       IDENTIFICATION DIVISION.
+       PROGRAM-ID. MAIN.
+       STOP RUN.
+`,
+  },
+  {
+    match: (name) => /\bprolog\b/i.test(name),
+    monacoLanguage: "prolog",
+    starterCode: `main :- true.
+`,
+  },
+  {
+    match: (name) => /\bocaml\b/i.test(name),
+    monacoLanguage: "ocaml",
+    starterCode: `let () =
+  ()
+`,
+  },
+  {
+    match: (name) => /\bd\b/i.test(name),
+    monacoLanguage: "d",
+    starterCode: `import std.stdio;
+
+void main() {
+}
+`,
+  },
+];
 
 const FALLBACK_CONSOLE_LINES = [
   "Judge connection is not wired yet.",
@@ -58,7 +319,7 @@ const FALLBACK_CONSOLE_LINES = [
 ];
 
 const getLanguagePreset = (languageName) =>
-  LANGUAGE_PRESETS[languageName] || { monacoLanguage: "plaintext", starterCode: "" };
+  LANGUAGE_PRESETS.find((preset) => preset.match(languageName || "")) || { monacoLanguage: "plaintext", starterCode: "" };
 
 const normalizeDifficulty = (difficulty) => {
   const value = String(difficulty || "").toLowerCase().trim();
@@ -465,7 +726,7 @@ function ProblemSolvingPage() {
               >
                 {submissions.length === 0 ? (
                   <div className="solve-empty-state" style={{ margin: "1rem" }}>
-                    No submissions yet. The first submit will create a dummy queue entry here.
+                    No submissions yet.
                   </div>
                 ) : (
                   <div style={{ overflowX: "auto" }}>

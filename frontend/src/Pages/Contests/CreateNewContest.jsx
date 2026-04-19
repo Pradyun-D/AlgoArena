@@ -285,6 +285,7 @@ const ContestFormPage = () => {
     const payload = {
       contest: {
         ...contest,
+        visibility: draftId ? "public" : contest.visibility,
         start_time: toUtcISOString(contest.start_time),
         end_time: toUtcISOString(calculatedEndTime),
       },
