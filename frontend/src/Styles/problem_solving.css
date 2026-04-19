@@ -546,6 +546,56 @@ body.light-mode .solve-language-picker select option {
   text-align: center;
 }
 
+.solve-submitting-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solve-submitting-content {
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.solve-submitting-content h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.solve-submitting-content p {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.solve-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(107, 254, 156, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: solve-spin 1s ease-in-out infinite;
+}
+
+@keyframes solve-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .is-easy {
   color: #7dffb2;
   background: rgba(125, 255, 178, 0.1);
@@ -656,10 +706,15 @@ body.light-mode .solve-submission-card,
 body.light-mode .solve-empty-state,
 body.light-mode .solve-editor-toolbar,
 body.light-mode .solve-bottom-panel__tabs button,
-body.light-mode .solve-banner-message {
+body.light-mode .solve-banner-message,
+body.light-mode .solve-submitting-content {
   border-color: rgba(204, 213, 225, 0.9);
   background: rgba(255, 255, 255, 0.78);
   color: var(--on-background);
+}
+
+body.light-mode .solve-submitting-overlay {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 body.light-mode .solve-sidebar,

@@ -371,12 +371,14 @@ function ProblemSolvingPage() {
   const [selectedLanguageId, setSelectedLanguageId] = useState("");
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [running, setRunning] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [activePanel, setActivePanel] = useState("submissions");
   const [consoleLines, setConsoleLines] = useState(FALLBACK_CONSOLE_LINES);
   const [bannerMessage, setBannerMessage] = useState("");
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
+  const bottomPanelRef = useRef(null);
   const { isDarkMode } = useTheme();
 
   const problem = solveData?.problem || null;
@@ -447,7 +449,17 @@ function ProblemSolvingPage() {
     if (model) monaco.editor.setModelLanguage(model, selectedPreset.monacoLanguage);
   };
 
-  const handleRun = () => {
+  const handleRun = async () => {
+    if (!selectedLanguage || !sourceCode.trim()) {
+      setBannerMessage("Choose a language and enter some code before running.");
+      return;
+    }
+    setRunning(true);
+    setBannerMessage("");
+    
+    // Simulate execution delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
     setActivePanel("console");
     setBannerMessage("Mock run opened. Execution is not connected yet.");
     setConsoleLines((current) => [
@@ -455,6 +467,11 @@ function ProblemSolvingPage() {
       "No compile or execution step has been wired yet.",
       ...current,
     ]);
+    
+    setRunning(false);
+    setTimeout(() => {
+      bottomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const handleSubmit = async () => {
@@ -477,6 +494,9 @@ function ProblemSolvingPage() {
         ...current,
       ]);
       setBannerMessage("Submission added to the list.");
+      setTimeout(() => {
+        bottomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } catch (err) {
       setBannerMessage(err.response?.data?.error || err.message || "Unable to add the submission right now.");
     } finally { setSubmitting(false); }
@@ -491,6 +511,22 @@ function ProblemSolvingPage() {
 
   return (
     <div className="solve-page-shell">
+      <AnimatePresence>
+        {(submitting || running) && (
+          <motion.div
+            className="solve-submitting-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="solve-submitting-content">
+              <div className="solve-spinner"></div>
+              <h2>{submitting ? "Waiting in queue..." : "Executing code..."}</h2>
+              <p>{submitting ? "Sending your submission to the judge" : "Running your mock execution environment"}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Topbar slides down ── */}
       <motion.header
@@ -636,11 +672,12 @@ function ProblemSolvingPage() {
                     type="button"
                     className="solve-ghost-button"
                     onClick={handleRun}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.95 }}
+                    disabled={running}
+                    whileHover={{ scale: running ? 1 : 1.04 }}
+                    whileTap={{ scale: running ? 1 : 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 20 }}
                   >
-                    Run
+                    {running ? "Running..." : "Run"}
                   </motion.button>
 
                   {/* Submit button — press + shimmer via CSS */}
@@ -685,7 +722,7 @@ function ProblemSolvingPage() {
           </div>
 
           {/* ── Bottom panel ── */}
-          <section className="solve-bottom-panel">
+          <section className="solve-bottom-panel" ref={bottomPanelRef}>
             <div className="solve-bottom-panel__tabs">
               {["submissions", "tests", "console"].map((tab) => (
                 <motion.button
