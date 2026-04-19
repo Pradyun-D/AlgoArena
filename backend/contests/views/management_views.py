@@ -124,16 +124,37 @@ def delete_contest(request, contest_id):
             (contest_id,),
         )
         contest = cursor.fetchone()
-        if not contest:
-            return Response({"error": "Contest not found"}, status=404)
+        deleted_from = "contests"
 
-        if not _can_manage_contest(request, contest):
-            return Response({"error": "You do not have permission to delete this contest."}, status=403)
+        if contest:
+            if not _can_manage_contest(request, contest):
+                return Response({"error": "You do not have permission to delete this contest."}, status=403)
 
-        cursor.execute("DELETE FROM contests WHERE contest_id = %s", (contest_id,))
+            cursor.execute("DELETE FROM contests WHERE contest_id = %s", (contest_id,))
+        else:
+            cursor.execute(
+                "SELECT contest_id, title, created_by FROM drafts WHERE contest_id = %s",
+                (contest_id,),
+            )
+            draft = cursor.fetchone()
+            if not draft:
+                return Response({"error": "Contest not found"}, status=404)
+
+            if not _can_manage_contest(request, draft):
+                return Response({"error": "You do not have permission to delete this draft."}, status=403)
+
+            deleted_from = "drafts"
+            cursor.execute("DELETE FROM drafts WHERE contest_id = %s", (contest_id,))
+
         conn.commit()
         return Response(
-            {"message": "Contest deleted successfully (including problems, participants, and submissions)", "status": 200},
+            {
+                "message": (
+                    "Draft deleted successfully." if deleted_from == "drafts"
+                    else "Contest deleted successfully (including problems, participants, and submissions)"
+                ),
+                "status": 200,
+            },
             status=200,
         )
     except Exception as e:

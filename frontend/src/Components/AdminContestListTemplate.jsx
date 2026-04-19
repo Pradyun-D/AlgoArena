@@ -162,12 +162,14 @@ function AdminContestListTemplate({
       { withCredentials: true }
     );
 
-    // Remove from local state
     setContests((current) =>
       current.filter((c) => (c.contest_id || c.id) !== contestId)
     );
+    setDrafts((current) =>
+      current.filter((draft) => (draft.contest_id || draft.id) !== contestId)
+    );
 
-    setActionMessage("✅ Contest deleted permanently.");
+    setActionMessage(response.data?.message || "✅ Entry deleted permanently.");
     
   } catch (err) {
     console.error("Delete failed:", err.response?.data || err.message);

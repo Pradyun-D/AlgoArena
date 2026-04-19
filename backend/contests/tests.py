@@ -198,6 +198,36 @@ class DraftPersistenceTests(TestCase):
         )
 
     @patch("contests.views.get_connection")
+    def test_delete_contest_falls_back_to_drafts_table(self, get_connection_mock):
+        admin = self.user_model.objects.create_user(
+            username="admin_delete",
+            email="admindelete@algoarena.dev",
+            password="testpass123",
+            role="admin",
+            external_user_id=304,
+        )
+        self.client.force_authenticate(user=admin)
+
+        cursor = get_connection_mock.return_value.cursor.return_value
+        cursor.fetchone.side_effect = [
+            None,
+            {
+                "contest_id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+                "title": "Draft Delta",
+                "created_by": 304,
+            },
+        ]
+
+        response = self.client.delete("/contests/dddddddd-dddd-dddd-dddd-dddddddddddd/delete/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["message"], "Draft deleted successfully.")
+        cursor.execute.assert_any_call(
+            "DELETE FROM drafts WHERE contest_id = %s",
+            ("dddddddd-dddd-dddd-dddd-dddddddddddd",),
+        )
+
+    @patch("contests.views.get_connection")
     def test_create_contest_problem_returns_created_problem(self, get_connection_mock):
         setter = self.user_model.objects.create_user(
             username="problem_creator",

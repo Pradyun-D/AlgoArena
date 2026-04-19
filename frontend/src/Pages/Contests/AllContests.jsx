@@ -73,13 +73,18 @@ function ContestsPage() {
             if (allResponse.status === "fulfilled") {
                 allContests = Array.isArray(allResponse.value.data) ? allResponse.value.data : [];
             }
-
+            console.log ( allContests )
             // Use backend-provided status field instead of parsing dates
             const available = allContests
-                .filter(c => c.status === "Live" || c.status === "Draft")
+                .filter((c) => {
+                    const status = String(c.status || "").toLowerCase();
+                    return status === "live" || status === "scheduled";
+                })
                 .sort((a, b) => {
-                    if (a.status === "Live" && b.status !== "Live") return -1;
-                    if (a.status !== "Live" && b.status === "Live") return 1;
+                    const aIsLive = String(a.status || "").toLowerCase() === "live";
+                    const bIsLive = String(b.status || "").toLowerCase() === "live";
+                    if (aIsLive && !bIsLive) return -1;
+                    if (!aIsLive && bIsLive) return 1;
                     return new Date(a.start_time) - new Date(b.start_time);
                 });
 
