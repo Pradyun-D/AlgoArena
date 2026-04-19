@@ -11,8 +11,15 @@ import "../../Styles/new_problem.css";
 import "../../Styles/form.css";
 import "../../Styles/auth_pages.css";
 
+const generateTempId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'temp-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
 const createEmptyTestcase = () => ({
-  testcase_id: crypto.randomUUID(),
+  testcase_id: generateTempId(),
   input_data: "",
   output_data: "",
   is_hidden: true,
@@ -237,7 +244,7 @@ function ContestProblemManagerPage() {
 
         const createdProblem = response.data?.problem
           ? cloneProblem(response.data.problem)
-          : { ...cloneProblem(draftProblem), problem_id: crypto.randomUUID() };
+          : { ...cloneProblem(draftProblem), problem_id: generateTempId() };
 
         setProblems((current) => [...current, createdProblem]);
         setSelectedProblemId(createdProblem.problem_id);

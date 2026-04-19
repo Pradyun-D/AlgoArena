@@ -39,7 +39,7 @@ function ContestCard({ contest, contestBaseUrl }) {
         ? "Live Now"
         : isCompleted
             ? "Completed"
-            : formatDisplayText(contest.status || "Scheduled");
+            : "Scheduled";
     const previewDescription = contest.description || "Open the contest dashboard to view details, problems, leaderboard, and actions for this round.";
     const scheduleLabel = isLive
         ? "Ends"

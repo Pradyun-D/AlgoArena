@@ -133,7 +133,6 @@ def judge_submission(submission_id):
                 score_to_add, 
                 max_execution_time_ms, 
                 is_accepted,
-                # For ON DUPLICATE KEY UPDATE:
                 score_to_add,
                 is_accepted,
                 max_execution_time_ms,

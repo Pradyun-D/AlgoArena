@@ -1,4 +1,5 @@
 
+from django.db.models import CASCADE
 import mysql.connector
 import os
 from pathlib import Path
@@ -114,6 +115,7 @@ problem_queries = [
         );
         CREATE TABLE IF NOT EXISTS editorials(
             editorial_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+            created_by INT NULL,
             problem_id CHAR(36),
             content TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -272,8 +274,8 @@ draft_query = [
         contest_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        start_time TIMESTAMP,
-        end_time TIMESTAMP,
+        start_time TIMESTAMP NULL,
+        end_time TIMESTAMP NULL,
         visibility ENUM('public', 'private') DEFAULT 'public',
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -302,6 +304,30 @@ score_query = [
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE CASCADE,
     FOREIGN KEY (problem_id) REFERENCES problems(problem_id) ON DELETE CASCADE
     );
+    """
+]
+
+adding_cascade = [
+    """
+    Drop old FK
+    ALTER TABLE contest_participants 
+    DROP FOREIGN KEY fk_1;
+
+    Add new FK with CASCADE
+    ALTER TABLE contest_participants 
+    ADD CONSTRAINT fk_contest_participants_contest
+    FOREIGN KEY (contest_id) 
+    REFERENCES contests(contest_id) 
+    ON DELETE CASCADE;
+
+    ALTER TABLE Submissions 
+    DROP FOREIGN KEY fk_3;
+    
+    ALTER TABLE Submissions 
+    ADD CONSTRAINT fk_submissions_contest
+    FOREIGN KEY (contest_id) 
+    REFERENCES contests(contest_id) 
+    ON DELETE CASCADE;    
     """
 ]
 

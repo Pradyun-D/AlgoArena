@@ -262,6 +262,78 @@ def platform_metrics(request):
 			conn.close()
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def global_leaderboard(request):
+	conn = None
+	cursor = None
+	try:
+		conn = get_connection()
+		cursor = conn.cursor(dictionary=True)
+
+		cursor.execute(
+			"""
+			WITH ContestTotals AS (
+				SELECT contest_id, SUM(max_score) AS total_possible_score
+				FROM contest_problems
+				GROUP BY contest_id
+				HAVING SUM(max_score) > 0
+			),
+			UserScores AS (
+				SELECT user_id, contest_id, SUM(score) AS user_score
+				FROM contest_problem_scores
+				GROUP BY user_id, contest_id
+			),
+			UserContestPercentages AS (
+				SELECT 
+					u.user_id,
+					u.contest_id,
+					(u.user_score * 100.0 / ct.total_possible_score) AS score_percentage
+				FROM UserScores u
+				JOIN ContestTotals ct ON u.contest_id = ct.contest_id
+			),
+			UserAverages AS (
+				SELECT user_id, ROUND(AVG(score_percentage), 2) AS average_performance_score
+				FROM UserContestPercentages
+				GROUP BY user_id
+			)
+			SELECT 
+				u.user_id, 
+				u.username, 
+				p.full_name, 
+				p.avatar_url, 
+				COALESCE(ua.average_performance_score, 0) AS average_performance_score
+			FROM `user` u
+			LEFT JOIN UserAverages ua ON ua.user_id = u.user_id
+			LEFT JOIN profile p ON p.user_id = u.user_id
+			WHERE u.deleted_at IS NULL AND u.status = 'active'
+			ORDER BY ua.average_performance_score DESC, u.created_at ASC
+			"""
+		)
+		users = cursor.fetchall()
+
+		leaderboard = []
+		for idx, row in enumerate(users):
+			leaderboard.append({
+				"rank": idx + 1,
+				"user_id": row["user_id"],
+				"username": row["username"],
+				"full_name": row["full_name"],
+				"avatar_url": row["avatar_url"],
+				"average_performance_score": float(row["average_performance_score"])
+			})
+		
+		return Response({"leaderboard": leaderboard}, status=200)
+	except Exception as e:
+		return Response({"error": str(e)}, status=500)
+	finally:
+		if cursor is not None:
+			cursor.close()
+		if conn is not None and conn.is_connected():
+			conn.close()
+
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register_account(request):

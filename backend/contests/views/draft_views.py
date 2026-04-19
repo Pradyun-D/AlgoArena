@@ -9,10 +9,6 @@ from ._helpers import (
     _get_request_user_external_id,
     _parse_optional_datetime,
     _to_sql_datetime,
-    _extract_draft_problems,
-    _persist_draft_problems_as_contest_problems,
-    _attach_draft_problems,
-    _delete_draft_problems,
     _validate_publishable_draft,
 )
 
@@ -25,16 +21,10 @@ def list_drafts(request):
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT c.contest_id, c.title, c.description, c.start_time, c.end_time,
-                   c.visibility, c.created_by, c.created_at, c.updated_at,
-                   COALESCE((
-                       SELECT COUNT(*)
-                       FROM contest_problems cp
-                       WHERE cp.contest_id = c.contest_id
-                   ), 0) AS problem_count
-            FROM contests c
-            WHERE c.visibility = 'private'
-            ORDER BY c.updated_at DESC, c.created_at DESC
+            SELECT contest_id, title, description, start_time, end_time,
+                   visibility, created_by, created_at, updated_at
+            FROM drafts
+            ORDER BY updated_at DESC, created_at DESC
             """
         )
         return Response(cursor.fetchall(), status=200)
@@ -57,6 +47,9 @@ def create_draft(request):
     draft_payload = dict(request.data.get("contest", request.data) or {})
     title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
     description = str(draft_payload.get("description", "") or "").strip()
+    visibility = str(draft_payload.get("visibility", "public") or "public").strip()
+    if visibility not in ("public", "private"):
+        visibility = "public"
 
     try:
         start_time = _parse_optional_datetime(draft_payload.get("start_time"))
@@ -74,7 +67,7 @@ def create_draft(request):
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            INSERT INTO contests
+            INSERT INTO drafts
             (contest_id, title, description, start_time, end_time, visibility, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
@@ -84,30 +77,21 @@ def create_draft(request):
                 description,
                 _to_sql_datetime(start_time),
                 _to_sql_datetime(end_time),
-                "private",
+                visibility,
                 created_by,
             ),
         )
         conn.commit()
 
-        problems = _extract_draft_problems(draft_payload) or []
-        if problems:
-            _persist_draft_problems_as_contest_problems(
-                cursor, {"contest_id": contest_id, "created_by": created_by}, problems
-            )
-            conn.commit()
-
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM contests WHERE contest_id = %s LIMIT 1
+            FROM drafts WHERE contest_id = %s LIMIT 1
             """,
             (contest_id,),
         )
         draft = cursor.fetchone()
-        draft["problems"] = problems
-        draft["problem_count"] = len(problems)
         return Response({"message": "Draft saved successfully.", "draft": draft}, status=201)
     except Exception as e:
         if "conn" in locals() and conn:
@@ -132,15 +116,13 @@ def draft_detail(request, contest_id):
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM contests WHERE contest_id = %s LIMIT 1
+            FROM drafts WHERE contest_id = %s LIMIT 1
             """,
             (contest_id,),
         )
         draft = cursor.fetchone()
         if not draft:
             return Response({"error": "Draft not found."}, status=404)
-
-        draft = _attach_draft_problems(cursor, draft)
 
         if request.method == "GET":
             return Response({"draft": draft}, status=200)
@@ -149,6 +131,9 @@ def draft_detail(request, contest_id):
         draft_payload = dict(request.data.get("contest", request.data) or {})
         title = str(draft_payload.get("title", "") or "").strip() or "Untitled Draft"
         description = str(draft_payload.get("description", "") or "").strip()
+        visibility = str(draft_payload.get("visibility", draft.get("visibility", "public")) or "public").strip()
+        if visibility not in ("public", "private"):
+            visibility = "public"
 
         try:
             start_time = _parse_optional_datetime(draft_payload.get("start_time"))
@@ -161,34 +146,28 @@ def draft_detail(request, contest_id):
 
         cursor.execute(
             """
-            UPDATE contests
+            UPDATE drafts
             SET title = %s,
                 description = %s,
                 start_time = %s,
                 end_time = %s,
-                visibility = 'private',
+                visibility = %s,
                 updated_at = UTC_TIMESTAMP()
             WHERE contest_id = %s
             """,
-            (title, description, _to_sql_datetime(start_time), _to_sql_datetime(end_time), contest_id),
+            (title, description, _to_sql_datetime(start_time), _to_sql_datetime(end_time), visibility, contest_id),
         )
-
-        problems = _extract_draft_problems(draft_payload)
-        if problems is not None:
-            _delete_draft_problems(cursor, contest_id)
-            if problems:
-                _persist_draft_problems_as_contest_problems(cursor, draft, problems)
         conn.commit()
 
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM contests WHERE contest_id = %s LIMIT 1
+            FROM drafts WHERE contest_id = %s LIMIT 1
             """,
             (contest_id,),
         )
-        updated_draft = _attach_draft_problems(cursor, cursor.fetchone())
+        updated_draft = cursor.fetchone()
         return Response({"message": "Draft updated successfully.", "draft": updated_draft}, status=200)
     except Exception as e:
         if "conn" in locals() and conn:
@@ -209,11 +188,13 @@ def publish_draft(request, contest_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        # Fetch from drafts table
         cursor.execute(
             """
             SELECT contest_id, title, description, start_time, end_time, visibility,
                    created_by, created_at, updated_at
-            FROM contests WHERE contest_id = %s LIMIT 1
+            FROM drafts WHERE contest_id = %s LIMIT 1
             """,
             (contest_id,),
         )
@@ -221,38 +202,51 @@ def publish_draft(request, contest_id):
         if not draft:
             return Response({"error": "Draft not found."}, status=404)
 
+        # Validate (problem_count not required since problems added via editor post-publish)
+        title = str(draft.get("title") or "").strip()
+        description = str(draft.get("description") or "").strip()
+        start_time = draft.get("start_time")
+        end_time = draft.get("end_time")
+
+        if not title or title == "Untitled Draft":
+            return Response({"error": "Add a real contest title before publishing this draft."}, status=400)
+        if not description:
+            return Response({"error": "Add a contest description before publishing this draft."}, status=400)
+        if start_time is None or end_time is None:
+            return Response({"error": "Set both start and end time before publishing this draft."}, status=400)
+        if start_time >= end_time:
+            return Response({"error": "End time must occur after start time."}, status=400)
+
+        # Generate a new contest_id for the published contest
+        new_contest_id = str(uuid.uuid4())
+
+        # Insert into contests table as public
         cursor.execute(
             """
-            SELECT COUNT(*) AS problem_count
-            FROM contest_problems
-            WHERE contest_id = %s
+            INSERT INTO contests
+            (contest_id, title, description, start_time, end_time, visibility, created_by)
+            VALUES (%s, %s, %s, %s, %s, 'public', %s)
             """,
-            (contest_id,),
+            (
+                new_contest_id,
+                draft["title"],
+                draft["description"],
+                draft["start_time"],
+                draft["end_time"],
+                draft["created_by"],
+            ),
         )
-        problem_count_row = cursor.fetchone() or {}
-        draft["problem_count"] = int(problem_count_row.get("problem_count") or 0)
 
-        publish_error = _validate_publishable_draft(draft)
-        if publish_error:
-            return Response({"error": publish_error}, status=400)
-
-        cursor.execute(
-            """
-            UPDATE contests
-            SET visibility = 'public', updated_at = UTC_TIMESTAMP()
-            WHERE contest_id = %s
-            """,
-            (contest_id,),
-        )
+        # Delete from drafts table
+        cursor.execute("DELETE FROM drafts WHERE contest_id = %s", (contest_id,))
         conn.commit()
 
         cursor.execute(
             """
-            SELECT contest_id, title, description, start_time, end_time, visibility,
-                   created_by, created_at
+            SELECT contest_id, title, description, start_time, end_time, visibility, created_at
             FROM contests WHERE contest_id = %s LIMIT 1
             """,
-            (contest_id,),
+            (new_contest_id,),
         )
         return Response(
             {"message": "Draft published successfully.", "contest": cursor.fetchone()},

@@ -15,7 +15,7 @@ const PAGE_SIZE = 10;
 
 const statusClassMap = {
   Live: "status-live",
-  Draft: "status-draft",
+  Scheduled: "status-draft",
   Completed: "status-completed",
 };
 
@@ -36,7 +36,7 @@ const formatAdminDate = (value) => {
 
 const getContestStatus = (startTime, endTime, visibility) => {
   if (visibility === "private") {
-    return "Draft";
+    return "Scheduled";
   }
 
   const now = Date.now();
@@ -44,11 +44,11 @@ const getContestStatus = (startTime, endTime, visibility) => {
   const end = parseContestTime(endTime);
 
   if (Number.isNaN(start) || Number.isNaN(end)) {
-    return "Draft";
+    return "Scheduled";
   }
 
   if (now < start) {
-    return "Draft";
+    return "Scheduled";
   }
 
   if (now >= end) {
@@ -74,6 +74,7 @@ function AdminContestListTemplate({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [contests, setContests] = useState([]);
+  const [drafts, setDrafts] = useState([]);
   const [actionMessage, setActionMessage] = useState("");
   const [deletingContestId, setDeletingContestId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,8 +97,12 @@ function AdminContestListTemplate({
         setLoading(true);
       }
       setError("");
-      const response = await axios.get(fetchUrl, { withCredentials: true });
-      setContests(Array.isArray(response.data) ? response.data : []);
+      const [contestsRes, draftsRes] = await Promise.allSettled([
+        axios.get(fetchUrl, { withCredentials: true }),
+        axios.get(fetchUrl.replace(/\/contests\/$/, "/contests/drafts/").replace(/\/contests$/, "/contests/drafts/"), { withCredentials: true }),
+      ]);
+      setContests(contestsRes.status === "fulfilled" && Array.isArray(contestsRes.value.data) ? contestsRes.value.data : []);
+      setDrafts(draftsRes.status === "fulfilled" && Array.isArray(draftsRes.value.data) ? draftsRes.value.data : []);
       setCurrentPage(1);
     } catch (err) {
       setError(
@@ -203,6 +208,17 @@ function AdminContestListTemplate({
     };
   });
 
+  const normalizedDrafts = drafts.map((draft) => ({
+    id: draft.contest_id || "N/A",
+    title: draft.title || "Untitled Draft",
+    visibility: draft.visibility || "public",
+    start: formatAdminDate(draft.start_time),
+    end: formatAdminDate(draft.end_time),
+    rawStartTime: parseContestTime(draft.start_time),
+    registrants: "—",
+    status: "Draft",
+  }));
+
   const dashboardMetrics = [
     {
       label: "Active Contests",
@@ -223,18 +239,18 @@ function AdminContestListTemplate({
 
   const insightCards = [
     {
-      eyebrow: "Draft Queue",
-      value: normalizedContests.filter((contest) => contest.status === "Draft").length.toLocaleString("en-IN"),
+      eyebrow: "Scheduled Queue",
+      value: normalizedContests.filter((contest) => contest.status === "Scheduled").length.toLocaleString("en-IN"),
       caption: "Rounds still pending publication",
       accent: "event",
       icon: "pending_actions",
     },
     {
-      eyebrow: "Public Contests",
-      value: normalizedContests.filter((contest) => contest.visibility !== "private").length.toLocaleString("en-IN"),
-      caption: "Visible across the arena",
+      eyebrow: "Saved Drafts",
+      value: drafts.length.toLocaleString("en-IN"),
+      caption: "Unpublished contest drafts",
       accent: "trend",
-      icon: "public",
+      icon: "draft",
     },
     {
       eyebrow: "Registrations",
@@ -247,13 +263,15 @@ function AdminContestListTemplate({
     },
   ];
 
-  const filteredContests = normalizedContests.filter((contest) => {
+  const sourceRows = statusFilter === "Drafts" ? normalizedDrafts : normalizedContests;
+
+  const filteredContests = sourceRows.filter((contest) => {
     const matchesSearch =
       contest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(contest.id).toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "All" || contest.status === statusFilter;
+      statusFilter === "All" || statusFilter === "Drafts" || contest.status === statusFilter;
 
     let matchesDate = true;
 
@@ -397,7 +415,8 @@ function AdminContestListTemplate({
                   <option value="All">Status: All</option>
                   <option value="Live">Live</option>
                   <option value="Completed">Completed</option>
-                  <option value="Draft">Draft</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Drafts">Drafts</option>
                 </select>
 
                 <label

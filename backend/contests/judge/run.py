@@ -1,6 +1,15 @@
 import requests
+import os
+import environ
+from pathlib import Path
 
-API_URL = "http://192.168.1.3:2358/submissions"  # update IP if VM address changes
+# Load environment variable if running standalone
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    environ.Env.read_env(env_file)
+
+API_URL = os.environ.get("JUDGE_API_URL", "http://192.168.1.4:2358/submissions")  # update IP if VM address changes
 
 def run_test(test_name, source_code, language_id, stdin=""):
     print(f"\n[{test_name}]")

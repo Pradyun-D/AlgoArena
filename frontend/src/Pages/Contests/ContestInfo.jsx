@@ -181,7 +181,7 @@ function ContestPage() {
 
   const navLinks = [
       { label: "Overview", to: `/contest/${contestId}/`, active: true },
-      { label: "Leaderboard", to: `/contest/${contestId}/leaderboard`, active: false },
+      { label: "Contest Leaderboard", to: `/contest/${contestId}/leaderboard`, active: false },
       { label: "My Submissions", to: "/submissions", active: false },
   ];
 

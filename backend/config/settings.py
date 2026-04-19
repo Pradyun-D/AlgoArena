@@ -100,6 +100,12 @@ LOCAL_FRONTEND_ORIGINS = [
     'http://192.168.1.2:5173',
 ]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://192\.168\..*",
+    r"^http://10\..*",
+    r"^http://localhost.*",
+    r"^http://127\.0\.0\.1.*",
+]
 CORS_ALLOWED_ORIGINS = LOCAL_FRONTEND_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = LOCAL_FRONTEND_ORIGINS

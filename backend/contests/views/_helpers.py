@@ -399,8 +399,7 @@ def _get_contests_data(user_id=None, include_private=False):
                 created_by,
                 created_at,
                 CASE
-                    WHEN visibility = 'private' THEN 'Draft'
-                    WHEN start_time > UTC_TIMESTAMP() THEN 'Draft'
+                    WHEN start_time > UTC_TIMESTAMP() THEN 'Scheduled'
                     WHEN end_time <= UTC_TIMESTAMP() THEN 'Completed'
                     ELSE 'Live'
                 END AS status,

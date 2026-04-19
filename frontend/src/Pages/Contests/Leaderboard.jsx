@@ -62,7 +62,7 @@ function Leaderboard() {
 
     const navLinks = [
         { label: "Overview", to: `/contest/${contestId}/`, active: false },
-        { label: "Leaderboard", to: `/contest/${contestId}/leaderboard`, active: true },
+        { label: "Contest Leaderboard", to: `/contest/${contestId}/leaderboard`, active: true },
         { label: "My Submissions", to: "/submissions", active: false },
     ];
 

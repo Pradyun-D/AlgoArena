@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/logout/', views.logout_account, name='logout_account_api'),
     path('api/platform-metrics/', views.platform_metrics, name='platform_metrics_api'),
     path('api/profile/<str:user_uuid>/', views.profile_detail, name='profile_detail_api'),
+    path('api/leaderboard/', views.global_leaderboard, name='global_leaderboard_api'),
 ]

@@ -13,33 +13,33 @@ import { fetchSessionUser } from "../../Utils/session_auth";
 
 // ── variants ────────────────────────────────────────────────
 const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
-  show:   { opacity: 1, y: 0  },
+    hidden: { opacity: 0, y: 22 },
+    show: { opacity: 1, y: 0 },
 };
 
 const cardStagger = {
-  hidden: {},
-  show:   { transition: { staggerChildren: 0.07 } },
+    hidden: {},
+    show: { transition: { staggerChildren: 0.07 } },
 };
 
 // animated metric counter
 function AnimatedMetric({ value, formatter }) {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    if (!value) return;
-    const steps = 40;
-    const increment = value / steps;
-    let current = 0;
-    let frame = 0;
-    const tick = () => {
-      frame++;
-      current = Math.min(Math.round(increment * frame), value);
-      setDisplay(current);
-      if (current < value) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [value]);
-  return <>{formatter(display)}</>;
+    const [display, setDisplay] = useState(0);
+    useEffect(() => {
+        if (!value) return;
+        const steps = 40;
+        const increment = value / steps;
+        let current = 0;
+        let frame = 0;
+        const tick = () => {
+            frame++;
+            current = Math.min(Math.round(increment * frame), value);
+            setDisplay(current);
+            if (current < value) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+    }, [value]);
+    return <>{formatter(display)}</>;
 }
 
 function ContestsPage() {
@@ -57,23 +57,21 @@ function ContestsPage() {
     const [error, setError] = useState("");
 
     const contestBaseUrl = "/contest/";
-    const leaderboardUrl = availableContests.length > 0
-        ? `/leaderboard/${availableContests[0].contest_id}/`
-        : "/contests";
+    const leaderboardUrl = "/leaderboard";
 
     const loadContests = async () => {
         try {
             setLoading(true);
             setError("");
 
-           const [allResponse, metricsResponse] = await Promise.allSettled([
-            axios.get(`${API_BASE_URL}/contests/`),
-            axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`),
-              ]);
+            const [allResponse, metricsResponse] = await Promise.allSettled([
+                axios.get(`${API_BASE_URL}/contests/`),
+                axios.get(`${API_BASE_URL}/accounts/api/platform-metrics/`),
+            ]);
 
             let allContests = [];
-              if (allResponse.status === "fulfilled") {
-            allContests = Array.isArray(allResponse.value.data) ? allResponse.value.data : [];
+            if (allResponse.status === "fulfilled") {
+                allContests = Array.isArray(allResponse.value.data) ? allResponse.value.data : [];
             }
 
             // Use backend-provided status field instead of parsing dates
@@ -89,8 +87,8 @@ function ContestsPage() {
                 .filter(c => c.status === "Completed")
                 .sort((a, b) => new Date(b.end_time) - new Date(a.end_time));
 
-             setAvailableContests(available);
-             setPastContests(past);
+            setAvailableContests(available);
+            setPastContests(past);
 
             if (metricsResponse.status === "fulfilled") {
                 setPlatformMetrics({
@@ -172,7 +170,7 @@ function ContestsPage() {
     const formatMetric = (value) => new Intl.NumberFormat("en-IN").format(Number(value) || 0);
     const navLinks = [
         { label: "Contests", to: "/contests", active: true },
-        { label: "Leaderboard", to: leaderboardUrl, active: false },
+        { label: "Global Leaderboard", to: leaderboardUrl, active: false },
         { label: "My Submissions", to: "/submissions", active: false },
     ];
 
@@ -186,7 +184,7 @@ function ContestsPage() {
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 <div className="md:col-span-9 space-y-12">
 
-               
+
                     <motion.section
                         className="space-y-2"
                         initial={{ opacity: 0, y: 20 }}
@@ -223,7 +221,7 @@ function ContestsPage() {
                         ) : null}
                     </motion.section>
 
-              
+
                     <motion.section
                         className="space-y-4"
                         initial={{ opacity: 0, y: 16 }}
@@ -303,7 +301,7 @@ function ContestsPage() {
                     </motion.section>
                 </div>
 
-         
+
                 <motion.aside
                     className="md:col-span-3 sidebar-shell space-y-6"
                     initial={{ opacity: 0, x: 24 }}

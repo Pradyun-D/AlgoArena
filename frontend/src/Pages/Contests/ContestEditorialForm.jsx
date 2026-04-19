@@ -176,8 +176,8 @@ function ContestEditorialFormPage() {
 
   // ── nav ────────────────────────────────────────────────────────────────────
   const navLinks = [
-    { label: "Overview",    to: `/contest/${contestId}/`,               active: false },
-    { label: "Leaderboard", to: `/contest/${contestId}/leaderboard`,    active: false },
+    { label: "Overview",          to: `/contest/${contestId}/`,               active: false },
+    { label: "Contest Leaderboard", to: `/contest/${contestId}/leaderboard`,    active: false },
   ];
 
   // ── guards ─────────────────────────────────────────────────────────────────
