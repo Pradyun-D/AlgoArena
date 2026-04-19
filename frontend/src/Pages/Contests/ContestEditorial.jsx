@@ -20,7 +20,6 @@ import {
   parseSafeUTCDate 
 } from "../../Utils/editorial_helper";
 
-
 // ── COMPONENT ────────────────────────────────────────────────────────────────
 function ContestEditorialPage() {
   const { contestId, problemId } = useParams();
@@ -33,7 +32,8 @@ function ContestEditorialPage() {
   const [loading,    setLoading]   = useState(true);
   const [error,      setError]     = useState("");
   const [remaining,  setRemaining] = useState(0);
-
+  const [refetchKey, setRefetchKey] = useState(0);
+  console.log(authUser)
   const isPrivileged = Boolean(
     authUser && ["problem_setter", "admin"].includes(authUser.role)
   );
@@ -56,9 +56,7 @@ function ContestEditorialPage() {
       }
     };
     sync();
-    const onVisibility = () => { if (document.visibilityState === "visible") sync(); };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => { mounted = false; document.removeEventListener("visibilitychange", onVisibility); };
+    return () => { mounted = false; };
   }, []);
 
   // ── fetch problem info + editorial ─────────────────────────────────────────
@@ -86,8 +84,6 @@ function ContestEditorialPage() {
         const ended = !isNaN(endMs) && endMs <= Date.now();
         const privUser = Boolean(authUser && ["problem_setter", "admin"].includes(authUser.role));
 
-        console.log("[Editorial] end_time=", contestData?.end_time, "| ended=", ended, "| privUser=", privUser);
-
         if (ended || privUser) {
           try {
             const editRes = await axios.get(
@@ -109,8 +105,6 @@ function ContestEditorialPage() {
           setError(err.response?.data?.error || err.message || "Failed to load page.");
         }
       } finally {
-        // Only clear loading if this request wasn't cancelled by React cleanup.
-        // The live (second) mount will handle setLoading(false) itself.
         if (!controller.signal.aborted) {
           setLoading(false);
         }
@@ -119,7 +113,7 @@ function ContestEditorialPage() {
 
     load();
     return () => controller.abort();
-  }, [contestId, problemId]); // ← no isPrivileged dep: authUser is read directly inside load()
+  }, [contestId, problemId, authUser, refetchKey]);
 
   // ── live countdown ticker (only while contest is still running) ────────────
   useEffect(() => {
@@ -133,14 +127,12 @@ function ContestEditorialPage() {
       const diff = endMs - Date.now();
       setRemaining(Math.max(0, diff));
       if (diff <= 0) {
-        window.location.reload();
+        setRefetchKey((k) => k + 1);
       }
     };
     
-    // Initial run
     tick();
 
-    // Only set up interval if we didn't just reload
     if (endMs > Date.now()) {
       const timer = setInterval(tick, 1000);
       return () => clearInterval(timer);
@@ -216,6 +208,7 @@ function ContestEditorialPage() {
       </main>
     </div>
   );
+  console.log("contestId:", contestId, "problemId:", problemId, "isPrivileged:", isPrivileged);
 
   return (
     <div className="editorial-page">
@@ -277,7 +270,8 @@ function ContestEditorialPage() {
           </div>
 
           <AnimatePresence>
-            {isPrivileged && (
+            {/* THIS BUTTON ONLY SHOWS IF AN EDITORIAL ALREADY EXISTS */}
+            {isPrivileged && editorial && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -286,7 +280,7 @@ function ContestEditorialPage() {
               >
                 <Link to={`/contest/${contestId}/problems/${problemId}/editorial/edit`} className="editorial-edit-btn">
                   <span className="material-symbols-outlined">edit</span>
-                  {editorial ? "Edit Editorial" : "Write Editorial"}
+                  Edit Editorial
                 </Link>
               </motion.div>
             )}
@@ -328,11 +322,20 @@ function ContestEditorialPage() {
                 The editorial for this problem hasn&apos;t been published yet.
                 Check back after the contest ends.
               </p>
+              
+              {/* THE WORKING BUTTON MOVED TO THE CENTER */}
               {isPrivileged && (
-                <Link to={`/contest/${contestId}/problems/${problemId}/editorial/edit`} className="editorial-empty__cta">
-                  <span className="material-symbols-outlined" style={{ fontSize: "0.9rem" }}>add</span>
-                  Write Editorial
-                </Link>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2, delay: 0.2 }}
+                  style={{ marginTop: "1.5rem" }}
+                >
+                  <Link to={`/contest/${contestId}/problems/${problemId}/editorial/edit`} className="editorial-edit-btn">
+                    <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>add</span>
+                    Write Editorial
+                  </Link>
+                </motion.div>
               )}
             </motion.div>
           )}
