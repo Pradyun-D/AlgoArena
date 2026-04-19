@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.db import IntegrityError
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -173,7 +174,19 @@ def sync_django_user_from_external_row(row):
     if django_user is None:
         django_user = User(email=email)
 
-    django_user.username = row.get("username") or django_user.username or email
+    desired_username = row.get("username") or django_user.username or email or f"user-{external_user_id}"
+    if not desired_username:
+        desired_username = f"user-{external_user_id or external_uuid or 'account'}"
+
+    existing_username_user = User.objects.filter(username=desired_username)
+    if django_user.pk:
+        existing_username_user = existing_username_user.exclude(pk=django_user.pk)
+
+    if existing_username_user.exists():
+        suffix = external_user_id or (external_uuid[:8] if external_uuid else None) or "account"
+        desired_username = f"{desired_username}-{suffix}"
+
+    django_user.username = desired_username
     django_user.email = email
     role_name = row.get("role_name") or "user"
     django_user.role = "user" if role_name == "participant" else role_name
@@ -188,7 +201,12 @@ def sync_django_user_from_external_row(row):
     if password_hash and django_user.password != password_hash:
         django_user.password = password_hash
 
-    django_user.save()
+    try:
+        django_user.save()
+    except IntegrityError:
+        fallback_suffix = external_user_id or (external_uuid[:8] if external_uuid else None) or "account"
+        django_user.username = f"user-{fallback_suffix}"
+        django_user.save()
     _sync_django_role_group(django_user)
     return django_user
 
@@ -258,5 +276,4 @@ def clear_auth_cookies(response):
         secure=secure,
     )
     return response
-
 
