@@ -312,12 +312,6 @@ void main() {
   },
 ];
 
-const FALLBACK_CONSOLE_LINES = [
-  "Judge connection is not wired yet.",
-  "Use Run for the mock console view.",
-  "Use Submit to create a submission entry only.",
-];
-
 const getLanguagePreset = (languageName) =>
   LANGUAGE_PRESETS.find((preset) => preset.match(languageName || "")) || { monacoLanguage: "plaintext", starterCode: "" };
 
@@ -340,6 +334,24 @@ const getSubmissionTone = (submission) => {
     return "is-error"; // Red
   }
   return "is-warning"; // Orange
+};
+
+const getRunResultTone = (result) => {
+  const verdict = String(result?.verdict || "").toLowerCase();
+  if (verdict === "passed") {
+    return "is-complete";
+  }
+  if (
+    verdict === "failed" ||
+    verdict === "wrong answer" ||
+    verdict === "runtime error" ||
+    verdict === "compilation error" ||
+    verdict === "time limit exceeded" ||
+    verdict === "memory limit exceeded"
+  ) {
+    return "is-error";
+  }
+  return "is-warning";
 };
 
 const formatDateTime = (value) => {
@@ -371,10 +383,11 @@ function ProblemSolvingPage() {
   const [selectedLanguageId, setSelectedLanguageId] = useState("");
   const [sourceCode, setSourceCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [running, setRunning] = useState(false);
+  const [runningTests, setRunningTests] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [testCaseResults, setTestCaseResults] = useState([]);
   const [activePanel, setActivePanel] = useState("submissions");
-  const [consoleLines, setConsoleLines] = useState(FALLBACK_CONSOLE_LINES);
+  const [runSummary, setRunSummary] = useState("");
   const [bannerMessage, setBannerMessage] = useState("");
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -439,6 +452,8 @@ function ProblemSolvingPage() {
     const nextLanguage = languages.find((l) => String(l.language_id) === String(nextLanguageId));
     setSelectedLanguageId(nextLanguageId);
     setBannerMessage("");
+    setRunSummary("");
+    setTestCaseResults([]);
     if (nextLanguage) setSourceCode(getLanguagePreset(nextLanguage.name).starterCode);
   };
 
@@ -451,27 +466,43 @@ function ProblemSolvingPage() {
 
   const handleRun = async () => {
     if (!selectedLanguage || !sourceCode.trim()) {
-      setBannerMessage("Choose a language and enter some code before running.");
+      setBannerMessage("Choose a language and enter some code before running the visible test cases.");
       return;
     }
-    setRunning(true);
-    setBannerMessage("");
-    
-    // Simulate execution delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    setActivePanel("console");
-    setBannerMessage("Mock run opened. Execution is not connected yet.");
-    setConsoleLines((current) => [
-      `[${new Date().toLocaleTimeString("en-IN")}] Mock run started for ${selectedLanguage?.name || "the selected language"}.`,
-      "No compile or execution step has been wired yet.",
-      ...current,
-    ]);
-    
-    setRunning(false);
-    setTimeout(() => {
-      bottomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+
+    try {
+      setRunningTests(true);
+      setBannerMessage("");
+      setActivePanel("results");
+      setRunSummary("");
+      setTestCaseResults([]);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/contests/${contestId}/problems/${problemId}/run`,
+        {
+          language_id: Number(selectedLanguage.language_id),
+          language_name: selectedLanguage.name,
+          source_code: sourceCode,
+        },
+        { withCredentials: true }
+      );
+
+      const runData = response.data?.data || {};
+      const results = Array.isArray(runData.results) ? runData.results : [];
+      setTestCaseResults(results);
+      setRunSummary(
+        results.length > 0
+          ? `${runData.passed_cases || 0}/${runData.total_cases || results.length} visible testcase(s) passed.`
+          : "No visible testcases were available for this problem."
+      );
+      setBannerMessage("Visible test cases executed successfully.");
+    } catch (err) {
+      setRunSummary("");
+      setTestCaseResults([]);
+      setBannerMessage(err.response?.data?.error || err.message || "Unable to run the visible test cases right now.");
+    } finally {
+      setRunningTests(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -488,11 +519,6 @@ function ProblemSolvingPage() {
       );
       const newSubmission = response.data?.data;
       if (newSubmission) setSubmissions((current) => [newSubmission, ...current]);
-      setConsoleLines((current) => [
-        `[${new Date().toLocaleTimeString("en-IN")}] Submission queued for ${selectedLanguage.name}.`,
-        "Submission sent to the judge. Status will update shortly.",
-        ...current,
-      ]);
       setBannerMessage("Submission added to the list.");
       setTimeout(() => {
         bottomPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -512,7 +538,7 @@ function ProblemSolvingPage() {
   return (
     <div className="solve-page-shell">
       <AnimatePresence>
-        {(submitting || running) && (
+        {(submitting || runningTests) && (
           <motion.div
             className="solve-submitting-overlay"
             initial={{ opacity: 0 }}
@@ -522,7 +548,7 @@ function ProblemSolvingPage() {
             <div className="solve-submitting-content">
               <div className="solve-spinner"></div>
               <h2>{submitting ? "Waiting in queue..." : "Executing code..."}</h2>
-              <p>{submitting ? "Sending your submission to the judge" : "Running your mock execution environment"}</p>
+              <p>{submitting ? "Sending your submission to the judge" : "Running the visible test cases"}</p>
             </div>
           </motion.div>
         )}
@@ -672,12 +698,12 @@ function ProblemSolvingPage() {
                     type="button"
                     className="solve-ghost-button"
                     onClick={handleRun}
-                    disabled={running}
-                    whileHover={{ scale: running ? 1 : 1.04 }}
-                    whileTap={{ scale: running ? 1 : 0.95 }}
+                    disabled={runningTests}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 20 }}
                   >
-                    {running ? "Running..." : "Run"}
+                    {runningTests ? "Running..." : "Run"}
                   </motion.button>
 
                   {/* Submit button — press + shimmer via CSS */}
@@ -724,7 +750,7 @@ function ProblemSolvingPage() {
           {/* ── Bottom panel ── */}
           <section className="solve-bottom-panel" ref={bottomPanelRef}>
             <div className="solve-bottom-panel__tabs">
-              {["submissions", "tests", "console"].map((tab) => (
+              {["submissions", "tests", "results"].map((tab) => (
                 <motion.button
                   key={tab}
                   type="button"
@@ -734,7 +760,7 @@ function ProblemSolvingPage() {
                   whileTap={{ scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 >
-                  {tab === "submissions" ? "Submissions" : tab === "tests" ? "Visible Tests" : "Console"}
+                  {tab === "submissions" ? "Submissions" : tab === "tests" ? "Visible Tests" : "Test Case Results"}
                 </motion.button>
               ))}
             </div>
@@ -816,9 +842,43 @@ function ProblemSolvingPage() {
               </div>
             )}
 
-            {activePanel === "console" && (
-              <div className="solve-console">
-                {consoleLines.map((line, index) => <div key={`${line}-${index}`}>{line}</div>)}
+            {activePanel === "results" && (
+              <div className="solve-results-panel">
+                <div className="solve-results-summary">
+                  {runSummary || "Run the code to see visible testcase results here."}
+                </div>
+                {testCaseResults.length === 0 ? (
+                  <div className="solve-empty-state">Run the code to populate the test case results table.</div>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table className="cf-submissions-table">
+                      <thead>
+                        <tr>
+                          <th>Case</th>
+                          <th>Verdict</th>
+                          <th>Time</th>
+                          <th>Memory</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {testCaseResults.map((result) => (
+                          <tr key={result.testcase_id}>
+                            <td>
+                              <div className="cf-submissions-when">
+                                {formatDisplayText(result.case_label || "Sample")}
+                              </div>
+                            </td>
+                            <td className={`cf-submissions-verdict ${getRunResultTone(result)}`}>
+                              {formatDisplayText(result.verdict || "Pending")}
+                            </td>
+                            <td>{result.execution_time_ms || 0} ms</td>
+                            <td>{result.memory_used_kb || 0} KB</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </section>

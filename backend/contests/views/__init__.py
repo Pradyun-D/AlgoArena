@@ -31,6 +31,7 @@ from .problem_views import (
 from .submission_views import (
     submit_solution,
     create_problem_submission,
+    run_visible_testcases,
     my_submissions,
     get_submission,
 )

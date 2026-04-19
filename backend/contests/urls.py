@@ -24,6 +24,7 @@ urlpatterns = [
     path('<uuid:contest_id>/problems/create', views.create_contest_problem, name='create_contest_problem'),
     path('<uuid:contest_id>/problems/<uuid:problem_id>/solve', views.get_problem_solving_data, name='get_problem_solving_data'),
     path('<uuid:contest_id>/problems/<uuid:problem_id>/update', views.update_contest_problem, name='update_contest_problem'),
+    path('<uuid:contest_id>/problems/<uuid:problem_id>/run', views.run_visible_testcases, name='run_visible_testcases'),
     path('<uuid:contest_id>/problems/<uuid:problem_id>/submit', views.submit_solution, name='submit_solution'),
 
     path('submissions/', views.my_submissions, name='my_submissions'),

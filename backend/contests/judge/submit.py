@@ -2,7 +2,7 @@ import logging
 from db import get_connection
 from .run import run_test
 
-def judge_submission(submission_id):
+def judge_submission(submission_id, only_visible_testcases=False, update_contest_scores=True, return_details=False):
     connection = None
     cursor = None
     try:
@@ -30,13 +30,23 @@ def judge_submission(submission_id):
         connection.commit()
 
         # fetch test cases
-        cursor.execute("SELECT * FROM TestCases WHERE problem_id = %s", (submission["problem_id"],))
+        if only_visible_testcases:
+            cursor.execute(
+                "SELECT * FROM TestCases WHERE problem_id = %s AND is_sample = TRUE ORDER BY created_at ASC",
+                (submission["problem_id"],),
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM TestCases WHERE problem_id = %s ORDER BY created_at ASC",
+                (submission["problem_id"],),
+            )
         test_cases = cursor.fetchall()
         
         accepted = True
         verdict = "Accepted"
         max_execution_time_ms = 0
         max_memory_used_kb = 0
+        case_results = []
 
         for test_case in test_cases:
             try:
@@ -52,12 +62,11 @@ def judge_submission(submission_id):
                 if result is None:
                     raise RuntimeError("No response from judge VM (connection failed)")
 
+                stdout = result.get('stdout') or ""
+                expected_output = test_case.get("expected_output", "")
                 status_id = result.get('status', {}).get('id')
                 
                 if status_id == 3: # Successful execution
-                    stdout = result.get('stdout') or ""
-                    expected_output = test_case.get("expected_output", "")
-                    
                     # compare output
                     if stdout.strip() == expected_output.strip():
                         judge_verdict = "Passed"
@@ -87,6 +96,17 @@ def judge_submission(submission_id):
                     INSERT INTO SubmissionResults(submission_id, test_case_id, verdict, execution_time_ms, memory_used_kb)
                     VALUES(%s, %s, %s, %s, %s)
                 """, (submission_id, test_case["testcase_id"], judge_verdict, execution_time_ms, memory_used_kb))
+
+                case_results.append({
+                    "testcase_id": str(test_case["testcase_id"]),
+                    "verdict": judge_verdict,
+                    "execution_time_ms": execution_time_ms,
+                    "memory_used_kb": memory_used_kb,
+                    "stdout": stdout,
+                    "stderr": result.get("stderr") or "",
+                    "input_data": test_case.get("input", ""),
+                    "expected_output": expected_output,
+                })
             
                 if not accepted:
                     break
@@ -101,6 +121,16 @@ def judge_submission(submission_id):
                     INSERT INTO SubmissionResults(submission_id, test_case_id, verdict, execution_time_ms, memory_used_kb)
                     VALUES(%s, %s, %s, %s, %s)
                 """, (submission_id, test_case.get("testcase_id"), "Runtime Error", 0, 0))
+                case_results.append({
+                    "testcase_id": str(test_case.get("testcase_id")),
+                    "verdict": "Runtime Error",
+                    "execution_time_ms": 0,
+                    "memory_used_kb": 0,
+                    "stdout": "",
+                    "stderr": str(tc_error),
+                    "input_data": test_case.get("input", ""),
+                    "expected_output": test_case.get("expected_output", ""),
+                })
                 break
 
         # update submission status and verdict
@@ -112,7 +142,7 @@ def judge_submission(submission_id):
         """, (verdict, max_execution_time_ms, max_memory_used_kb, submission_id))
         
         # update contest_problem_scores table if part of a contest
-        if submission.get("contest_id") and submission.get("user_id"):
+        if update_contest_scores and submission.get("contest_id") and submission.get("user_id"):
             is_accepted = (verdict == "Accepted")
             max_score = submission.get("max_score")
             score_to_add = max_score if (max_score and is_accepted) else 0
@@ -162,3 +192,15 @@ def judge_submission(submission_id):
             cursor.close()
         if connection:
             connection.close()
+
+    if return_details:
+        return {
+            "submission_id": submission_id,
+            "verdict": verdict,
+            "status": "Completed",
+            "execution_time_ms": max_execution_time_ms,
+            "memory_used_kb": max_memory_used_kb,
+            "passed_cases": sum(1 for result in case_results if result.get("verdict") == "Passed"),
+            "total_cases": len(case_results),
+            "results": case_results,
+        }

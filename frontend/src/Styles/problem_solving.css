@@ -412,6 +412,11 @@ body.light-mode .solve-language-picker select option {
   color: var(--on-background);
 }
 
+.solve-ghost-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .solve-primary-button {
   background: linear-gradient(135deg, #6bfe9c 0%, #84adff 100%);
   color: #021015;
@@ -484,6 +489,22 @@ body.light-mode .solve-language-picker select option {
   padding: 1rem;
 }
 
+.solve-results-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.solve-results-summary {
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--on-surface-variant);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .solve-submission-list {
   overflow: visible;
 }
@@ -533,6 +554,13 @@ body.light-mode .solve-language-picker select option {
   line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.solve-results-pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+  min-width: 140px;
 }
 
 .solve-empty-state {
@@ -707,7 +735,7 @@ body.light-mode .solve-empty-state,
 body.light-mode .solve-editor-toolbar,
 body.light-mode .solve-bottom-panel__tabs button,
 body.light-mode .solve-banner-message,
-body.light-mode .solve-submitting-content {
+body.light-mode .solve-results-summary {
   border-color: rgba(204, 213, 225, 0.9);
   background: rgba(255, 255, 255, 0.78);
   color: var(--on-background);
@@ -736,6 +764,7 @@ body.light-mode .solve-panel-stats div,
 body.light-mode .solve-sample-note,
 body.light-mode .solve-submission-card__main p,
 body.light-mode .solve-submission-card__meta,
+body.light-mode .solve-results-summary,
 body.light-mode .solve-console {
   color: var(--on-surface-variant);
 }
