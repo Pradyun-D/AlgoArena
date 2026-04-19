@@ -127,7 +127,8 @@ function LandingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: "easeOut" }}
       >
-        <Link to="/" className="landing-brand">
+        <Link to="/" className="landing-brand" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <img src="/app.ico" alt="AlgoArena Logo" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
           ALGOARENA
         </Link>
 

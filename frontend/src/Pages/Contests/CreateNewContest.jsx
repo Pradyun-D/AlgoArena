@@ -467,21 +467,6 @@ const ContestFormPage = () => {
                 </select>
               </div>
 
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <p>Private Contest</p>
-                  <span>ACCESS VIA INVITATION ONLY</span>
-                </div>
-                <div className={`toggle ${contest.visibility === 'private' ? 'active' : ''}`} onClick={() => setContest(prev => ({...prev, visibility: prev.visibility === 'private' ? 'public' : 'private'}))}></div>
-              </div>
-
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <p>Auto-Publish Leaderboard</p>
-                  <span style={{color: 'var(--toggle-active)'}}>LIVE UPDATES ENABLED</span>
-                </div>
-                <div className="toggle active"></div>
-              </div>
             </div>
           </div>
 

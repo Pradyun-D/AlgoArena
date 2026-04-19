@@ -31,7 +31,8 @@ function ArenaNavbar({
   return (
     <nav className={`nav-shell fixed top-0 left-0 right-0 z-50 flex justify-between items-center w-full px-6 h-16 border-none ${className}`.trim()}>
       <div className="flex items-center gap-8">
-        <Link className="text-2xl font-black tracking-tighter text-primary font-headline uppercase" to="/contests">
+        <Link className="flex items-center gap-2 text-2xl font-black tracking-tighter text-primary font-headline uppercase" to="/contests">
+          <img src="/app.ico" alt="AlgoArena Logo" style={{ width: "28px", height: "28px", objectFit: "contain" }} />
           AlgoArena
         </Link>
         <div className="hidden md:flex gap-6 h-full items-center">
