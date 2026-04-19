@@ -236,6 +236,27 @@ def build_auth_response(user, payload, status_code=200):
 
 def clear_auth_cookies(response):
     auth_settings = settings.REST_AUTH
-    response.delete_cookie(auth_settings["JWT_AUTH_COOKIE"], path="/")
-    response.delete_cookie(auth_settings["JWT_AUTH_REFRESH_COOKIE"], path="/")
+    secure = auth_settings.get("JWT_AUTH_SECURE", False)
+    samesite = auth_settings.get("JWT_AUTH_SAMESITE", "Lax")
+    
+    response.set_cookie(
+        auth_settings["JWT_AUTH_COOKIE"],
+        "",
+        expires="Thu, 01 Jan 1970 00:00:00 GMT",
+        max_age=0,
+        path="/",
+        samesite=samesite,
+        secure=secure,
+    )
+    response.set_cookie(
+        auth_settings["JWT_AUTH_REFRESH_COOKIE"],
+        "",
+        expires="Thu, 01 Jan 1970 00:00:00 GMT",
+        max_age=0,
+        path="/",
+        samesite=samesite,
+        secure=secure,
+    )
     return response
+
+

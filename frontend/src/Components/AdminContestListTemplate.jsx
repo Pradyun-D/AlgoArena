@@ -9,6 +9,7 @@ import ThemeToggle from "./ThemeToggle";
 import { API_BASE_URL } from "../Utils/api";
 import { getAdminSettings } from "../Utils/admin_settings";
 import { parseContestTime } from "../Utils/is_live_contest";
+import { parseSafeUTCDate } from "../Utils/date_helpers";
 
 const PAGE_SIZE = 10;
 
@@ -19,14 +20,9 @@ const statusClassMap = {
 };
 
 const formatAdminDate = (value) => {
-  if (!value) {
-    return "TBA";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
+  if (!value) return "TBA";
+  const date = parseSafeUTCDate(value);
+  if (Number.isNaN(date.getTime())) return value;
 
   return date.toLocaleString("en-IN", {
     year: "numeric",

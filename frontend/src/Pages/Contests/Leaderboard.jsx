@@ -53,15 +53,6 @@ function Leaderboard() {
         };
     }, [contestId]);
 
-    const handleLogout = async () => {
-        try {
-            await axios.post(`${API_BASE_URL}/accounts/api/logout/`, {}, { withCredentials: true });
-        } catch { /* ignore */ } finally {
-            clearStoredAuthUser(); 
-            setAuthUser(null);
-            navigate("/", { replace: true });
-        }
-    };
 
     if (loading) return <LoadingPage title="Loading Standings" subtitle="Crunching the latest points and penalties..." />;
     
@@ -77,7 +68,7 @@ function Leaderboard() {
 
     return (
         <div className="bg-background text-on-background min-h-screen">
-            <ArenaNavbar navLinks={navLinks} authUser={authUser} onLogout={handleLogout} />
+            <ArenaNavbar navLinks={navLinks} authUser={authUser} />
             
             <main className="max-w-[1400px] mx-auto pt-24 px-6 pb-12">
                 <motion.div

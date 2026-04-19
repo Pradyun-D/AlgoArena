@@ -7,6 +7,8 @@ import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import ThemeToggle from "../../Components/ThemeToggle";
 import { useTheme } from "../../Theme/ThemeProvider";
 import "../../Styles/form.css"
+import { parseSafeUTCDate } from "../../Utils/date_helpers";
+
 const toUtcISOString = (localDateTimeValue) => {
   if (!localDateTimeValue) {
     return "";
@@ -90,8 +92,8 @@ const ContestFormPage = () => {
             : ""
           let duration = ""
           if (startTime && endTime) {
-            const start = new Date(draft.start_time)
-            const end = new Date(draft.end_time)
+            const start = parseSafeUTCDate(draft.start_time);
+            const end = parseSafeUTCDate(draft.end_time);
             const diffMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
             duration = Number.isFinite(diffMinutes) && diffMinutes > 0 ? String(diffMinutes) : ""
           }

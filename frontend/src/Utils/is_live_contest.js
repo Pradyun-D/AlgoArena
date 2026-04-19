@@ -1,18 +1,7 @@
+import { parseSafeUTCDate } from "./date_helpers";
+
 export const parseContestTime = (value) => {
-    if (!value) {
-        return Number.NaN;
-    }
-
-    if (value instanceof Date) {
-        return value.getTime();
-    }
-
-    const normalizedValue =
-        typeof value === "string" && !/[zZ]|[+-]\d{2}:\d{2}$/.test(value)
-            ? `${value}Z`
-            : value;
-
-    return new Date(normalizedValue).getTime();
+    return parseSafeUTCDate(value).getTime();
 };
 
 export const isLiveContest = (contest) => {

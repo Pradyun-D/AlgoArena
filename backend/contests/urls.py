@@ -30,4 +30,8 @@ urlpatterns = [
     path('submissions/<uuid:submission_id>/', views.get_submission, name='get_submission'),
 
     path('<uuid:contest_id>/register/', views.register_participant, name='register_participant'),
+
+    path('editorial/<uuid:problem_id>/', views.get_editorial, name='get_editorial'),
+    path('editorial/create/', views.create_editorial, name='create_editorial'),
+    path('editorial/<uuid:problem_id>/update/', views.update_editorial, name='update_editorial'),
 ]

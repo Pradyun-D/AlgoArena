@@ -9,7 +9,6 @@ import LoadingPage from "../Auth_and_Profile/LoadingPage";
 import { clearStoredAuthUser, getStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import ArenaNavbar from "../../Components/ArenaNavbar";
-import { isLiveContest, parseContestTime } from "../../Utils/is_live_contest";
 import { fetchSessionUser } from "../../Utils/session_auth";
 
 // ── variants ────────────────────────────────────────────────
@@ -77,20 +76,18 @@ function ContestsPage() {
             allContests = Array.isArray(allResponse.value.data) ? allResponse.value.data : [];
             }
 
-            const now = Date.now();
-            const available = allContests.filter(c => {
-                const end = parseContestTime(c.end_time);
-                return !isNaN(end) && end > now;
-            }).sort((a, b) => {
-                const aLive = isLiveContest(a);
-                const bLive = isLiveContest(b);
-                if (aLive !== bLive) return aLive ? -1 : 1;
-                return parseContestTime(a.start_time) - parseContestTime(b.start_time);
-            });
-            const past = allContests.filter(c => {
-                const end = parseContestTime(c.end_time);
-                return !isNaN(end) && end <= now;
-            }).sort((a, b) => parseContestTime(b.end_time) - parseContestTime(a.end_time));
+            // Use backend-provided status field instead of parsing dates
+            const available = allContests
+                .filter(c => c.status === "Live" || c.status === "Draft")
+                .sort((a, b) => {
+                    if (a.status === "Live" && b.status !== "Live") return -1;
+                    if (a.status !== "Live" && b.status === "Live") return 1;
+                    return new Date(a.start_time) - new Date(b.start_time);
+                });
+
+            const past = allContests
+                .filter(c => c.status === "Completed")
+                .sort((a, b) => new Date(b.end_time) - new Date(a.end_time));
 
              setAvailableContests(available);
              setPastContests(past);
@@ -156,14 +153,6 @@ function ContestsPage() {
         };
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await axios.post(`${API_BASE_URL}/accounts/api/logout/`, {}, { withCredentials: true });
-        } catch { /* ignore */ } finally {
-            clearStoredAuthUser(); setAuthUser(null); setUser({});
-            navigate("/", { replace: true });
-        }
-    };
 
     const sidebarUser = authUser
         ? {
@@ -192,7 +181,7 @@ function ContestsPage() {
 
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
-            <ArenaNavbar navLinks={navLinks} authUser={authUser} onLogout={handleLogout} />
+            <ArenaNavbar navLinks={navLinks} authUser={authUser} />
 
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
                 <div className="md:col-span-9 space-y-12">
@@ -281,8 +270,7 @@ function ContestsPage() {
                         className="space-y-4"
                         variants={cardStagger}
                         initial="hidden"
-                        whileInView="show"
-                        viewport={{ once: true, amount: 0.15 }}
+                        animate="show"
                     >
                         <motion.div className="flex items-center justify-between" variants={fadeUp} transition={{ duration: 0.38 }}>
                             <h2 className="contest-section-title contest-section-title--past text-lg font-bold font-headline tracking-tight flex items-center gap-2">

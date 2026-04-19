@@ -431,6 +431,9 @@ def refresh_session(request):
 		return clear_auth_cookies(response)
 
 
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def logout_account(request):

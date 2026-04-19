@@ -1,4 +1,3 @@
-
 from .contest_views import (
     all_contests,
     past_contests,
@@ -39,6 +38,7 @@ from .submission_views import (
 from .editorial_views import (
     create_editorial,
     get_editorial,
+    update_editorial,
 )
 
 from ._helpers import (

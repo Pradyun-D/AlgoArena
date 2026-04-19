@@ -1,5 +1,4 @@
 
-from rest_framework.permissions import NOT
 import mysql.connector
 import os
 from pathlib import Path
@@ -122,6 +121,7 @@ problem_queries = [
             FOREIGN KEY(problem_id) REFERENCES problems(problem_id)
         );
         ALTER TABLE editorials ADD UNIQUE(editorial_id);
+        
     """
 ]
 

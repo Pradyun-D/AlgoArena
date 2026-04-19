@@ -9,15 +9,12 @@ import { API_BASE_URL } from "../../Utils/api";
 import { formatDisplayText } from "../../Utils/format_display_text";
 import ArenaNavbar from "../../Components/ArenaNavbar";
 import { fetchSessionUser } from "../../Utils/session_auth";
+import { parseSafeUTCDate } from "../../Utils/date_helpers";
 
 const formatDateTime = (value) => {
-    if (!value) {
-        return "N/A";
-    }
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-        return value;
-    }
+    if (!value) return "N/A";
+    const parsed = parseSafeUTCDate(value);
+    if (Number.isNaN(parsed.getTime())) return value;
     return parsed.toLocaleString("en-IN", {
         day: "2-digit",
         month: "short",
@@ -124,18 +121,6 @@ function MySubmissionsPage() {
         };
     }, []);
 
-    const handleLogout = async () => {
-        try {
-            await axios.post(`${API_BASE_URL}/accounts/api/logout/`, {}, { withCredentials: true });
-        } catch {
-            // Clear local state even if the server-side logout request fails.
-        } finally {
-            clearStoredAuthUser();
-            setAuthUser(null);
-            setUser({});
-            navigate("/", { replace: true });
-        }
-    };
 
     if (loading) {
         return (
@@ -161,7 +146,7 @@ function MySubmissionsPage() {
 
     return (
         <div className="contest-page bg-background text-on-background min-h-screen">
-            <ArenaNavbar navLinks={navLinks} authUser={authUser} onLogout={handleLogout} />
+            <ArenaNavbar navLinks={navLinks} authUser={authUser} />
 
             <main className="main-shell pt-24 pb-12 px-6 max-w-[1600px] mx-auto">
                 <div className="space-y-12">

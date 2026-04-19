@@ -11,17 +11,20 @@ import { getStoredAuthUser } from "../../Utils/auth_storage";
 import { API_BASE_URL } from "../../Utils/api";
 import { fetchSessionUser } from "../../Utils/session_auth";
 import { formatDisplayText } from "../../Utils/format_display_text";
+import ArenaNavbar from "../../Components/ArenaNavbar";
+import { parseSafeUTCDate } from "../../Utils/date_helpers";
 
 // ── helpers (unchanged) ──────────────────────────────────────
 const formatDateTime = (value) => {
   if (!value) return "TBA";
-  const date = new Date(value);
+  const date = parseSafeUTCDate(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
 
 const formatDuration = (startTime, endTime) => {
-  const start = new Date(startTime); const end = new Date(endTime);
+  const start = parseSafeUTCDate(startTime); 
+  const end = parseSafeUTCDate(endTime);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Not available";
   const diffInMinutes = Math.max(0, Math.round((end - start) / 60000));
   const hours = Math.floor(diffInMinutes / 60); const minutes = diffInMinutes % 60;
@@ -31,7 +34,9 @@ const formatDuration = (startTime, endTime) => {
 };
 
 const getContestStatus = (startTime, endTime) => {
-  const now = new Date(); const start = new Date(startTime); const end = new Date(endTime);
+  const now = new Date(); 
+  const start = parseSafeUTCDate(startTime); 
+  const end = parseSafeUTCDate(endTime);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Unknown";
   if (now < start) return "Upcoming";
   if (now > end) return "Ended";
@@ -39,7 +44,7 @@ const getContestStatus = (startTime, endTime) => {
 };
 
 const formatCountdown = (targetTime) => {
-  const target = new Date(targetTime);
+  const target = parseSafeUTCDate(targetTime);
   if (Number.isNaN(target.getTime())) return "Time unavailable";
   const diff = target.getTime() - Date.now();
   if (diff <= 0) return "00:00:00";
@@ -174,9 +179,16 @@ function ContestPage() {
     return <span className="btn btn-primary opacity-60 cursor-not-allowed">Contest Ended</span>;
   };
 
+  const navLinks = [
+      { label: "Overview", to: `/contest/${contestId}/`, active: true },
+      { label: "Leaderboard", to: `/contest/${contestId}/leaderboard`, active: false },
+      { label: "My Submissions", to: "/submissions", active: false },
+  ];
+
   return (
     <div className="app-container">
-      <div className="main-layout">
+      <ArenaNavbar navLinks={navLinks} authUser={authUser} />
+      <div className="main-layout" style={{ marginTop: '64px' }}>
 
         {/* ── Left sidebar nav ── */}
         <motion.aside
@@ -286,32 +298,56 @@ function ContestPage() {
                 {problems.map((problem, index) => {
                   const difficulty = normalizeDifficulty(problem.difficulty);
                   const solveLocked = contestStatus === "Upcoming";
+                  // Editorial is visible once the contest has ended, or always for privileged users
+                  const showEditorial = contestStatus === "Ended" || isPrivilegedUser;
                   return (
                     <motion.div
                       className="list-row"
                       key={problem.problem_id || index}
                       variants={fadeUp}
                       transition={{ duration: 0.36 }}
-                      whileHover={{ x: 4, transition: { duration: 0.18 } }}
                     >
-                      <div>
-                        <p className="problem-title">{formatDisplayText(problem.title || `Problem ${index + 1}`)}</p>
-                        <p className="mono problem-meta">
-                          Max Score: {problem.max_score ?? "N/A"} | Time: {problem.time_limit_ms ?? "N/A"} ms | Memory: {problem.memory_limit_kb ?? "N/A"} KB
-                        </p>
-                        <p className="mono problem-meta" style={{ marginTop: "0.4rem", color: "var(--color-primary, #6bfe9c)", fontWeight: 600 }}>
-                          Your Score: {problem.user_score ?? 0} / {problem.max_score ?? "N/A"}
-                        </p>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <span className={`difficulty-pill ${difficulty.className}`}>{difficulty.label}</span>
-                        {solveLocked ? (
-                          <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.55, cursor: "not-allowed", pointerEvents: "none" }}>Solve</span>
-                        ) : (
-                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
-                            <Link className="btn btn-outline" to={`/contest/${contestId}/problems/${problem.problem_id}`}>Solve</Link>
-                          </motion.div>
-                        )}
+                      <div className="list-row-inner">
+                        <span className="problem-index">{String(index + 1).padStart(2, "0")}</span>
+                        <div className="problem-info">
+                          <p className="problem-title">{formatDisplayText(problem.title || `Problem ${index + 1}`)}</p>
+                          <p className="mono problem-meta">
+                            Max Score: {problem.max_score ?? "N/A"} · {problem.time_limit_ms ?? "N/A"} ms · {problem.memory_limit_kb ?? "N/A"} KB
+                          </p>
+                          <p className={`mono problem-score ${(problem.user_score ?? 0) === 0 ? "problem-score-zero" : ""}`}>
+                            ◆ {problem.user_score ?? 0} / {problem.max_score ?? "N/A"} pts
+                          </p>
+                        </div>
+                        <div className="problem-actions">
+                          <span className={`difficulty-pill ${difficulty.className}`}>{difficulty.label}</span>
+                          {solveLocked ? (
+                            <span className="btn btn-solve" aria-disabled="true" style={{ opacity: 0.45, cursor: "not-allowed", pointerEvents: "none" }}>Solve</span>
+                          ) : (
+                            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 380, damping: 18 }}>
+                              <Link className="btn btn-solve" to={`/contest/${contestId}/problems/${problem.problem_id}`}>Solve</Link>
+                            </motion.div>
+                          )}
+                          <AnimatePresence>
+                            {showEditorial && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.88, width: 0 }}
+                                animate={{ opacity: 1, scale: 1, width: "auto" }}
+                                exit={{ opacity: 0, scale: 0.88, width: 0 }}
+                                transition={{ type: "spring", stiffness: 340, damping: 22 }}
+                                style={{ overflow: "hidden" }}
+                              >
+                                <Link
+                                  className="btn btn-editorial"
+                                  to={`/contest/${contestId}/problems/${problem.problem_id}/editorial`}
+                                  style={{ whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "0.4rem" }}
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: "0.9rem" }}>menu_book</span>
+                                  Editorial
+                                </Link>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </motion.div>
                   );

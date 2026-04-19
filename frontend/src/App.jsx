@@ -22,6 +22,8 @@ import ProblemSetterRoute from "./Components/ProblemSetterRoute";
 import AdminRoute from "./Components/AdminRoute";
 import { ThemeProvider } from "./Theme/ThemeProvider";
 import AdminLandingRedirect from "./Components/AdminLandingRedirect";
+import ContestEditorialFormPage from "./Pages/Contests/ContestEditorialForm";
+import ContestEditorialPage from "./Pages/Contests/ContestEditorial";
 
 function App() {
   return (
@@ -112,6 +114,10 @@ function App() {
           />
           <Route path="/contest/:contestId/problems/:problemId" element={<ProblemSolvingPage />} />
           <Route path="*" element={<ErrorPage />} />
+     
+          <Route path="/contest/:contestId/problems/:problemId/editorial" element={<ContestEditorialPage />} />
+
+          <Route path="/contest/:contestId/problems/:problemId/editorial/edit" element={<ContestEditorialFormPage />} />
         </Routes>
       </Router>
     </ThemeProvider>
