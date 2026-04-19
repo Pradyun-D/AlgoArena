@@ -70,7 +70,7 @@ body.light-mode {
   grid-template-columns: 220px minmax(0, 1fr) 320px;
   gap: var(--gap-lg);
   max-width: 1420px;
-  margin: 0 auto;
+  margin: 96px auto 56px;
   padding: 32px 28px 56px;
   width: 100%;
 }
@@ -98,7 +98,7 @@ body.light-mode {
   flex-direction: column;
   gap: 12px;
   position: sticky;
-  top: 28px;
+  top: 96px;
 }
 
 .nav-item {
@@ -463,7 +463,7 @@ body.light-mode {
 /* --- RIGHT SIDEBAR --- */
 .status-card {
   position: sticky;
-  top: 28px;
+  top: 96px;
 }
 
 .status-header {

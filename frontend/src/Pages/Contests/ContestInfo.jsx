@@ -186,9 +186,9 @@ function ContestPage() {
   ];
 
   return (
-    <div className="app-container">
+    <div className="contest-page bg-background text-on-background min-h-screen">
       <ArenaNavbar navLinks={navLinks} authUser={authUser} />
-      <div className="main-layout" style={{ marginTop: '64px' }}>
+      <main className="main-layout pt-32 md:pt-28 pb-12 px-6">
 
         {/* ── Left sidebar nav ── */}
         <motion.aside
@@ -406,7 +406,7 @@ function ContestPage() {
             </motion.div>
           </div>
         </motion.aside>
-      </div>
+      </main>
     </div>
   );
 }

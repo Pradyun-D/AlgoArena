@@ -3,7 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import rehypeRaw from "rehype-raw";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { motion, AnimatePresence } from "motion/react";
 import ErrorPage from "../Auth_and_Profile/ErrorPage";
 import LoadingPage from "../Auth_and_Profile/LoadingPage";
@@ -645,7 +649,10 @@ function ProblemSolvingPage() {
               </div>
 
               <div className="solve-markdown">
-                <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeRaw, rehypeKatex]}
+                >
                   {problem.description || "This problem does not have a published description yet."}
                 </ReactMarkdown>
               </div>

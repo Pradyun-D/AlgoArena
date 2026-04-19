@@ -240,6 +240,17 @@
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+.solve-markdown .katex,
+.solve-markdown .katex * {
+  color: inherit;
+}
+
+.solve-markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0;
+}
+
 .solve-markdown pre {
   overflow-x: auto;
   padding: 1rem;
@@ -781,6 +792,11 @@ body.light-mode .solve-markdown code {
 body.light-mode .solve-markdown pre {
   background: rgba(244, 247, 251, 0.95);
   border-color: rgba(204, 213, 225, 0.95);
+}
+
+body.light-mode .solve-markdown .katex,
+body.light-mode .solve-markdown .katex * {
+  color: inherit;
 }
 
 /* Codeforces Style Submissions Table */
