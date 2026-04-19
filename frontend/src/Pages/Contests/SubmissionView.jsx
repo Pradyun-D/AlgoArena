@@ -93,12 +93,14 @@ function SubmissionViewPage() {
                 rightContent={(
                     <motion.button
                         onClick={() => navigate(-1)}
-                        className="px-4 py-2 bg-primary text-on-primary rounded-sm font-bold text-sm uppercase tracking-wider hover:bg-primary/90 transition-colors"
+                        aria-label="Go back to submissions"
+                        className="inline-flex items-center gap-2 rounded-sm border border-outline-variant/20 bg-white px-3.5 py-2 text-primary shadow-sm transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-[1px] font-headline font-bold uppercase text-sm tracking-tight"
                         whileHover={{ scale: 1.04, y: -1 }}
                         whileTap={{ scale: 0.96 }}
                         transition={{ type: "spring", stiffness: 380, damping: 18 }}
                     >
-                        Go Back
+                        <span className="material-symbols-outlined text-[18px] leading-none">arrow_back</span>
+                        <span className="whitespace-nowrap">Back to Submissions</span>
                     </motion.button>
                 )}
             />

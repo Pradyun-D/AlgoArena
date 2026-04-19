@@ -250,6 +250,40 @@
   font-weight: 700;
 }
 
+.auth-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10.5rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid rgba(107, 254, 156, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.auth-secondary-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(107, 254, 156, 0.42);
+  background: rgba(107, 254, 156, 0.08);
+  color: var(--primary);
+}
+
+body.light-mode .auth-secondary-link {
+  border-color: rgba(47, 125, 244, 0.18);
+  background: rgba(47, 125, 244, 0.05);
+  color: var(--primary);
+}
+
+body.light-mode .auth-secondary-link:hover {
+  border-color: rgba(47, 125, 244, 0.3);
+  background: rgba(47, 125, 244, 0.1);
+  color: var(--primary-variant);
+}
+
 .auth-error,
 .auth-success {
   margin: 0;

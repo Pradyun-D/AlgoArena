@@ -54,7 +54,6 @@ function MySubmissionsPage() {
     const [error, setError] = useState("");
     const navLinks = [
         { label: "Contests", to: "/contests", active: false },
-        { label: "Contest Leaderboard", to: `/contest/${contestId}/leaderboard`, active: false },
         { label: "My Submissions", to: "/submissions", active: true },
     ];
 
