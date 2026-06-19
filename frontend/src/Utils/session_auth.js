@@ -1,6 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from "./api";
-import { clearStoredAuthUser, setStoredAuthUser } from "./auth_storage";
+import { clearStoredAuthUser, getStoredAuthUser, setStoredAuthUser } from "./auth_storage";
 
 let refreshRequest = null;
 
@@ -19,6 +19,8 @@ const refreshSession = async () => {
 };
 
 export const fetchSessionUser = async () => {
+    const storedUser = getStoredAuthUser();
+
     const loadSessionUser = async () => {
         const response = await axios.get(`${API_BASE_URL}/accounts/api/session/`, {
             withCredentials: true,
@@ -36,6 +38,11 @@ export const fetchSessionUser = async () => {
         if (![401, 403].includes(error.response?.status)) {
             throw error;
         }
+    }
+
+    if (!storedUser) {
+        clearStoredAuthUser();
+        return null;
     }
 
     try {

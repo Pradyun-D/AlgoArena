@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import path, include, re_path
 from django.views.generic import TemplateView
 from dj_rest_auth.registration.views import RegisterView, VerifyEmailView, ResendEmailVerificationView
@@ -25,8 +25,14 @@ def health_check(request):
     return JsonResponse({"status": "AlgoArena backend running"})
 
 
+def empty_favicon(request):
+    return HttpResponse(status=204)
+
+
 urlpatterns = [
     path('', health_check, name='health_check'),
+    path('favicon.ico', empty_favicon, name='favicon_ico'),
+    path('favicon.png', empty_favicon, name='favicon_png'),
     path('admin/', admin.site.urls),
     path('admin-api/', include('adminpanel.urls')),
     path('accounts/', include('accounts.urls')),
