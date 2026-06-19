@@ -38,13 +38,17 @@ SIMPLE_JWT = {
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+def env_csv(name, default=""):
+    return [item.strip() for item in env.str(name, default=default).split(",") if item.strip()]
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2egg!)tfc^*o-7d%!9yll+tlz2j9ou!t#w6%l4dz!t0_$05he8'
+SECRET_KEY = env.str('SECRET_KEY', default='django-insecure-2egg!)tfc^*o-7d%!9yll+tlz2j9ou!t#w6%l4dz!t0_$05he8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = ['*', '.vercel.app']
+ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', default='*,.vercel.app')
 
 
 # Application definition
@@ -100,15 +104,18 @@ LOCAL_FRONTEND_ORIGINS = [
     'http://192.168.1.2:5173',
 ]
 
+FRONTEND_ORIGINS = env_csv('FRONTEND_URL') + env_csv('CORS_ALLOWED_ORIGINS')
+CSRF_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS')
+
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^http://192\.168\..*",
     r"^http://10\..*",
     r"^http://localhost.*",
     r"^http://127\.0\.0\.1.*",
 ]
-CORS_ALLOWED_ORIGINS = LOCAL_FRONTEND_ORIGINS
+CORS_ALLOWED_ORIGINS = LOCAL_FRONTEND_ORIGINS + FRONTEND_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = LOCAL_FRONTEND_ORIGINS
+CSRF_TRUSTED_ORIGINS = LOCAL_FRONTEND_ORIGINS + FRONTEND_ORIGINS + CSRF_ORIGINS
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
