@@ -42,6 +42,13 @@ def env_csv(name, default=""):
     return [item.strip() for item in env.str(name, default=default).split(",") if item.strip()]
 
 
+def resolve_backend_path(value):
+    path = Path(value)
+    if not path.is_absolute():
+        path = BASE_DIR / path
+    return str(path.resolve())
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env.str('SECRET_KEY', default='django-insecure-2egg!)tfc^*o-7d%!9yll+tlz2j9ou!t#w6%l4dz!t0_$05he8')
 
@@ -139,12 +146,36 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+USE_MYSQL_DATABASE = env.bool(
+    'USE_MYSQL_DATABASE',
+    default=bool(env.str('DB_USER', default='') and env.str('DB_PASS', default='')),
+)
+
+if USE_MYSQL_DATABASE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': env.str('DB_HOST', default='gateway01.ap-southeast-1.prod.aws.tidbcloud.com'),
+            'PORT': env.int('DB_PORT', default=4000),
+            'NAME': env.str('DB_NAME', default='test'),
+            'USER': env.str('DB_USER'),
+            'PASSWORD': env.str('DB_PASS'),
+            'OPTIONS': {
+                'ssl': {
+                    'ca': resolve_backend_path(env.str('CA', default='certs/isrgrootx1.pem')),
+                },
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES', time_zone='+00:00'",
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
