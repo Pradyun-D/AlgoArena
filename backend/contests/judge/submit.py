@@ -32,12 +32,12 @@ def judge_submission(submission_id, only_visible_testcases=False, update_contest
         # fetch test cases
         if only_visible_testcases:
             cursor.execute(
-                "SELECT * FROM TestCases WHERE problem_id = %s AND is_sample = TRUE ORDER BY created_at ASC",
+                "SELECT * FROM testcases WHERE problem_id = %s AND is_sample = TRUE ORDER BY created_at ASC",
                 (submission["problem_id"],),
             )
         else:
             cursor.execute(
-                "SELECT * FROM TestCases WHERE problem_id = %s ORDER BY created_at ASC",
+                "SELECT * FROM testcases WHERE problem_id = %s ORDER BY created_at ASC",
                 (submission["problem_id"],),
             )
         test_cases = cursor.fetchall()

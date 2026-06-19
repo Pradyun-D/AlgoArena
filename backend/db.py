@@ -5,8 +5,14 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BASE_DIR.parent
+
+for env_file in (BASE_DIR / '.env', ROOT_DIR / '.env'):
+    if env_file.exists():
+        load_dotenv(env_file)
+        break
+
 ca_env = os.getenv('CA', 'certs/isrgrootx1.pem')
 ca_path = Path(ca_env)
 if not ca_path.is_absolute():

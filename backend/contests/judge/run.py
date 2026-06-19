@@ -2,6 +2,8 @@ import requests
 import os
 import environ
 from pathlib import Path
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 # Load environment variable if running standalone
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -9,7 +11,16 @@ env_file = BASE_DIR / '.env'
 if env_file.exists():
     environ.Env.read_env(env_file)
 
-API_URL = os.environ.get("JUDGE_API_URL", "http://192.168.1.4:2358/submissions")  # update IP if VM address changes
+def get_judge_api_url():
+    try:
+        api_url = getattr(settings, "JUDGE_API_URL", "")
+    except ImproperlyConfigured:
+        api_url = ""
+
+    api_url = api_url or os.environ.get("JUDGE_API_URL")
+    if not api_url:
+        raise ImproperlyConfigured("Set JUDGE_API_URL to your Judge0 submissions endpoint.")
+    return api_url
 
 def run_test(test_name, source_code, language_id, stdin=""):
     print(f"\n[{test_name}]")
@@ -23,7 +34,7 @@ def run_test(test_name, source_code, language_id, stdin=""):
     params = {"base64_encoded": "false", "wait": "true"}
     
     try:
-        response = requests.post(API_URL, params=params, json=payload)
+        response = requests.post(get_judge_api_url(), params=params, json=payload, timeout=30)
         response.raise_for_status()
         result = response.json()
         return result
