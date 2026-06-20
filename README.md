@@ -163,62 +163,62 @@ All primary keys use UUIDs (UUIDv4), preventing sequential enumeration vulnerabi
 
 ### Landing Page
 <!-- INSERT: front_page.png -->
-![Landing Page](front_page.png)
+![Landing Page](images/front_page.png)
 
 ---
 
 ### Authentication
 
 <!-- INSERT: login.png -->
-![Login Page](login.png)
+![Login Page](images/login.png)
 
 <!-- INSERT: reg.png -->
-![Register Page](reg.png)
+![Register Page](images/reg.png)
 
 ---
 
 ### User Experience
 
 <!-- INSERT: profile.png -->
-![Profile Completion](profile.png)
+![Profile Completion](images/profile.png)
 
 <!-- INSERT: all.png -->
-![All Contests](all.png)
+![All Contests](images/all.png)
 
 <!-- INSERT: contestinfo.png -->
-![Contest Info](contestinfo.png)
+![Contest Info](images/contestinfo.png)
 
 <!-- INSERT: solve.png -->
-![Problem Solving](solve.png)
+![Problem Solving](images/solve.png)
 
 <!-- INSERT: subm.png -->
-![My Submissions](subm.png)
+![My Submissions](images/subm.png)
 
 ---
 
 ### Contest & Problem Management (Setter View)
 
 <!-- INSERT: create.png -->
-![Create Contest](create.png)
+![Create Contest](images/create.png)
 
 <!-- INSERT: draft.png -->
-![Drafts](draft.png)
+![Drafts](images/draft.png)
 
 ---
 
 ### Admin Panel
 
 <!-- INSERT: dash.png -->
-![Admin Dashboard](dash.png)
+![Admin Dashboard](images/dash.png)
 
 <!-- INSERT: perm.png -->
-![Admin Permissions](perm.png)
+![Admin Permissions](images/perm.png)
 
 <!-- INSERT: settings.png -->
-![Admin Settings](settings.png)
+![Admin Settings](images/settings.png)
 
 <!-- INSERT: admin_prof.png -->
-![Admin Profile](admin_prof.png)
+![Admin Profile](images/admin_prof.png)
 
 ---
 
