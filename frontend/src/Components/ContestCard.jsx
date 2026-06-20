@@ -1,5 +1,6 @@
 import { isLiveContest } from "../Utils/is_live_contest";
 import ReactMarkdown from "react-markdown";
+import { Link } from "react-router-dom";
 import { formatDisplayText } from "../Utils/format_display_text";
 
 const formatCardDate = (value) => {
@@ -100,12 +101,12 @@ function ContestCard({ contest, contestBaseUrl }) {
                     <ReactMarkdown>{previewDescription}</ReactMarkdown>
                 </div>
 
-                <a
-                    href={`${contestBaseUrl}${contest.contest_id}/`}
+                <Link
+                    to={`${contestBaseUrl}${contest.contest_id}/`}
                     className={`contest-card__action ${actionClass}`}
                 >
                     View Contest
-                </a>
+                </Link>
             </div>
         </article>
     );

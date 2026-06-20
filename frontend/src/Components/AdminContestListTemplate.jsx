@@ -494,12 +494,12 @@ function AdminContestListTemplate({
                       <tr key={contest.id}>
                         <td>
                           <div className="contest-primary-cell">
-                            <a
-                              href={`/contest/${contest.id}/`}
+                            <Link
+                              to={`/contest/${contest.id}/`}
                               className="contest-link"
                             >
                               {contest.title}
-                            </a>
+                            </Link>
                           </div>
                         </td>
                         <td>
