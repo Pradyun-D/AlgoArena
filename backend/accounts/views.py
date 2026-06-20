@@ -472,8 +472,7 @@ def refresh_session(request):
 	refresh_token = request.COOKIES.get(refresh_cookie_name)
 
 	if not refresh_token:
-		response = Response({"error": "Refresh token is missing."}, status=401)
-		return clear_auth_cookies(response)
+		return Response(status=204)
 
 	try:
 		refresh = RefreshToken(refresh_token)
